@@ -9,4 +9,4 @@ class CrmLead(models.Model):
 class IntrestTag(models.Model):
     _name = 'intrest.tag'
 
-    name = fields.Char
+    name = fields.Char()

@@ -16,12 +16,13 @@
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group[@name='lead_priority']" position="inside">
+                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags"/>
+            </xpath>
+
+            <xpath expr="//page[@name='lead']//field[@name='partner_name']" position="after">
                 <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True,'no_open':True}"/>
             </xpath>
-            <xpath expr="//page[@name='lead']/field[@name='partner_name']" position="after">
-                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True,'no_open':True}"/>
-            </xpath>
-            lead
+
         </field>
     </record>
 
