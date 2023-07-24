@@ -34,11 +34,27 @@
             <xpath expr="//field[@name='tag_ids']" position="after">
                     <field string="Productos de interés" name="intrest_tag_ids" filter_domain="[('intrest_tag_ids', 'ilike', self)]"/>
             </xpath>
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <filter string="Busca instalación" name="installation" domain="[('installation','=',True)]"/>
+                <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
+                <separator orientation="vertical"/>
+            </xpath>
+
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
                 <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <filter string="Productos de interés" name="intrest_tag_ids" context="{'group_by':'intrest_tag_ids'}"/>
-            </xpath>
+                <separator orientation="vertical"/>
+                <filter string="URL de procedencia" name="source_url" context="{'group_by':'source_url'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Interés del cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
+                <filter string="Tipo de cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
+                <filter string="Tipo de contacto" name="type_of_contact" context="{'group_by':'type_of_contact'}"/>
+                <filter string="Nivel de seguridad" name="safety_level" context="{'group_by':'safety_level'}"/>
+                <filter string="Tipo de obra" name="work_type_id" context="{'group_by':'work_type_id'}"/>
+                <filter string="Categoría" name="category_id" context="{'group_by':'category_id'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Fecha de cambio a pendiente de visita" name="pending_visit_date" context="{'group_by':'pending_visit_date'}"/>            </xpath>
         </field>
     </record>
     <record id="crm_opportunity_search_custom" model="ir.ui.view">
@@ -49,10 +65,27 @@
             <xpath expr="//field[@name='tag_ids']" position="after">
                     <field string="Productos de interés" name="intrest_tag_ids" filter_domain="[('intrest_tag_ids', 'ilike', self)]"/>
             </xpath>
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <filter string="Busca instalación" name="installation" domain="[('installation','=',True)]"/>
+                <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
+                <separator orientation="vertical"/>
+            </xpath>
+
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
                 <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <filter string="Productos de interés" name="intrest_tag_ids" context="{'group_by':'intrest_tag_ids'}"/>
+                <separator orientation="vertical"/>
+                <filter string="URL de procedencia" name="source_url" context="{'group_by':'source_url'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Interés del cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
+                <filter string="Tipo de cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
+                <filter string="Tipo de contacto" name="type_of_contact" context="{'group_by':'type_of_contact'}"/>
+                <filter string="Nivel de seguridad" name="safety_level" context="{'group_by':'safety_level'}"/>
+                <filter string="Tipo de obra" name="work_type_id" context="{'group_by':'work_type_id'}"/>
+                <filter string="Categoría" name="category_id" context="{'group_by':'category_id'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Fecha de cambio a pendiente de visita" name="pending_visit_date" context="{'group_by':'pending_visit_date'}"/>
             </xpath>
         </field>
     </record>

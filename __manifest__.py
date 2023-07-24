@@ -9,6 +9,7 @@
     'website': '',
     'depends': [
         'crm',
+        'roc_crm',
     ],
     'data': [
         'views/crm_lead.xml',
