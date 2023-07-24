@@ -1,21 +1,20 @@
-from odoo import fields, models
+from odoo import fields, models, api
+
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
-
-    name = fields.Char(required=False)
-    def create(self,vals):
-        res = super(CrmLead,self).create(vals)
-        for rec in res:
-            if rec.name == 'custom_dev':
-                name = res.contact_name or ''
-                for tag in rec.intrest_tag_ids:
+    @api.depends('name')
+    def compute_name(self):
+        for record in self:
+            if record.name == 'custom_dev':
+                name = record.contact_name or ''
+                for tag in record.intrest_tag_ids:
                     name += " | " + tag.name
-                rec.name = name
-        return res
+                record.name = name
+            record.trigger_change_name = False if record.trigger_change_name else True
+    trigger_change_name = fields.Boolean(compute='compute_name', store=True)
+
     intrest_tag_ids = fields.Many2many(comodel_name='intrest.tag')
-
-
 
 
 class IntrestTag(models.Model):
