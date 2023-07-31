@@ -1,28 +1,123 @@
 <?xml version="1.0"?>
 <odoo>
+    <record id="crm_lead_tree_roc_crm_custom" model="ir.ui.view">
+        <field name="name">crm_lead_tree_roc_crm_custom</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="roc_crm.roc_crm_crm_lead_tree_lead"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='source_url']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='medium_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='date_action_last']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='request']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='priority']" position="replace">
+                <field name="priority" widget="priority" readonly="1"/>
+            </xpath>
+            <xpath expr="//field[@name='customer_concern']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='safety_level']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_ids']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='activity_state']" position="replace">
+                <field name="activity_ids" widget="list_activity"/>
+            </xpath>
+        </field>
+    </record>
     <record id="crm_lead_tree_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_leads"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='name']" position="after">
+            <xpath expr="//field[@name='zip']" position="after">
                 <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True,'no_open':True}"/>
+            </xpath>
+            <xpath expr="//field[@name='create_date']" position="before">
+                <field name="id" string=" " widget="open_tab" />
+            </xpath>
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="team_id"/>
+            </xpath>
+            <xpath expr="//field[@name='mobile']" position="replace">
+                <field name="phone_resume" widget="copy_phone"/>
+            </xpath>
+
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='probability']" position="attributes">
+                <attribute name="invisible">1</attribute>
             </xpath>
         </field>
     </record>
+
+
+
+
     <record id="crm_lead_form_custom" model="ir.ui.view">
         <field name="name">crm_lead_form_custom</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='lead_priority']" position="inside">
+
+            <xpath expr="//group[@name='lead_priority']//field[@name='tag_ids']" position="before">
+                <field name="work_type_id"/>
                 <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags"/>
+                <field name="source_id"/>
             </xpath>
-
-            <xpath expr="//page[@name='lead']//field[@name='partner_name']" position="after">
-                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True,'no_open':True}"/>
+            <xpath expr="//group[@name='opportunity_partner']//field[@name='phone']//.." position="after">
+                <field name="mobile"/>
             </xpath>
+            <xpath expr="//field[@name='tag_ids']" position="before">
+                <field name="work_type_id"/>
+                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags"/>
+                <field name="source_id"/>
+            </xpath>
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='%(crm.crm_lead_lost_action)d']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_set_lost']" position="replace">
+                <button name="%(open_lost_wizard)d"  string="Perdido" type="action" class = "btn btn-danger" attrs = "{'invisible': [('active', '=', False)]}"/>
+            </xpath>
+            <xpath expr="//page[@name='lead']//field[@name='mobile']" position="after">
+                <field name="phone" readonly="1"/>
+            </xpath>
+            <xpath expr="//field[@name='description']" position="before">
+                <group>
+                    <field name="lost_reason_id" options="{'no_create':True,'no_create_and_edit':True,'no_open':True}" attrs="{'invisible':[('lost_reason_id','=',False)]}"/>
+                    <field name="lost_observations" options="{'no_create':True,'no_create_and_edit':True,'no_open':True}" attrs="{'invisible':[('lost_reason_id','=',False)]}"/>
+                </group>
+            </xpath>
+            <field name="date_deadline" position="after">
+                <field name="pending_visit_date" readonly="1"/>
+            </field>
 
+            <xpath expr="//page[last()]" position="after">
+                <page string="Campos a eliminar">
+                    <group>
+                        <field name="customer_concern"/>
+                        <field name="type_of_client"/>
+                        <field name="source_url"/>
+                        <field name="request"/>
+                        <field name="type_of_contact"/>
+                        <field name="safety_level"/>
+                        <field name="category_id"/>
+                    </group>
+                </page>
+            </xpath>
         </field>
     </record>
 
@@ -31,30 +126,31 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.view_crm_case_leads_filter"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='phone_mobile_search']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='city']" position="before">
+                    <field name="zip" string="Código postal"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                    <field name="phone_mobile_search"/>
+                    <field name="street" string="Dirección"/>
+            </xpath>
             <xpath expr="//field[@name='tag_ids']" position="after">
                     <field string="Productos de interés" name="intrest_tag_ids" filter_domain="[('intrest_tag_ids', 'ilike', self)]"/>
             </xpath>
-            <xpath expr="//filter[@name='inactive']" position="before">
-                <filter string="Busca instalación" name="installation" domain="[('installation','=',True)]"/>
-                <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
-                <separator orientation="vertical"/>
+            <xpath expr="//filter[@name='city']" position="after">
+                <filter string="Código postal" name="zip" context="{'group_by':'zip'}"/>
             </xpath>
-
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
-                <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <filter string="Productos de interés" name="intrest_tag_ids" context="{'group_by':'intrest_tag_ids'}"/>
                 <separator orientation="vertical"/>
-                <filter string="URL de procedencia" name="source_url" context="{'group_by':'source_url'}"/>
-                <separator orientation="vertical"/>
-                <filter string="Interés del cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
-                <filter string="Tipo de cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
-                <filter string="Tipo de contacto" name="type_of_contact" context="{'group_by':'type_of_contact'}"/>
-                <filter string="Nivel de seguridad" name="safety_level" context="{'group_by':'safety_level'}"/>
-                <filter string="Tipo de obra" name="work_type_id" context="{'group_by':'work_type_id'}"/>
-                <filter string="Categoría" name="category_id" context="{'group_by':'category_id'}"/>
-                <separator orientation="vertical"/>
-                <filter string="Fecha de cambio a pendiente de visita" name="pending_visit_date" context="{'group_by':'pending_visit_date'}"/>            </xpath>
+                <filter string="Motivo de pérdida" name="lost_reason_id" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
+            </xpath>
         </field>
     </record>
     <record id="crm_opportunity_search_custom" model="ir.ui.view">
@@ -62,6 +158,19 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='phone_mobile_search']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='city']" position="before">
+                    <field name="zip" string="Código postal"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                    <field name="phone_mobile_search"/>
+                    <field name="street" string="Dirección"/>
+            </xpath>
             <xpath expr="//field[@name='tag_ids']" position="after">
                     <field string="Productos de interés" name="intrest_tag_ids" filter_domain="[('intrest_tag_ids', 'ilike', self)]"/>
             </xpath>
@@ -70,7 +179,6 @@
                 <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
                 <separator orientation="vertical"/>
             </xpath>
-
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
                 <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
@@ -85,7 +193,9 @@
                 <filter string="Tipo de obra" name="work_type_id" context="{'group_by':'work_type_id'}"/>
                 <filter string="Categoría" name="category_id" context="{'group_by':'category_id'}"/>
                 <separator orientation="vertical"/>
-                <filter string="Fecha de cambio a pendiente de visita" name="pending_visit_date" context="{'group_by':'pending_visit_date'}"/>
+                <filter string="Fecha de cambio a pendiente de visita" name="pending_visit_date"  context="{'group_by':'pending_visit_date'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Motivo de pérdida" name="lost_reason_id" domain="['|', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
             </xpath>
         </field>
     </record>

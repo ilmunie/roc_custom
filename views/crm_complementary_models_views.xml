@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<odoo>
+    <record model="ir.actions.act_window" id="crm_action_conf_lost_reason">
+        <field name="name">Motivos de pérdida</field>
+        <field name="res_model">lead.lost.reason</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record model="ir.actions.act_window" id="crm_action_conf_origin">
+        <field name="name">Origen</field>
+        <field name="res_model">utm.source</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record model="ir.actions.act_window" id="crm_action_conf_work_type">
+        <field name="name">Tipo de obra</field>
+        <field name="res_model">crm.work.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record model="ir.actions.act_window" id="crm_action_conf_label">
+        <field name="name">Etiquetas</field>
+        <field name="res_model">crm.tag</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record model="ir.actions.act_window" id="crm_action_intrest_label">
+        <field name="name">Productos de interés</field>
+        <field name="res_model">intrest.tag</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem
+        id="menu_crm_conf_conf"
+        name="Maestros"
+        parent = "crm.crm_menu_config"
+        sequence="15"/>
+    <menuitem
+            id ="menu_crm_conf_lost_reason"
+            name = "Motivos de pérdida"
+            parent = "roc_custom.menu_crm_conf_conf"
+            action = "roc_custom.crm_action_conf_lost_reason"/>
+    <menuitem
+            id ="menu_crm_conf_origin"
+            name = "Origen"
+            parent = "roc_custom.menu_crm_conf_conf"
+            action = "roc_custom.crm_action_conf_origin"/>
+    <menuitem
+            id ="menu_crm_conf_work_type"
+            name = "Tipos de obra"
+            parent = "roc_custom.menu_crm_conf_conf"
+            action = "roc_custom.crm_action_conf_work_type"/>
+    <menuitem
+            id ="menu_crm_conf_label"
+            name = "Etiquetas"
+            parent = "roc_custom.menu_crm_conf_conf"
+            action = "roc_custom.crm_action_conf_label"/>
+    <menuitem
+            id ="menu_crm_conf_label"
+            name = "Productos de interés"
+            parent = "roc_custom.menu_crm_conf_conf"
+            action = "roc_custom.crm_action_intrest_label"/>
+</odoo>
