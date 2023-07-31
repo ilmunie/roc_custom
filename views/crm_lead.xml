@@ -56,8 +56,7 @@
             </xpath>
             <xpath expr="//field[@name='source_id'][1]" position="replace">
             </xpath>
-            <xpath expr="//field[@name='source_id'][2]" position="replace">
-            </xpath>
+
 
             <xpath expr="//field[@name='zip']" position="after">
                 <field name="source_id" invisible="1" options="{'create':False,'create_edit':False}"/>
