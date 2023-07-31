@@ -59,7 +59,7 @@
 
 
             <xpath expr="//field[@name='zip']" position="after">
-                <field name="source_id" invisible="1" options="{'create':False,'create_edit':False}"/>
+                <field name="source_id" invisible="0" options="{'create':False,'create_edit':False}"/>
                 <field string="Medio" name="medium_id" options="{'create': False,'create_edit': False}"/>
                 <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
             </xpath>
