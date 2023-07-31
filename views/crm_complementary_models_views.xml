@@ -25,6 +25,11 @@
         <field name="res_model">intrest.tag</field>
         <field name="view_mode">tree,form</field>
     </record>
+    <record model="ir.actions.act_window" id="crm_action_medium">
+        <field name="name">Medios</field>
+        <field name="res_model">utm.medium</field>
+        <field name="view_mode">tree,form</field>
+    </record>
     <menuitem
         id="menu_crm_conf_conf"
         name="Maestros"
@@ -51,7 +56,12 @@
             parent = "roc_custom.menu_crm_conf_conf"
             action = "roc_custom.crm_action_conf_label"/>
     <menuitem
-            id ="menu_crm_conf_label"
+            id ="menu_crm_conf_medium"
+            name = "Medios"
+            parent = "roc_custom.menu_crm_conf_conf"
+            action = "roc_custom.crm_action_medium"/>
+    <menuitem
+            id ="menu_crm_conf_intrest_label"
             name = "Productos de interés"
             parent = "roc_custom.menu_crm_conf_conf"
             action = "roc_custom.crm_action_intrest_label"/>
