@@ -5,7 +5,14 @@ from lxml import etree
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
-
+    def get_link_html(self):
+        for record in self:
+            html = ""
+            html += "<table>"
+            html += "<tr><td><a href='/web#id={}&view_type=form&model={}'target='_blank'>".format(record.id, 'crm.lead')
+            html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(" Ver ")
+            record.link_to_form = html
+    link_to_form = fields.Html(compute=get_link_html)
 
     work_type_id = fields.Many2one('crm.work.type', tracking=True)
     source_id = fields.Many2one('utm.source', tracking=True)

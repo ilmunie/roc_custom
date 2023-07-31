@@ -39,14 +39,38 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_leads"/>
         <field name="arch" type="xml">
+            <xpath expr="//tree[last()]" position="attributes">
+                <attribute name="editable">bottom</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='team_id']" position="attributes">
+                <attribute name="options">{'create':False,'create_edit':False}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='tag_ids']" position="attributes">
+                <attribute name="options">{'create':False,'create_edit':False}</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='medium_id']" position="attributes">
+                <attribute name="options">{'create':False,'create_edit':False}</attribute>
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='source_id'][1]" position="replace">
+            </xpath>
+            <xpath expr="//field[@name='source_id'][2]" position="replace">
+            </xpath>
+
             <xpath expr="//field[@name='zip']" position="after">
-                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True,'no_open':True}"/>
+                <field name="source_id" invisible="1" options="{'create':False,'create_edit':False}"/>
+                <field string="Medio" name="medium_id" options="{'create': False,'create_edit': False}"/>
+                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
             </xpath>
             <xpath expr="//field[@name='create_date']" position="before">
-                <field name="id" string=" " widget="open_tab" />
+                <field name="link_to_form" string="         " />
             </xpath>
             <xpath expr="//field[@name='user_id']" position="after">
-                <field name="team_id"/>
+                <field name="team_id" options="{'create':False,'create_edit':False}"/>
+                <field string="Etiquetas" name="tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
+
             </xpath>
             <xpath expr="//field[@name='mobile']" position="replace">
                 <field name="phone_resume" widget="copy_phone"/>
@@ -70,18 +94,39 @@
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
 
+            <xpath expr="//group[@name='categorization']//field[@name='medium_id']" position="replace">
+            </xpath>
+            <xpath expr="//page[@name='lead']//field[@name='medium_id']" position="replace">
+            </xpath>
+            <xpath expr="//group[@name='categorization']//field[@name='source_id']" position="replace">
+            </xpath>
+            <xpath expr="//page[@name='lead']//field[@name='source_id']" position="replace">
+            </xpath>
+            <xpath expr="//field[@name='tag_ids']" position="attributes">
+                <attribute name="options">{'create': False,'create_edit': False, 'color_field': 'color'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="options">{'create': False,'create_edit': False}</attribute>
+            </xpath>
+            <xpath expr="//group[@name='lead_priority']//field[@name='tag_ids']"  position="attributes">
+                <attribute name="options">{'create': False,'create_edit': False, 'color_field': 'color'}</attribute>
+            </xpath>
             <xpath expr="//group[@name='lead_priority']//field[@name='tag_ids']" position="before">
-                <field name="work_type_id"/>
-                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags"/>
-                <field name="source_id"/>
+                <field name="work_type_id" options="{'create': False,'create_edit': False}"/>
+                <field name="installation"/>
+                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
+                <field string="Origen" name="source_id" options="{'create': False,'create_edit': False}"/>
+                <field string="Medio" name="medium_id" options="{'create': False,'create_edit': False}"/>
             </xpath>
             <xpath expr="//group[@name='opportunity_partner']//field[@name='phone']//.." position="after">
                 <field name="mobile"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="before">
-                <field name="work_type_id"/>
-                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags"/>
-                <field name="source_id"/>
+                <field name="work_type_id" options="{'create': False,'create_edit': False}"/>
+                <field name="installation"/>
+                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
+                <field string="Origen" name="source_id" options="{'create': False,'create_edit': False}"/>
+                <field string="Medio" name="medium_id" options="{'create': False,'create_edit': False}"/>
             </xpath>
             <xpath expr="//field[@name='website']" position="attributes">
                 <attribute name="invisible">1</attribute>

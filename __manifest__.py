@@ -11,6 +11,7 @@
         'crm',
         'roc_crm',
         'web_widget_open_tab',
+        'web_m2x_options',
     ],
     'data': [
         'wizards/lost_reason.xml',
