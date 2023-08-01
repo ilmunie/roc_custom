@@ -22,7 +22,7 @@
         'security/ir.model.access.csv',
     ],
     "assets": {
-        "web.assets_backend": ["roc_custom/static/src/js/widget.js"],
+        "web.assets_backend": ["roc_custom/static/src/js/widget.js","roc_custom/static/src/css/custom_css.js"],
         "web.assets_qweb": ["roc_custom/static/src/xml/template.xml"],
     },
     'installable': True,

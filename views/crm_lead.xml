@@ -34,11 +34,12 @@
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
                     <field name="probability" string="Probability (%)" optional="hide"/>
                     <field name="message_needaction" invisible="1"/>
+                    <field name="description" widget="text_widget" />
+
                     <field name="priority" widget="priority"/>
 
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
-                    <field name="description"/>
                 </tree>
 
             </xpath>
@@ -54,6 +55,11 @@
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
 
+
+
+            <xpath expr="//group[@name='lead_partner']//field[@name='partner_id']" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </xpath>
             <xpath expr="//group[@name='categorization']//field[@name='medium_id']" position="replace">
             </xpath>
             <xpath expr="//page[@name='lead']//field[@name='medium_id']" position="replace">

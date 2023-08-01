@@ -5,6 +5,14 @@ from lxml import etree
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
+
+    team_id = fields.Many2one(
+        'crm.team', 'Sales Team',
+        ondelete="set null", tracking=True)
+    @api.onchange('partner_id')
+    def onchange_partner_id(self):
+        return False
+
     def get_link_html(self):
         for record in self:
             html = ""

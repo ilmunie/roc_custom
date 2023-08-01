@@ -139,6 +139,88 @@ odoo.define('custom_leads.CopyPhoneWidget', function (require) {
 
     return CopyPhoneWidget;
 });
+odoo.define('custom_leads.TextWidget', function (require) {
+    'use strict';
+
+    const AbstractField = require('web.AbstractField');
+    const field_registry = require('web.field_registry');
+    const core = require('web.core');
+
+    const _t = core._t;
+
+    const TextWidget = AbstractField.extend({
+        supportedFieldTypes: ['text'],
+
+        /**
+         * @override
+         */
+        _render: function () {
+            this.$el.empty();
+            const value = this.value || '';
+
+            // Customize the maximum length before truncating the text
+            const maxLength = 35;
+            this.truncatedText = value.length > maxLength ? value.slice(0, maxLength) + '...' : value;
+
+            // Create a container element for the text
+            this.$content = $('<div>', {
+                class: 'o_text_widget',
+                html: this.truncatedText,
+            }).appendTo(this.$el);
+
+            if (value.length > maxLength) {
+                // Show "Ver más" button if the text is longer than the maximum length
+                this.$seeMoreButton = $('<button>', {
+                    class: 'o_btn_see_more btn btn-link',
+                    text: _t('Ver más'),
+                }).appendTo(this.$el);
+
+                this.$seeMoreButton.click(this._onClickSeeMore.bind(this));
+            }
+        },
+
+        /**
+         * @private
+         */
+        _onClickSeeMore: function (ev) {
+            if (this.$seeMoreButton.text() === _t('Ver más')) {
+                // Show the full text when clicking "Ver más"
+                const fullText = this.value || '';
+                this.$el.find('.o_text_widget').html(fullText);
+                this.$seeMoreButton.text(_t('Ver menos'));
+
+                // Trigger the 'resize' event on the table to adjust column width
+                this._triggerResizeEvent();
+            } else {
+                // Truncate the text again and show "Ver más" when clicking "Ver menos"
+                this.$el.find('.o_text_widget').html(this.truncatedText);
+                this.$seeMoreButton.text(_t('Ver más'));
+
+                // Remove the inline width style to restore the original column width
+                this.$el.css('width', '');
+
+                // Trigger the 'resize' event on the table to adjust column width
+                this._triggerResizeEvent();
+            }
+        },
+
+        /**
+         * @private
+         * Triggers the 'resize' event on the table to adjust column width
+         */
+        _triggerResizeEvent: function () {
+            const $table = this.$el.closest('.o_list_view').find('.o_list_table');
+            $table.trigger('resize');
+        },
+    });
+
+    field_registry.add('text_widget', TextWidget);
+
+    return TextWidget;
+});
+
+
+
 
 
 odoo.define('many2many_tags_link.widget', function (require) {

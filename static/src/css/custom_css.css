@@ -1,0 +1,11 @@
+/* Asegurarse de que el contenido se muestre en múltiples líneas */
+.o_text_widget {
+    white-space: normal;
+}
+
+/* Ancho máximo para el campo de texto cuando está truncado */
+.o_text_widget.truncate {
+    max-width: 200px; /* Ajusta este valor según tus necesidades */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
