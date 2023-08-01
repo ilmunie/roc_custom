@@ -22,7 +22,7 @@
                     <field name="country_id" optional="hide" options="{'no_open': True, 'no_create': True}"/>
                     <field name="partner_id" invisible="1"/>
                     <!-- Explicit domain due to multi edit -> real company domain would be complicated -->
-                    <field name="user_id" optional="hide" widget="many2one_avatar_user" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
+                    <field name="user_id" optional="show" widget="many2one_avatar_user" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
                     <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
                     <field name="active" invisible="1"/>
                     <field name="campaign_id" optional="hide"/>
