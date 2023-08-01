@@ -22,15 +22,16 @@
                     <field name="country_id" optional="hide" options="{'no_open': True, 'no_create': True}"/>
                     <field name="partner_id" invisible="1"/>
                     <!-- Explicit domain due to multi edit -> real company domain would be complicated -->
-                    <field name="user_id" optional="show" widget="many2one_avatar_user" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
                     <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
+                    <field name="user_id" invisible="0" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
+
                     <field name="active" invisible="1"/>
                     <field name="campaign_id" optional="hide"/>
                     <field name="referred" invisible="1"/>
                     <field name="medium_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
-                    <field name="installation"/>
+
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
                     <field name="probability" string="Probability (%)" optional="hide"/>
                     <field name="message_needaction" invisible="1"/>
@@ -40,6 +41,8 @@
 
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
+                    <field name="installation"/>
+
                 </tree>
 
             </xpath>

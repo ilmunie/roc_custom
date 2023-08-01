@@ -163,7 +163,7 @@ odoo.define('custom_leads.TextWidget', function (require) {
             this.truncatedText = value.length > maxLength ? value.slice(0, maxLength) + '...' : value;
 
             // Create a container element for the text
-            this.$content = $('<div>', {
+            const $content = $('<div>', {
                 class: 'o_text_widget',
                 html: this.truncatedText,
             }).appendTo(this.$el);
@@ -182,25 +182,29 @@ odoo.define('custom_leads.TextWidget', function (require) {
         /**
          * @private
          */
-        _onClickSeeMore: function (ev) {
-            if (this.$seeMoreButton.text() === _t('Ver más')) {
-                // Show the full text when clicking "Ver más"
-                const fullText = this.value || '';
-                this.$el.find('.o_text_widget').html(fullText);
-                this.$seeMoreButton.text(_t('Ver menos'));
+         _onClickSeeMore: function (ev) {
+             if (this.$seeMoreButton.text() === _t('Ver más')) {
+                 // Show the full text when clicking "Ver más"
+                 const fullText = this.value || '';
+                 this.$el.find('.o_text_widget').html(fullText);
+                 this.$seeMoreButton.text(_t('Ver menos'));
+             } else {
+                 // Truncate the text again and show "Ver más" when clicking "Ver menos"
+                 this.$el.find('.o_text_widget').html(this.truncatedText);
+                 this.$seeMoreButton.text(_t('Ver más'));
+                 this._triggerResizeEvent(); // Trigger resize when clicking "Ver menos"
+             }
+             this.trigger_up('widgets_start_request', {editableMode: true});
+         },
 
-                // Trigger the 'resize' event on the table to adjust column width
-                this._triggerResizeEvent();
-            } else {
-                // Truncate the text again and show "Ver más" when clicking "Ver menos"
-                this.$el.find('.o_text_widget').html(this.truncatedText);
-                this.$seeMoreButton.text(_t('Ver más'));
-
-                // Remove the inline width style to restore the original column width
-                this.$el.css('width', '');
-
-                // Trigger the 'resize' event on the table to adjust column width
-                this._triggerResizeEvent();
+        /**
+         * @override
+         */
+        _renderEdit: function () {
+            this.$el.removeClass('o_text_widget');
+            this._super.apply(this, arguments);
+            if (this.$seeMoreButton && this.value.length <= 35) {
+                this.$seeMoreButton.hide();
             }
         },
 
@@ -218,7 +222,6 @@ odoo.define('custom_leads.TextWidget', function (require) {
 
     return TextWidget;
 });
-
 
 
 
