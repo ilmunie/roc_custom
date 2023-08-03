@@ -48,8 +48,76 @@
             </xpath>
         </field>
     </record>
+    <record id="crm_lead_tree_original" model="ir.ui.view">
+        <field name="name">crm_lead_tree_original</field>
+        <field name="model">crm.lead</field>
+        <field name="arch" type="xml">
+                <tree string="Leads" sample="1">
+                    <field name="link_to_form" string="         " />
+                     <field name="date_deadline" invisible="1"/>
+                    <field name="create_date" optional="show"/>
+                    <field name="name" string="Lead"/>
+                    <field name="contact_name" optional="hide"/>
+                    <field name="partner_name" optional="hide"/>
+                    <field name="email_from" optional="show"/>
+                    <field name="phone_resume" widget="copy_phone"/>
+                    <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                    <field name="zip" optional="show"/>
+                    <field name="city" optional="show"/>
+                    <field name="state_id" optional="hide" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="country_id" optional="hide" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="partner_id" invisible="1"/>
+                    <!-- Explicit domain due to multi edit -> real company domain would be complicated -->
+                    <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
+                    <field name="user_id" invisible="0" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
 
+                    <field name="active" invisible="1"/>
+                    <field name="campaign_id" optional="hide"/>
+                    <field name="referred" invisible="1"/>
+                    <field name="medium_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
+                    <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
 
+                    <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
+                    <field name="probability" string="Probability (%)" optional="hide"/>
+                    <field name="message_needaction" invisible="1"/>
+                    <field name="description" optional="hide"/>
+
+                    <field name="priority" widget="priority"/>
+
+                    <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
+                    <field name="activity_ids" widget="list_activity"/>
+                    <field name="installation"/>
+
+                </tree>
+        </field>
+    </record>
+        <record model="ir.actions.act_window" id="crm_lead_my_leads">
+            <field name="name">Leads</field>
+            <field name="res_model">crm.lead</field>
+            <field name="view_mode">tree,kanban,graph,pivot,calendar,form,activity</field>
+            <field name="view_id" ref="roc_custom.crm_lead_tree_original"/>
+            <field name="domain">['|', ('type','=','lead'), ('type','=',False)]</field>
+            <field name="search_view_id" ref="crm.view_crm_case_leads_filter"/>
+            <field name="context">{
+                    'default_type':'lead',
+                    'search_default_my_leads':1,
+                }
+            </field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a Lead
+                </p><p>
+                    Leads are the qualification step before the creation of an opportunity.
+                </p>
+            </field>
+        </record>
+
+    <menuitem
+            id ="menu_crm_leads_original"
+            name = "Mis Leads"
+            parent = "crm.crm_menu_root"
+            action = "roc_custom.crm_lead_my_leads"/>
 
 
     <record id="crm_lead_form_custom" model="ir.ui.view">
@@ -58,10 +126,20 @@
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
 
-
+            <!--
+        <xpath expr="//group[@name='lead_info']//field[@name='street']" position="attributes">
+                <attribute name="invisible">[('partner_id','!=',True)]</attribute>
+            </xpath>
+        <xpath expr="//group[@name='lead_partner']//field[@name='street']" position="after">
+                <field name="partner_street" placeholder="Street..." class="o_address_street"/>
+            </xpath>
+            <xpath expr="//group[@name='lead_partner']//field[@name='street2']" position="after">
+                <field name="partner_street2" placeholder="Street..." class="o_address_street"/>
+            </xpath>-->
 
             <xpath expr="//group[@name='lead_partner']//field[@name='partner_id']" position="attributes">
                 <attribute name="invisible">0</attribute>
+                <attribute name="groups">base.group_user</attribute>
             </xpath>
             <xpath expr="//group[@name='categorization']//field[@name='medium_id']" position="replace">
             </xpath>
@@ -138,11 +216,17 @@
         </field>
     </record>
 
+
+
     <record id="crm_lead_search_custom" model="ir.ui.view">
         <field name="name">crm_lead_search_custom</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.view_crm_case_leads_filter"/>
         <field name="arch" type="xml">
+
+            <xpath expr="//filter[@name='assigned_to_me']" position="after">
+                    <filter string="Mis Leads" name="my_leads" domain="['|',('activity_user_id','=',uid),('user_id','=',uid)]" help="Próxima tarea mía o soy el comercial"/>
+            </xpath>
             <xpath expr="//field[@name='phone_mobile_search']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>

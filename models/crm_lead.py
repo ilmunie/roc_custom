@@ -6,6 +6,14 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+    partner_street = fields.Char(related='partner_id.street', readonly=False)
+    partner_street2 = fields.Char(related='partner_id.street2', readonly=False)
+    partner_zip = fields.Char(related='partner_id.zip', readonly=False)
+    partner_city = fields.Char(related='partner_id.city', readonly=False)
+    partner_state_id = fields.Many2one(related='partner_id.state_id', readonly=False)
+    partner_country_id = fields.Many2one(related='partner_id.country_id', readonly=False)
+    partner_lang = fields.Selection(related='partner_id.lang', readonly=False)
+
     team_id = fields.Many2one(
         'crm.team', 'Sales Team',
         ondelete="set null", tracking=True)
