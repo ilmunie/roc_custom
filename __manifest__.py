@@ -10,6 +10,7 @@
     'depends': [
         'crm',
         'roc_crm',
+        'sale',
         'sale_stock',
         'purchase_stock',
         'web_widget_open_tab',
@@ -18,6 +19,7 @@
     'data': [
         'wizards/lost_reason.xml',
         'wizards/crm_convert_opp_wizard.xml',
+        'views/stock_picking.xml',
         'views/crm_lead.xml',
         'views/purchase_order.xml',
         'views/crm_complementary_models_views.xml',

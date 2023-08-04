@@ -113,3 +113,30 @@ class PurchaseOrderLine(models.Model):
                     line.display_qty_widget = True
             else:
                 line.display_qty_widget = False
+
+
+
+
+    product_template_id = fields.Many2one(
+        'product.template', string='Product Template',
+        related="product_id.product_tmpl_id", domain=[('purchase_ok', '=', True)])
+    product_updatable = fields.Boolean(compute='_compute_product_updatable', string='Can Edit Product', default=True)
+    @api.depends('product_id', 'order_id.state', 'qty_invoiced', 'qty_received')
+    def _compute_product_updatable(self):
+        for line in self:
+            if line.state in ['done', 'cancel'] or (line.state == 'purchase' and (line.qty_invoiced > 0 or line.qty_received > 0)):
+                line.product_updatable = False
+            else:
+                line.product_updatable = True
+    product_custom_attribute_value_ids = fields.One2many('product.attribute.custom.value', 'purchase_order_line_id', string="Custom Values POL", copy=True)
+    product_no_variant_attribute_value_ids = fields.Many2many('product.template.attribute.value', string="Extra Values", ondelete='restrict')
+    is_configurable_product = fields.Boolean('Is the product configurable?', related="product_template_id.has_configurable_attributes")
+    product_template_attribute_value_ids = fields.Many2many(related='product_id.product_template_attribute_value_ids', readonly=True)
+
+class ProductAttributeCustomValue(models.Model):
+    _inherit = "product.attribute.custom.value"
+
+    purchase_order_line_id = fields.Many2one('purchase.order.line', string="Purchase Order Line", required=True, ondelete='cascade')
+    _sql_constraints = [
+        ('sol_custom_value_unique', 'unique(custom_product_template_attribute_value_id, purchase_order_line_id)', "Only one Custom Value is allowed per Attribute Value per Sales Order Line.")
+    ]

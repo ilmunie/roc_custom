@@ -5,6 +5,16 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_status']" position="attributes">
+                <attribute name="invisible">1</attribute>
+                <attribute name="widget">statusbar</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='notes']//..//.." position="before">
+                <field name="reception_status" widget="statusbar"/>
+                <field name="invoice_status" widget="statusbar"/>
+            </xpath>
+
             <xpath expr="//field[@name='product_qty']" position="after">
                     <!-- below fields are used in the widget qty_at_date_widget -->
                     <field name="product_type" invisible="1"/>
@@ -12,13 +22,14 @@
                     <field name="qty_available_today" invisible="1"/>
                     <field name="free_qty_today" invisible="1"/>
                     <field name="scheduled_date" invisible="1"/>
+                    <field name="id" invisible="1"/>
                     <field name="forecast_expected_date" invisible="1"/>
                     <field name="warehouse_id" invisible="1"/>
                     <field name="move_ids" invisible="1"/>
                     <field name="qty_to_deliver" invisible="1"/>
                     <field name="is_mto" invisible="1"/>
                     <field name="display_qty_widget" invisible="1"/>
-                    <widget name="qty_at_date_widget_purchase" width="0.1"/>
+                    <widget name="qty_at_date_widget_purchase" width="0.2"/>
             </xpath>
             <xpath expr="//page/field[@name='order_line']/tree/field[@name='date_planned']" position="attributes">
                 <attribute name="optional">show</attribute>
@@ -27,7 +38,114 @@
             </xpath>
             <xpath expr="//button[@name='action_product_forecast_report'][last()]" position="replace">
             </xpath>
+
+
+            <xpath expr="//tree/field[@name='product_id']" position="attributes">
+                <attribute name="optional">hide</attribute>
+                <attribute name="string">Product Variant</attribute>
+            </xpath>
+            <xpath expr="//page/field[@name='order_line']/tree/field[@name='product_id']"  position="after">
+                <field name="product_template_attribute_value_ids" invisible="1" />
+                <field name="product_custom_attribute_value_ids" invisible="1" >
+                    <tree>
+                        <field name="custom_product_template_attribute_value_id" />
+                        <field name="custom_value" />
+                    </tree>
+                </field>
+                <field name="is_configurable_product" invisible="1" />
+                <field name="product_no_variant_attribute_value_ids" invisible="1" />
+                            <field name="product_updatable" invisible="1"/>
+                                    <field
+                                        name="product_id" invisible="1"
+                                        attrs="{
+                                            'readonly': [('product_updatable', '=', False)],
+                                            'required': [('display_type', '=', False)],
+                                        }"
+                                        force_save="1"
+                                        context="{
+                                            'partner_id': parent.partner_id,
+                                            'quantity': product_qty,
+                                            'uom':product_uom,
+                                            'company_id': parent.company_id,
+                                            'default_lst_price': price_unit,
+                                            'default_description_sale': name
+                                        }"
+                                        domain="[('purchase_ok', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]"
+                                        widget="product_configurator"
+                                    />
+                                    <field name="product_template_id"
+                                      string="Product"
+                                      invisible="1"
+                                      attrs="{
+                                          'readonly': [('product_updatable', '=', False)],
+                                          'required': [('display_type', '=', False)],
+                                      }"
+                                      context="{
+                                          'partner_id': parent.partner_id,
+                                          'quantity': product_qty,
+                                          'uom':product_uom,
+                                          'company_id': parent.company_id,
+                                          'default_list_price': price_unit,
+                                          'default_description_sale': name
+                                      }"
+                                      domain="[('purchase_ok', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]"
+                                      widget="product_configurator"/>
+                        </xpath>
         </field>
     </record>
+    <record id="purchase.purchase_rfq" model="ir.actions.act_window">
+        <field name="context">{'search_default_draft':1}</field>
+    </record>
+    <record id="purchase.purchase_form_action" model="ir.actions.act_window">
+        <field name="domain"></field>
+        <field name="context">{'search_default_po':1}</field>
+    </record>
 
+    <record id="purchase_order_view_tree_inherit_custom" model="ir.ui.view">
+        <field name="name">purchase.order.tree.custom</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date_order']" position="after">
+                <field name="date_planned" widget="remaining_days"/>
+                <field name="picking_type_id" />
+            </xpath>
+            <xpath expr="//field[@name='invoice_status']" position="after">
+                <field name="invoice_status" widget="badge" decoration-success="invoice_status == 'invoiced'" decoration-info="invoice_status == 'to invoice'" optional="show"/>
+                <field name="reception_status" widget="badge" decoration-success="reception_status == 'full_reception'" decoration-warning="reception_status == 'partial_reception'" decoration-info="reception_status == 'waiting_reception'" decoration-muted="reception_status == 'no_confirmed'"/>
+            </xpath>
+
+        </field>
+    </record>
+    <record id="purchase_order_view_tree_inherit_custom__" model="ir.ui.view">
+        <field name="name">purchase.order.tree.custom._</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_status']" position="before">
+                <field name="picking_type_id"/>
+                <field name="state" optional="show" widget="badge" decoration-success="state == 'purchase' or state == 'done'" decoration-warning="state == 'to approve'" decoration-info="state == 'draft' or state == 'sent'"/>
+                <field name="reception_status" widget="badge" decoration-success="reception_status == 'full_reception'" decoration-warning="reception_status == 'partial_reception'" decoration-info="reception_status == 'waiting_reception'" decoration-muted="reception_status == 'no_confirmed'"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="purchase_order_view_search_inherit_custom__" model="ir.ui.view">
+        <field name="name">purchase.order.search.custom._</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='starred']" position="after">
+                    <separator/>
+                    <filter name="draft" string="Presupuestos" domain="[('state', 'in', ('draft', 'sent', 'to approve'))]"/>
+                    <filter name="to_approve" string="To Approve" domain="[('state', '=', 'to approve')]"/>
+                    <filter name="po" string="Pedidos de compra" domain="[('state', 'not in', ('draft', 'sent', 'to approve','cancel'))]"/>
+                    <separator/>
+                    <filter name="draft_rfqs" string="Draft RFQs" domain="[('state', '=', 'draft')]"/>
+                    <filter name="waiting_rfqs" string="Waiting RFQs" domain="[('state', '=', 'sent'), ('date_order', '&gt;=', datetime.datetime.now())]"/>
+                    <filter name="late_rfqs" string="Late RFQs" domain="[('state', 'in', ['draft', 'sent', 'to approve']),('date_order', '&lt;', datetime.datetime.now())]"/>
+                    <separator/>
+                    <filter string="Warnings" name="activities_exception" domain="[('activity_exception_decoration', '!=', False)]"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
