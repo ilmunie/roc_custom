@@ -39,16 +39,8 @@ class PurchaseOrder(models.Model):
 
     sale_order_ids = fields.Many2many(comodel_name='sale.order',store=True,compute=compute_sale_origin, string='Órden Venta')
     sale_partner_id = fields.Many2one('res.partner',related='sale_order_ids.partner_id',store=True, string='Cliente')
-    def create(self,vals):
-        res = super(PurchaseOrder,self).create(vals)
-        if "origin" in vals:
-            if "S" == vals['origin'][:1] :
-                so = self.env['sale.order'].search([('name','=',vals['origin'])])
-                if so:
-                    so._compute_purchase_order_rel()
-        return  res
 
-        return res
+
     @api.depends('state', 'order_line', 'order_line.qty_received', 'order_line.product_qty')
     def compute_reception_status(self):
         for record in self:
