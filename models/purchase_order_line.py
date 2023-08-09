@@ -137,6 +137,9 @@ class ProductAttributeCustomValue(models.Model):
     _inherit = "product.attribute.custom.value"
 
     purchase_order_line_id = fields.Many2one('purchase.order.line', string="Purchase Order Line", required=True, ondelete='cascade')
+    stock_move_id = fields.Many2one('stock.move')
+    stock_move_line_id = fields.Many2one('stock.move.line')
+
     _sql_constraints = [
         ('sol_custom_value_unique', 'unique(custom_product_template_attribute_value_id, purchase_order_line_id)', "Only one Custom Value is allowed per Attribute Value per Sales Order Line.")
     ]

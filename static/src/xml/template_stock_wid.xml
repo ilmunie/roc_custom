@@ -1,0 +1,13 @@
+    <template id="custom_sale_stock_qty_detail_popover" inherit_id="sale_stock.QtyDetailPopOver">
+        <xpath expr="//t[t-if='!data.is_mto and ['draft', 'sent'].includes(data.state)']" position="attributes">
+            <!-- Replace the existing condition with your modified content -->
+            <!-- You can remove the condition entirely or adjust it as needed -->
+            <attribute name="t-if">['draft', 'sent'].includes(data.state)
+                <!-- Your modified content here -->
+            </attribute>
+        </xpath>
+        <xpath expr="//button[t-if='!data.is_mto']" position="replace">
+            <!-- Replace the existing condition with your modified content -->
+            <!-- You can remove the condition entirely or adjust it as needed -->
+        </xpath>
+    </template>

@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="view_sales_tree_custom" model="ir.ui.view">
+            <field name="name">sale.order.custom</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='state']" position="after">
+                    <field name="mrp_production_ids" widget="many2many_tags"/>
+                    <field name="purchase_order_ids" widget="many2many_tags"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_sales_tree_custom_" model="ir.ui.view">
+            <field name="name">sale.order.custom_</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_status']" position="before">
+                    <field name="state"/>
+                    <field name="mrp_production_ids" widget="many2many_tags"/>
+                    <field name="purchase_order_ids" widget="many2many_tags"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_sales_order_custom" model="ir.ui.view">
+            <field name="name">sale.order.custom</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook[last()]" position="inside">
+                    <page string="Documentos generados">
+                        <group string="Órdenes de producción" attrs="{'invisible':[('mrp_production_ids','=',[])]}"></group>
+                        <field name="mrp_production_ids" attrs="{'invisible':[('mrp_production_ids','=',[])]}"/>
+                        <group string="Órdenes de compra" attrs="{'invisible':[('purchase_order_ids','=',[])]}"></group>
+                        <field name="purchase_order_ids" attrs="{'invisible':[('purchase_order_ids','=',[])]}"/>
+                        <group string="Entregas" attrs="{'invisible':[('picking_ids','=',[])]}"></group>
+                        <field name="picking_ids" attrs="{'invisible':[('picking_ids','=',[])]}"/>
+                    </page>
+                </xpath>
+                <xpath expr="//button[@name='action_view_purchase_orders']" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_sales_order_search_custom" model="ir.ui.view">
+            <field name="name">sale.order.custom</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']" position="before">
+                <field name="product_tmp_id"/>
+                <field name="product_id"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']" position="after">
+
+                        <field name="mrp_production_ids" string="Órdenes de producción"/>
+                        <field name="purchase_order_ids" string="Órdenes de compra"/>
+                        <field name="picking_ids" string="Entregas"/>
+                </xpath>
+            </field>
+        </record>
+
+</odoo>

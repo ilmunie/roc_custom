@@ -10,6 +10,11 @@
                 <attribute name="widget">statusbar</attribute>
             </xpath>
 
+            <xpath expr="//field[@name='partner_ref']" position="after">
+                <field name="sale_order_ids" widget="many2many_tags" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
+                <field name="sale_partner_id" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
+                <field name="mrp_production_ids" widget="many2many_tags" attrs="{'invisible':[('mrp_production_ids','=',False)]}"/>
+            </xpath>
             <xpath expr="//field[@name='notes']//..//.." position="before">
                 <field name="reception_status" widget="statusbar"/>
                 <field name="invoice_status" widget="statusbar"/>
@@ -109,6 +114,10 @@
             <xpath expr="//field[@name='date_order']" position="after">
                 <field name="date_planned" widget="remaining_days"/>
                 <field name="picking_type_id" />
+                <field name="sale_order_ids" widget="many2many_tags"/>
+
+                <field name="mrp_production_ids" widget="many2many_tags"/>
+                <field name="sale_partner_id" />
             </xpath>
             <xpath expr="//field[@name='invoice_status']" position="after">
                 <field name="invoice_status" widget="badge" decoration-success="invoice_status == 'invoiced'" decoration-info="invoice_status == 'to invoice'" optional="show"/>
@@ -124,8 +133,35 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='invoice_status']" position="before">
                 <field name="picking_type_id"/>
+                <field name="sale_order_ids" widget="many2many_tags"/>
+                <field name="mrp_production_ids" widget="many2many_tags"/>
+                <field name="sale_partner_id" />
                 <field name="state" optional="show" widget="badge" decoration-success="state == 'purchase' or state == 'done'" decoration-warning="state == 'to approve'" decoration-info="state == 'draft' or state == 'sent'"/>
                 <field name="reception_status" widget="badge" decoration-success="reception_status == 'full_reception'" decoration-warning="reception_status == 'partial_reception'" decoration-info="reception_status == 'waiting_reception'" decoration-muted="reception_status == 'no_confirmed'"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <record id="purchase_order_view_filter_inherit_custom__" model="ir.ui.view">
+        <field name="name">purchase.order.filter.custom._</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="sale_order_ids"/>
+                <field name="sale_partner_id"/>
+                <field name="product_tmp_id"/>
+                <field name="product_id"/>
+                <field name="order_line"/>
+                <field name="mrp_production_ids"/>
+            </xpath>
+
+            <xpath expr="//filter[@name='starred']" position="after">
+                    <separator/>
+                    <filter name="form_sale" string="Asociados a Venta" domain="[('sale_order_ids', '!=', False)]"/>
+                    <filter name="form_mrp" string="Asociados a Producción" domain="[('mrp_production_ids', '!=', False)]"/>
+                    <separator/>
             </xpath>
         </field>
     </record>
@@ -134,7 +170,20 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="sale_order_ids"/>
+                <field name="mrp_production_ids"/>
+                <field name="sale_partner_id"/>
+                <field name="product_tmp_id"/>
+                <field name="product_id"/>
+                <field name="order_line"/>
+            </xpath>
+
             <xpath expr="//filter[@name='starred']" position="after">
+                    <separator/>
+                    <filter name="form_sale" string="Asociados a Venta" domain="[('sale_order_ids', '!=', False)]"/>
+                    <filter name="form_mrp" string="Asociados a Producción" domain="[('mrp_production_ids', '!=', False)]"/>
+
                     <separator/>
                     <filter name="draft" string="Presupuestos" domain="[('state', 'in', ('draft', 'sent', 'to approve'))]"/>
                     <filter name="to_approve" string="To Approve" domain="[('state', '=', 'to approve')]"/>

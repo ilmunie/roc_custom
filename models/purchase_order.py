@@ -5,6 +5,50 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    product_tmp_id = fields.Many2one(related='order_line.product_template_id', string="Plantilla de producto")
+    product_id = fields.Many2one(related='order_line.product_id',string="Variante de producto" )
+    trigger_compute_rel = fields.Boolean()
+
+    def name_get(self):
+        res = []
+        for rec in self:
+            name = rec.name
+            name += " | " + dict(rec._fields['state']._description_selection(self.env)).get(rec.state)
+            name += " | " + dict(rec._fields['reception_status']._description_selection(self.env)).get(rec.reception_status)
+            if rec.partner_id:
+                name += " | " + rec.partner_id.name
+            res.append((rec.id, name))
+        return res
+
+    @api.depends('order_line.move_dest_ids.group_id.mrp_production_ids','trigger_compute_rel')
+    def _compute_mrp_production_link(self):
+        for purchase in self:
+            purchase.mrp_production_ids = [(6,0,purchase._get_mrp_productions().mapped('id'))]
+    mrp_production_ids = fields.Many2many(comodel_name='mrp.production',store=True,compute=_compute_mrp_production_link, string='Órdenes de producción')
+
+
+    @api.depends('order_line.sale_order_id','order_line.move_dest_ids.group_id.mrp_production_ids','trigger_compute_rel')
+    def compute_sale_origin(self):
+        for purchase in self:
+            sales = purchase._get_sale_orders()
+            sale_ids = sales.mapped('id') if sales else []
+            for mrp_prod in purchase._get_mrp_productions():
+                if mrp_prod.sale_order_ids:
+                    sale_ids.extend(mrp_prod.sale_order_ids.mapped('id'))
+            purchase.sale_order_ids = [(6,0,sale_ids)]
+
+    sale_order_ids = fields.Many2many(comodel_name='sale.order',store=True,compute=compute_sale_origin, string='Órden Venta')
+    sale_partner_id = fields.Many2one('res.partner',related='sale_order_ids.partner_id',store=True, string='Cliente')
+    def create(self,vals):
+        res = super(PurchaseOrder,self).create(vals)
+        if "origin" in vals:
+            if "S" == vals['origin'][:1] :
+                so = self.env['sale.order'].search([('name','=',vals['origin'])])
+                if so:
+                    so._compute_purchase_order_rel()
+        return  res
+
+        return res
     @api.depends('state', 'order_line', 'order_line.qty_received', 'order_line.product_qty')
     def compute_reception_status(self):
         for record in self:

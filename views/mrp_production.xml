@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="mrp_production_tree_view_inherit" model="ir.ui.view">
+		<field name="name">mrp.production.tree.view.inherit</field>
+		<field name="model">mrp.production</field>
+		<field name="inherit_id" ref="mrp.mrp_production_tree_view"/>
+		<field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="purchase_order_ids" widget="many2many_tags"/>
+                <field name="sale_order_ids" widget="many2many_tags"/>
+            </field>
+		</field>
+    </record>
+</odoo>
