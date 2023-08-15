@@ -358,38 +358,27 @@
             <field name="activity_ids" position="after">
                 <field name="referred_professional"/>
             </field>
-            <field name="tag_ids" position="before">
-                <div>
-                    <field name="referred_professional"/>
+        <field name="tag_ids" position="before">
+                <div attrs="{'invisible':[('referred_professional','=',False)]}">
+                    <strong>Referido por
+                    <field name="referred_professional"/></strong>
                 </div>
-            </field>
+        </field>
             <field name="tag_ids" position="after">
-                <t t-if="record.phone_resume">
-                <div>
+                <div attrs="{'invisible':[('phone_resume','=',False)]}" >
                     <field name="phone_resume" widget="copy_phone"/>
                 </div>
-                </t>
-            </field>
+                            </field>
                 <xpath expr="//div[hasclass('oe_kanban_footer')]" position="inside">
                     <div class="o_kanban_record_subtitle">
                         <field name="intrest_tag_ids" widget="many2many_tags"/>
-                        <t t-if="record.team_id">
-                        <strong><field name="team_id" widget="badge"/></strong>
-                        </t>
-                        <t t-if="record.work_type_id">
-                        <field name="work_type_id" widget="badge"/>
-                        </t>
+                        <strong><field name="team_id" widget="badge" /></strong>
+                        <field name="work_type_id" widget="badge" attrs="{'invisible':[('work_type_id','=',False)]}"/>
                         <br/>
-                        <t t-if="record.customer_concern">
-                            <span>Interés </span><strong><field name="customer_concern"/></strong>
-                        </t>
-                        <t t-if="record.customer_concern and record.type_of_client">
-                            <span> | </span>
-                        </t>
-                        <t t-if="record.type_of_client != False">
-                        <span>Cliente </span><strong><field name="type_of_client"/></strong>
-                        </t>
-                        <br/>
+                        <div>
+                            <span attrs="{'invisible':[('customer_concern','=',False)]}">Interés </span><strong><field attrs="{'invisible':[('customer_concern','=',False)]}" name="customer_concern"/></strong>
+                            <span attrs="{'invisible':['|',('type_of_client','=',False),('customer_concern','=',False)]}"> | </span>
+                        <span attrs="{'invisible':[('type_of_client','=',False)]}" >Cliente </span><strong><field attrs="{'invisible':[('type_of_client','=',False)]}" name="type_of_client"/></strong></div>
                     </div>
                 </xpath>
         </field>
