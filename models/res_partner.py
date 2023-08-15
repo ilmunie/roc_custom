@@ -6,6 +6,7 @@ class ResPartner(models.Model):
 
     phone = fields.Char(widget="phone")
     mobile = fields.Char(widget="mobile")
+    professional = fields.Boolean(string="Profesional")
 
     @api.model
     def name_search(self, name="", args=None, operator="ilike", limit=100):

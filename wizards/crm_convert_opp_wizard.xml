@@ -29,6 +29,8 @@
                         <field name="referred" string="Recomendado por"/>
                     </group>
                     <group>
+                        <field name="customer_concern"/>
+                        <field name="type_of_client"/>
                         <field name="tag_ids" string="Etiquetas" widget="many2many_tags" options="{'no_create':True,'no_quick_create':True,'no_create_and_edit':True}"/>
                     </group>
                 </group>

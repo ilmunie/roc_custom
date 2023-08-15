@@ -23,6 +23,7 @@
         'views/crm_lead.xml',
         'views/purchase_order.xml',
         'views/sale_order.xml',
+        'views/res_partner.xml',
         'views/mrp_production.xml',
         'views/crm_complementary_models_views.xml',
         'data/intrest_tag.xml',

@@ -14,6 +14,9 @@ class CrmLead(models.Model):
     partner_country_id = fields.Many2one(related='partner_id.country_id', readonly=False)
     partner_lang = fields.Selection(related='partner_id.lang', readonly=False)
 
+    referred_professional = fields.Many2one('res.partner', domain=[('professional','=',True)], string="Profesional vinculado")
+
+    type_of_client = fields.Selection(selection_add=[('profesional','Profesional')])
     team_id = fields.Many2one(
         'crm.team', 'Sales Team',
         ondelete="set null", tracking=True)

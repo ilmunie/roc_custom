@@ -30,8 +30,9 @@
                     <field name="referred" invisible="1"/>
                     <field name="medium_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="customer_concern"/>
+                    <field name="type_of_client"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
-
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
                     <field name="probability" string="Probability (%)" optional="hide"/>
                     <field name="message_needaction" invisible="1"/>
@@ -76,6 +77,8 @@
                     <field name="referred" invisible="1"/>
                     <field name="medium_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="customer_concern"/>
+                    <field name="type_of_client"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
 
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
@@ -152,6 +155,11 @@
             <xpath expr="//field[@name='team_id']" position="attributes">
                 <attribute name="domain">[('id','!=',False)]</attribute>
             </xpath>
+            <xpath expr="//field[@name='team_id']" position="after">
+                <field name="customer_concern"/>
+                <field name="type_of_client"/>
+                <field name="referred_professional" context="{'default_professional':True}"/>
+            </xpath>
             <xpath expr="//field[@name='tag_ids']" position="attributes">
                 <attribute name="options">{'create': False,'create_edit': False, 'color_field': 'color'}</attribute>
             </xpath>
@@ -203,8 +211,7 @@
             <xpath expr="//page[last()]" position="after">
                 <page string="Campos a eliminar">
                     <group>
-                        <field name="customer_concern"/>
-                        <field name="type_of_client"/>
+
                         <field name="source_url"/>
                         <field name="request"/>
                         <field name="type_of_contact"/>
@@ -241,14 +248,42 @@
                     <field name="street" string="Dirección"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="after">
+                    <field name="referred_professional"/>
                     <field string="Productos de interés" name="intrest_tag_ids" filter_domain="[('intrest_tag_ids', 'ilike', self)]"/>
             </xpath>
-            <xpath expr="//filter[@name='city']" position="after">
+            <xpath expr="//filter[@name='unassigned_leads']" position="after">
+                <separator orientation="vertical"/>
+                <filter string="Busca instalación" name="installation" domain="[('installation','=',True)]"/>
+                <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
+                <separator orientation="vertical"/>
+                    <filter string="Asociadas a profesional" name="with_referred_professional" domain="[('referred_professional', '!=', False)]"/>
+                <separator orientation="vertical"/>
+                    <filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />
+                    <filter string="Alta prioridad" name="high_priority" domain="['|',('priority','=',3),('priority','=',2)]" />
+                <separator orientation="vertical"/>
+                    <filter string="Cliente Profesional" name="type_client_profesional" domain="[('type_of_client','=','profesional')]" />
+                    <filter string="Cliente Preferente" name="type_client_preferential" domain="[('type_of_client','=','preferential')]" />
+                    <filter string="Cliente VIP" name="type_client_vip" domain="[('type_of_client','=','vip')]" />
+            </xpath>
+
+            <xpath expr="//filter[@name='city']" position="before">
+                <separator orientation="vertical"/>
                 <filter string="Código postal" name="zip" context="{'group_by':'zip'}"/>
+            </xpath>
+            <xpath expr="//filter[@name='compaign']" position="before">
+                <separator orientation="vertical"/>
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
+                    <filter string="Prioridad" name="priority" context="{'group_by':'priority'}"/>
+                    <filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
+                    <filter string="Tipo Cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Por profesional" name="referred_professional" domain="[('referred_professional', '!=', False)]" context="{'group_by':'referred_professional'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Tipo de trabajo" name="work_type_id" context="{'group_by':'work_type_id'}"/>
                 <filter string="Productos de interés" name="intrest_tag_ids" context="{'group_by':'intrest_tag_ids'}"/>
+                <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <separator orientation="vertical"/>
                 <filter string="Motivo de pérdida" name="lost_reason_id" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
             </xpath>
@@ -273,31 +308,91 @@
                     <field name="street" string="Dirección"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="after">
+                    <field name="referred_professional"/>
                     <field string="Productos de interés" name="intrest_tag_ids" filter_domain="[('intrest_tag_ids', 'ilike', self)]"/>
             </xpath>
-            <xpath expr="//filter[@name='inactive']" position="before">
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <separator orientation="vertical"/>
                 <filter string="Busca instalación" name="installation" domain="[('installation','=',True)]"/>
                 <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
+                <separator orientation="vertical"/>
+                    <filter string="Asociadas a profesional" name="with_referred_professional" domain="[('referred_professional', '!=', False)]"/>
+                <separator orientation="vertical"/>
+                    <filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />
+                    <filter string="Alta prioridad" name="high_priority" domain="['|',('priority','=',3),('priority','=',2)]" />
+                <separator orientation="vertical"/>
+                    <filter string="Cliente Profesional" name="type_client_profesional" domain="[('type_of_client','=','profesional')]" />
+                    <filter string="Cliente Preferente" name="type_client_preferential" domain="[('type_of_client','=','preferential')]" />
+                    <filter string="Cliente VIP" name="type_client_vip" domain="[('type_of_client','=','vip')]" />
+            </xpath>
+
+            <xpath expr="//filter[@name='city']" position="before">
+                <separator orientation="vertical"/>
+                <filter string="Código postal" name="zip" context="{'group_by':'zip'}"/>
+            </xpath>
+            <xpath expr="//filter[@name='compaign']" position="before">
                 <separator orientation="vertical"/>
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
-                <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
+                    <filter string="Prioridad" name="priority" context="{'group_by':'priority'}"/>
+                    <filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
+                    <filter string="Tipo Cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Por profesional" name="referred_professional" domain="[('referred_professional', '!=', False)]" context="{'group_by':'referred_professional'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Tipo de trabajo" name="work_type_id" context="{'group_by':'work_type_id'}"/>
                 <filter string="Productos de interés" name="intrest_tag_ids" context="{'group_by':'intrest_tag_ids'}"/>
+                <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <separator orientation="vertical"/>
-                <filter string="URL de procedencia" name="source_url" context="{'group_by':'source_url'}"/>
-                <separator orientation="vertical"/>
-                <filter string="Interés del cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
-                <filter string="Tipo de cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
-                <filter string="Tipo de contacto" name="type_of_contact" context="{'group_by':'type_of_contact'}"/>
-                <filter string="Nivel de seguridad" name="safety_level" context="{'group_by':'safety_level'}"/>
-                <filter string="Tipo de obra" name="work_type_id" context="{'group_by':'work_type_id'}"/>
-                <filter string="Categoría" name="category_id" context="{'group_by':'category_id'}"/>
-                <separator orientation="vertical"/>
-                <filter string="Fecha de cambio a pendiente de visita" name="pending_visit_date"  context="{'group_by':'pending_visit_date'}"/>
-                <separator orientation="vertical"/>
-                <filter string="Motivo de pérdida" name="lost_reason_id" domain="['|', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
+                <filter string="Motivo de pérdida" name="lost_reason_id" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
             </xpath>
         </field>
     </record>
+
+    <record id="crm_opportunity_kanban_custom" model="ir.ui.view">
+        <field name="name">crm_opportunity_kanban_custom</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+            <field name="activity_ids" position="after">
+                <field name="referred_professional"/>
+            </field>
+            <field name="tag_ids" position="before">
+                <div>
+                    <field name="referred_professional"/>
+                </div>
+            </field>
+            <field name="tag_ids" position="after">
+                <t t-if="record.phone_resume">
+                <div>
+                    <field name="phone_resume" widget="copy_phone"/>
+                </div>
+                </t>
+            </field>
+                <xpath expr="//div[hasclass('oe_kanban_footer')]" position="inside">
+                    <div class="o_kanban_record_subtitle">
+                        <field name="intrest_tag_ids" widget="many2many_tags"/>
+                        <t t-if="record.team_id">
+                        <strong><field name="team_id" widget="badge"/></strong>
+                        </t>
+                        <t t-if="record.work_type_id">
+                        <field name="work_type_id" widget="badge"/>
+                        </t>
+                        <br/>
+                        <t t-if="record.customer_concern">
+                            <span>Interés </span><strong><field name="customer_concern"/></strong>
+                        </t>
+                        <t t-if="record.customer_concern and record.type_of_client">
+                            <span> | </span>
+                        </t>
+                        <t t-if="record.type_of_client != False">
+                        <span>Cliente </span><strong><field name="type_of_client"/></strong>
+                        </t>
+                        <br/>
+                    </div>
+                </xpath>
+        </field>
+    </record>
+
 </odoo>

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_picking_form_stock_custom" model="ir.ui.view">
+        <field name="name">view.partner.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="professional"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_res_partner_search_inherit" model="ir.ui.view">
+		<field name="name">res.partner.search.inherit</field>
+		<field name="model">res.partner</field>
+		<field name="inherit_id" ref="base.view_res_partner_filter"/>
+		<field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <separator/>
+                <filter string="Profesionales" name="professional" domain="[('professional','=',True)]"/>
+            </xpath>
+		</field>
+    </record>
+</odoo>
