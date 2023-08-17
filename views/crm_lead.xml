@@ -178,6 +178,17 @@
             </xpath>
             <xpath expr="//group[@name='opportunity_partner']//field[@name='phone']//.." position="after">
                 <field name="mobile"/>
+
+                <label class="o_form_label oe_inline" for="date_schedule_visit" attrs="{'invisible':[('visited','=',True)]}"/>
+                <div class="o_row oe_inline" attrs="{'invisible':[('visited','=',True)]}">
+                    <field name="date_schedule_visit" class="oe_inline o_datepicker_input"/>
+                    <field name="visit_duration" class="oe_inline" />
+                    <span class="o_duration_suffix"> hs.</span>
+                </div>
+                <field name="visited"/>
+                <field name="date_visited" attrs="{'invisible':[('visited','=',False)]}"/>
+                <field name="visit_user_ids" widget="many2many_tags"/>
+                <field name="visit_vehicle"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="before">
                 <field name="work_type_id" options="{'create': False,'create_edit': False}"/>
@@ -384,4 +395,81 @@
         </field>
     </record>
 
+
+        <record id="lead_visit_calendar_view" model="ir.ui.view">
+            <field name="name">lead.visit.calendar.view</field>
+            <field name="model">crm.lead.visit</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <calendar string="Calendario de visitas" event_open_popup="true"  date_delay="visit_duration" create="0" mode="week" date_start="calendar_date" color="visit_vehicle" >
+                    <field name="lead_id"/>
+                    <field name="visit_status" filters="True"/>
+                    <field name="lead_team_id" avatar_field="avatar_128"/>
+                    <field name="partner_id" avatar_field="avatar_128"/>
+                    <field name="user_id" avatar_field="avatar_128" />
+                    <field name="visit_user_id" avatar_field="avatar_128"/>
+                    <field name="visit_vehicle" avatar_field="avatar_128"/>
+                    <field name="tag_ids"/>
+                    <field name="intrest_tag_ids"/>
+                </calendar>
+            </field>
+        </record>
+        <record id="lead_visit_form_view" model="ir.ui.view">
+            <field name="name">lead.visit.form.view</field>
+            <field name="model">crm.lead.visit</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <form string="Visita" >
+                    <group>
+                        <group>
+                            <field name="lead_id"/>
+                            <field name="visit_status"/>
+                        </group>
+                        <group>
+                            <label class="o_form_label oe_inline" for="date_schedule_visit" attrs="{'invisible':[('visited','=',True)]}"/>
+                            <div class="o_row oe_inline" attrs="{'invisible':[('visited','=',True)]}">
+                                    <field name="date_schedule_visit" class="oe_inline o_datepicker_input"/>
+                                    <field name="visit_duration" class="oe_inline" />
+                                    <span class="o_duration_suffix"> hs.</span>
+                            </div>
+                            <field name="visited"/>
+                            <field name="date_visited" attrs="{'invisible':[('visited','=',False)]}"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group>
+                            <field name="visit_user_ids" widget="many2many_tags" />
+                        </group>
+                        <group>
+                            <field name="visit_vehicle" />
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="user_id"  />
+                            <field name="lead_stage_id"  />
+                        </group>
+                        <group>
+                            <field name="lead_team_id" avatar_field="avatar_128"/>
+                            <field name="intrest_tag_ids" widget="many2many_tags"/>
+                            <field name="tag_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+    <record model="ir.actions.act_window" id="action_crm_lead_visit">
+        <field name="name">Calendario de visitas</field>
+        <field name="res_model">crm.lead.visit</field>
+        <field name="view_mode">calendar</field>
+        <field name="view_id" ref="roc_custom.lead_visit_calendar_view" />
+    </record>
+    <menuitem
+        id="menu_crm_visit"
+        name="Calendario de visitas"
+        sequence="10"
+        parent="crm.crm_menu_root"
+        action="roc_custom.action_crm_lead_visit"/>
 </odoo>

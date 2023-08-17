@@ -1,10 +1,96 @@
 from odoo import fields, models, api
 from lxml import etree
+from datetime import timedelta
+
+class CrmLeadVisit(models.Model):
+    _name = 'crm.lead.visit'
+
+    @api.model
+    def name_get(self):
+        res = []
+        for rec in self:
+            name = rec.visit_user_id.display_name + " | " + rec.visit_vehicle.display_name + "     |     "
+            name += rec.lead_id.display_name + ' (' + rec.visit_status + ' | ' + rec.lead_id.stage_id.display_name + ')'
+            res.append((rec.id, name))
+        return res
+
+    lead_id = fields.Many2one('crm.lead', readonly="1", force_save="1")
+    tag_ids = fields.Many2many(related="lead_id.tag_ids", string="Etiquetas", readonly=False)
+    visit_user_ids = fields.Many2many(related="lead_id.visit_user_ids", readonly=False, string="Personal visita")
+    intrest_tag_ids = fields.Many2many(related="lead_id.intrest_tag_ids", string="Productos de Interés")
+    lead_stage_id = fields.Many2one(related="lead_id.stage_id", string="Etapa")
+    lead_team_id = fields.Many2one(related="lead_id.team_id", string="Equipo de ventas")
+    visit_user_id = fields.Many2one('res.users', readonly="1", force_save="1", string="Asignado")
+    visit_vehicle = fields.Many2one(related='lead_id.visit_vehicle',store=True, readonly=False, string="Vehículo")
+    partner_id = fields.Many2one(related='lead_id.partner_id', string="Cliente")
+    calendar_date = fields.Datetime(related='lead_id.calendar_date', string="Fecha visita")
+    date_schedule_visit = fields.Datetime(related='lead_id.date_schedule_visit' ,store=True, readonly=False, string="Fecha a visitar")
+    user_id = fields.Many2one(related='lead_id.user_id',store=True, string="Comercial")
+    visit_duration = fields.Float(related='lead_id.visit_duration', store=True, readonly=False, string="Tiempo visita (hs.)")
+    visited = fields.Boolean(related='lead_id.visited', store=True, readonly=False, string="Visita terminada")
+    visit_status = fields.Char(related='lead_id.visit_status', string="Estado visita")
+    date_visited = fields.Datetime(related='lead_id.date_visited', store=True, string="Visitado el")
+
+
 
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
+    @api.depends('date_schedule_visit','date_visited','visited')
+    def get_calendar_date(self):
+        for record in self:
+            if record.visited:
+                res = record.date_visited
+            else:
+                res = record.date_schedule_visit
+            record.calendar_date = res
+    calendar_date = fields.Datetime(compute=get_calendar_date, store=True)
+    date_schedule_visit = fields.Datetime(string="A visitar")
+    visit_duration = fields.Float(string="Tiempo visita (hs.)")
+    visited = fields.Boolean(string="Visita terminada")
+    date_visited = fields.Datetime(string="Visitado el")
+    visit_user_ids = fields.Many2many(comodel_name='res.users', string="Personal visita")
+    visit_vehicle = fields.Many2one('fleet.vehicle', string="Vehículo")
+    crm_lead_visit_ids = fields.One2many('crm.lead.visit','lead_id')
+    @api.depends('visited','date_schedule_visit')
+    def get_visit_status(self):
+        for record in self:
+            if record.visited:
+                res = f"Visitado"
+            elif record.date_schedule_visit:
+                res = f"A visitar"
+            else:
+                res = "Sin visitas programadas"
+            record.visit_status = res
+
+    visit_status = fields.Char(compute=get_visit_status, store=True, string="Estado visita")
+    @api.depends('visit_user_ids')
+    def recompute_visit_calendar(self):
+        for record in self:
+            record.crm_lead_visit_ids.unlink()
+            create_vals = []
+            for user in record.visit_user_ids:
+                vals = {
+                    'lead_id': record.id,
+                    'visit_user_id': user.id,
+                }
+                create_vals.append(vals)
+            self.env['crm.lead.visit'].create(create_vals)
+            res = False if record.trigger_recompute_visit_calendar else True
+            record.trigger_recompute_visit_calendar = res
+
+
+
+    trigger_recompute_visit_calendar = fields.Boolean(compute='recompute_visit_calendar', store=True)
+
+    def write(self, vals):
+        res = super(CrmLead, self).write(vals)
+        if 'visited' in vals and vals['visited']:
+            self.date_visited = fields.datetime.now()
+        return res
+
+
 
     partner_street = fields.Char(related='partner_id.street', readonly=False)
     partner_street2 = fields.Char(related='partner_id.street2', readonly=False)

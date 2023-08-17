@@ -11,6 +11,7 @@
         'crm',
         'roc_crm',
         'sale',
+        'fleet',
         'sale_stock',
         'purchase_stock',
         'web_widget_open_tab',
