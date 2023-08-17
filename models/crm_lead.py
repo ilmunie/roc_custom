@@ -65,6 +65,18 @@ class CrmLead(models.Model):
             record.visit_status = res
 
     visit_status = fields.Char(compute=get_visit_status, store=True, string="Estado visita")
+    @api.depends('visited','date_schedule_visit')
+    def get_visit_status(self):
+        for record in self:
+            if record.visited:
+                res = f"Visitado el {record.date_visited.strftime('%Y-%m-%d') or ''}"
+            elif record.date_schedule_visit:
+                res = f"A visitar {record.date_schedule_visit.strftime('%Y-%m-%d') or ''}"
+            else:
+                res = "Sin visitas programadas"
+            record.visit_status_date = res
+
+    visit_status_date = fields.Char(compute=get_visit_status, store=True, string="Estado visita")
     @api.depends('visit_user_ids')
     def recompute_visit_calendar(self):
         for record in self:
