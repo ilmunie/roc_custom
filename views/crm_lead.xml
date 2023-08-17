@@ -225,7 +225,7 @@
                 </div>
                 <field name="visited"/>
                 <field name="date_visited" attrs="{'invisible':[('visited','=',False)]}"/>
-                <field name="visit_user_ids" widget="many2many_tags"/>
+                <field name="visit_user_ids" widget="many2many_tags" attrs="{'required':[('date_schedule_visit','!=',False)]}"/>
                 <field name="visit_vehicle"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="before">

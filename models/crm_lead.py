@@ -9,7 +9,11 @@ class CrmLeadVisit(models.Model):
     def name_get(self):
         res = []
         for rec in self:
-            name = rec.visit_user_id.display_name + " | " + rec.visit_vehicle.display_name + "     |     "
+            name = ''
+            if rec.visit_user_id:
+                name = rec.visit_user_id.display_name + " | "
+            if rec.visit_vehicle:
+                name += rec.visit_vehicle.display_name + "     |     "
             name += rec.lead_id.display_name + ' (' + rec.visit_status + ' | ' + rec.lead_id.stage_id.display_name + ')'
             res.append((rec.id, name))
         return res
