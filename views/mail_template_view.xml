@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="mail_template_form_inherit_custom" model="ir.ui.view">
+		<field name="name">mail.template.form.inherit.custom</field>
+		<field name="model">mail.template</field>
+		<field name="inherit_id" ref="mail.email_template_form"/>
+		<field name="arch" type="xml">
+            <field name="report_template" position="after">
+                <field name="other_model_reports"/>
+                <field widget="section_and_note_one2many" name="extra_report_template_ids" attrs="{'invisible': [('other_model_reports','=',False)]}">
+                    <tree editable="top">
+                        <field name="field_id" domain="field_domain_ids"/>
+                        <field name="field_domain_ids" invisible="1"/>
+                        <field name="template_domain_ids" invisible="1"/>
+                        <field name="report_template_id" domain="template_domain_ids"/>
+                    </tree>
+                </field>
+            </field>
+		</field>
+    </record>
+</odoo>

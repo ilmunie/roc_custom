@@ -178,6 +178,10 @@
                 <field name="partner_street2" placeholder="Street..." class="o_address_street"/>
             </xpath>-->
 
+            <xpath expr="//header[last()]" position="inside">
+                <button name="%(open_generale_sale_quotation_wizard)d" string="Generar presupuestos" type="action" class="oe_highlight"
+                attrs="{'invisible': [('type','=','lead')]}"/>
+            </xpath>
             <xpath expr="//group[@name='lead_partner']//field[@name='partner_id']" position="attributes">
                 <attribute name="invisible">0</attribute>
                 <attribute name="groups">base.group_user</attribute>
@@ -445,6 +449,15 @@
         </field>
     </record>
 
+        <record id="lead_visit_gantt_view_custom" model="ir.ui.view">
+            <field name="name">lead.visit.gantt.view.custom</field>
+            <field name="model">crm.lead.visit</field>
+            <field name="arch" type="xml">
+                <gantt date_start="calendar_date" date_stop="calendar_date">
+                    <field name="lead_id" />
+                </gantt>
+            </field>
+        </record>
 
         <record id="lead_visit_calendar_view" model="ir.ui.view">
             <field name="name">lead.visit.calendar.view</field>
@@ -513,7 +526,7 @@
     <record model="ir.actions.act_window" id="action_crm_lead_visit">
         <field name="name">Calendario de visitas</field>
         <field name="res_model">crm.lead.visit</field>
-        <field name="view_mode">calendar</field>
+        <field name="view_mode">calendar,gantt</field>
         <field name="view_id" ref="roc_custom.lead_visit_calendar_view" />
     </record>
     <menuitem
