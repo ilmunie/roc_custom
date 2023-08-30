@@ -22,6 +22,7 @@
         'wizards/lost_reason.xml',
         'wizards/crm_convert_opp_wizard.xml',
         'wizards/generate_sale_quotation_wizard.xml',
+        'wizards/supplierinfo_import_view.xml',
         'views/stock_picking.xml',
         'views/mail_template_view.xml',
         'views/crm_lead.xml',

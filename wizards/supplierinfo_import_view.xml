@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+		<record id="view_supplierinfo_import" model="ir.ui.view">
+			<field name="name">Supplierinfo Import</field>
+			<field name="model">supplierinfo.import</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Import">
+					<header>
+						<field name="state" widget="statusbar"/>
+					</header>
+					<group>
+						<group attrs="{'invisible': [('state', 'not in', 'draft')]}">
+							<field name="file" filename="filename"/>
+							<field name="filename"/>
+						</group>
+						<group attrs="{'invisible': [('state', 'not in', 'done')]}">
+							<field name="message" nolabel="1"/>
+						</group>
+					</group>
+					<footer>
+                        <button class="btn-default" special="cancel" string="Cancel" 
+                         attrs="{'invisible': [('state', 'not in', 'draft')]}"/>
+                        <button name="read_file" string="Read file" type="object" class="btn-primary" 
+                         attrs="{'invisible': [('state', 'not in', 'draft')]}"/>
+                        <button class="btn-default" special="cancel" string="Close" 
+                         attrs="{'invisible': [('state', 'not in', 'done')]}"/>
+					</footer>
+				</form>
+			</field>
+		</record>
+
+        <record id="action_supplierinfo_import" model="ir.actions.act_window">
+            <field name="name">Supplierinfo Import</field>
+            <field name="res_model">supplierinfo.import</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_supplierinfo_import"
+            name="Supplierinfo Import"
+            action="action_supplierinfo_import"/>
+        
+
+
+<!--
+        <act_window name="Import BOM"
+            res_model="bom.import"
+            src_model="mrp.bom"
+            key2="client_action_multi"
+            multi="True"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            id="action_bom_import"/>
+-->
+            
+  </data>
+</odoo>

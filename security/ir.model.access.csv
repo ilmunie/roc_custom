@@ -6,3 +6,4 @@ access_lost_reason_wizard,roc_custom.lost.reason.wizard,model_lost_reason_wizard
 access_crm_lead_visit,roc_custom.crm_lead_visit,model_crm_lead_visit,base.group_user,1,1,1,0
 access_generale_sale_quotation,roc_custom.generale.sale.quotation,model_generale_sale_quotation,base.group_user,1,1,1,0
 access_mail_template_extra_report,roc_custom.mail.template.extra.report,model_mail_template_extra_report,base.group_user,1,1,1,0
+access_supplierinfo_import,roc_custom.supplierinfo_import,model_supplierinfo_import,base.group_user,1,1,1,0
