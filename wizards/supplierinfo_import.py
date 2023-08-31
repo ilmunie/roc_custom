@@ -26,7 +26,10 @@ import os
 import xlrd
 from odoo import _, exceptions, fields, models, api
 
-
+class AccontMover(models.Model):
+    _inherit = "account.move"
+    aux_payment_date = fields.Date()
+    aux_journal_id = fields.Many2one('account.journal')
 class SupplierinfoImport(models.TransientModel):
     _name = "supplierinfo.import"
     _description = "Supplierinfo Import"
@@ -119,7 +122,7 @@ class SupplierinfoImport(models.TransientModel):
                         error = True
                     else:
                         account_id = accounts[0].id
-                        vals = {'name':name, 'vat': vat, 'property_account_receivable_id': account_id }
+                        vals = {'name':name, 'vat': vat, 'property_account_payable_id': account_id }
                         supplier = self.env['res.partner'].create(vals).id
             else:
                 mess = '<span> FILA ' + str(curr_row) + ' | CIF ACTUALIZADO PROVEEDOR<span/>'
@@ -190,6 +193,7 @@ class SupplierinfoImport(models.TransientModel):
     def read_file(self):
         product = self.env['product.product']
         message = []
+        rows_with_payments = []
         #path = os.path.abspath(os.path.dirname(__file__))
         path = '/tmp/%s' % self.filename
         # ~ f = open(path, 'a')
@@ -230,23 +234,62 @@ class SupplierinfoImport(models.TransientModel):
                 vals['journal_id'] = 2
                 vals['ref'] = invoice_name
                 vals['move_type'] = 'in_invoice'
+                date_payment = self._read_cell(sheet, curr_row, 12) or False
+                if date_payment:
+                    payment_method = self._read_cell(sheet, curr_row, 13)
+                    journal_id = False
+                    #pdb.set_trace()
+                    if payment_method == 'EFECTIVO':
+                        journal_id = 7
+                    else:
+                        cc = self._read_cell(sheet, curr_row, 14)
+                        if cc:
+                            rp_bank = self.env['res.partner.bank'].search([('acc_number','=',cc)])
+                            if rp_bank:
+                                journal_ids = self.env['account.journal'].search([('bank_account_id','=',rp_bank[0].id)])
+                                if journal_ids:
+                                    journal_id = journal_ids[0].id
+                    if journal_id:
+                        rows_with_payments.append(invoice_name)
+                        vals['aux_payment_date'] = date_payment
+                        vals['aux_journal_id'] = journal_id
+                    else:
+                        message.append(f'<span>FILA {str(curr_row)} : ERROR DIARIO PAGO</span>')
+                        continue
                 invoices.append(vals)
             error = False
             for mess in message:
                 if 'ERROR' in mess:
                     error = True
             if not error:
-                self.env['account.move'].create(invoices)
+                invs = self.env['account.move'].create(invoices)
+                for inv in invs:
+                    inv.action_post()
+                    if inv.ref in rows_with_payments:
+                        payment = self.env['account.payment'].create({
+                            'date': inv.aux_payment_date,
+                            'payment_type': 'outbound',
+                            'partner_type': 'supplier',
+                            'partner_id': inv.partner_id.id,
+                            'amount': abs(inv.amount_total_signed),
+                            'currency_id': self.env.user.company_id.currency_id.id,
+                            'journal_id': inv.aux_journal_id.id,
+                        })
+                        payment.action_post()
+                        receivable_line = payment.line_ids.filtered('debit')
+                        inv.js_assign_outstanding_line(receivable_line.id)
                 self.message = f'<span>{str(len(invoices))} FACTURAS CREADAS</span><br/>' + '<br/>'.join(message)
             else:
                 self.message = '<br/>'.join(message)
             self.state = 'done'
             view = self.env.ref('roc_custom.view_supplierinfo_import')
             return {
-                'name': _('Product Supplierinfo Import'),
+                'name': _('Supplierinfo Import'),
                 'res_model': 'supplierinfo.import',
                 'type': 'ir.actions.act_window',
                 'views': [(view.id, 'form')],
                 'view_id': view.id,
                 'target': 'new',
                 'res_id': self.id,}
+
+
