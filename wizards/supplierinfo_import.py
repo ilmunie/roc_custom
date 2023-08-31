@@ -165,7 +165,7 @@ class SupplierinfoImport(models.TransientModel):
                     else:
                         account_id = accounts[0].id
                         mess = '<span> FILA ' + str(curr_row) + ' | PRODUCTO CREADO<span/>'
-                        product_id = self.env['product.template'].create({'name': product_name,'detailed_type': 'service', 'property_account_expense_id': account_id}).id
+                        product_id = self.env['product.product'].create({'name': product_name,'detailed_type': 'service', 'property_account_expense_id': account_id}).id
         if not error:
             tax_ids = []
             if iva_21 > 0:
