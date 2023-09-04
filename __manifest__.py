@@ -24,6 +24,7 @@
         'wizards/generate_sale_quotation_wizard.xml',
         'wizards/supplierinfo_import_view.xml',
         'views/stock_picking.xml',
+        'views/account_journal_view.xml',
         'views/mail_template_view.xml',
         'views/crm_lead.xml',
         'views/purchase_order.xml',

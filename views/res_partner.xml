@@ -9,6 +9,10 @@
             <xpath expr="//field[@name='category_id']" position="after">
                 <field name="professional"/>
             </xpath>
+            <xpath expr="//field[@name='property_account_receivable_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+                <attribute name="required">0</attribute>
+            </xpath>
 
         </field>
     </record>
@@ -22,6 +26,7 @@
                 <separator/>
                 <filter string="Profesionales" name="professional" domain="[('professional','=',True)]"/>
             </xpath>
+
 		</field>
     </record>
 </odoo>
