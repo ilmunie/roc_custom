@@ -94,6 +94,7 @@ class SupplierinfoImport(models.TransientModel):
         supplier = False
         mess = False
         error = False
+        avoid_refresh = False
         name = str(self._read_cell(sheet, curr_row, 6) or '')
         vat = str(self._read_cell(sheet, curr_row, 8) or '')
         if not vat and not name:
@@ -123,11 +124,27 @@ class SupplierinfoImport(models.TransientModel):
                     else:
                         account_id = accounts[0].id
                         vals = {'name':name, 'vat': vat, 'property_account_payable_id': account_id }
+                        avoid_refresh = True
                         supplier = self.env['res.partner'].create(vals).id
             else:
                 mess = '<span> FILA ' + str(curr_row) + ' | CIF ACTUALIZADO PROVEEDOR<span/>'
                 name_partners[0].vat = vat
                 supplier = name_partners[0].id
+        #ACTIALIZAR CUENTA
+        if supplier and not avoid_refresh:
+            partner = self.env['res.partner'].browse(supplier)
+            account_code = str(int(self._read_cell(sheet, curr_row, 1) or 0) or '')
+            if not account_code:
+                mess = '<span> FILA ' + str(curr_row) + ' | ERROR FALTA COD CUENTA<span/>'
+                error = True
+            else:
+                accounts = self.env['account.account'].search([('code', '=', account_code)])
+                if not accounts:
+                    mess = '<span> FILA ' + str(curr_row) + ' | ERROR FALTA CUENTA<span/>'
+                    error = True
+                else:
+                    if partner[0].property_account_payable_id.id != accounts[0].id:
+                        partner[0].property_account_payable_id = accounts[0].id
         return supplier, mess, error
 
     def get_product_lines(self, sheet, curr_row):
