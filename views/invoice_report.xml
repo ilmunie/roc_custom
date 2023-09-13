@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="roc_custom_external_layout_bold"
+        inherit_id='web.external_layout_bold'>
+        <xpath expr="//div[hasclass('row')]" position="replace">
+            <div class="row" style="font-size:11px; padding:0;margin:0">
+                <div class="col-8">
+                    <img t-if="company.logo"
+                        t-att-src="image_data_uri(company.logo)" alt="Logo"
+                        style="max-height: 2cm;min-height: 2cm" valig="baseline"/>
+                    <img class="image" src="/roc_sales/static/images/logo1.png"
+                        style="max-height: 2cm;min-height: 2cm" valig="baseline"/>
+                    <img class="image" src="/roc_sales/static/images/logo2.png"
+                        style="max-height: 2cm;min-height: 2cm" valig="baseline"/>
+                </div>
+                <div class="col-4 align-items-right text-right"
+                    name="company_address" valig="bottom"
+                    style="padding:0;margin:0">
+                    <ul class="list-unstyled" style="padding:0;margin:0">
+                        <!-- <li t-if="forced_vat or company.vat">
+                            <t
+                        t-esc="company.country_id.vat_label or 'Tax ID'"/>
+                            :
+                        <span t-if="forced_vat" t-esc="forced_vat"/>
+                            <span
+                        t-else="" t-field="company.vat"/>
+                        </li> -->
+                        <div class="address" style="padding:0;margin:0">
+                            <t t-if="company.name">
+                                <strong>
+                                    <span t-field="company.name"/>
+                                </strong>
+                            </t>
+                            <li t-if="company.vat">
+                                <strong>CIF </strong>
+                                <span class="o_force_ltr" t-field="company.vat"/>
+                                <span class="o_force_ltr"> | </span>
+                                <t t-if="company.street">
+                                    <span
+                                        t-field="company.street"/>
+                                </t>
+                                <t t-if="company.street2">
+                                    <span
+                                        t-field="company.street2"/>
+                                </t>
+                            </li>
+                            <p style="margin:0;padding:0">
+                                <t t-if="company.zip">
+                                    <span t-field="company.zip"/>
+                                </t>
+                                <t t-if="company.city">
+                                    <span
+                                        t-if="company.zip">|</span>
+                                    <span
+                                        t-field="company.city"/>
+                                </t>
+                            </p>
+                        </div>
+                        <li>
+                            <strong>Tienda y exp:</strong>
+                            <span class="o_force_ltr">Juan Bautista de Toledo 30</span>
+                        </li>
+                        <li t-if="company.phone">
+                            <strong>Tel:</strong>
+                            <span class="o_force_ltr" t-field="company.phone"/>
+                            <strong>Móvil:</strong>
+                            <span
+                                class="o_force_ltr" t-field="company.mobile"/>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </xpath>
+        <xpath expr="//div[contains(@t-attf-class,'footer')]" position="replace">
+            <div t-attf-class="footer o_clean_footer">
+                <div class="row">
+                    <div class="col-4 text-muted text-left">
+                        <span style="font-size: 9px;">RMM Tomo 4.548 F-120 Secc 8ª Hoja M-74906-1ª Ins</span>
+                    </div>
+                    <div class="col-4 align-items-right text-center" style="font-size: 11px;">
+                        <span t-field="company.website"/>
+                    </div>
+                    <div class="col-4" style="text-align: right; font-size: 11px;">
+                        <div t-if="report_type == 'pdf'" class="text-muted">
+                            <span class="page"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="report_invoice_custom" inherit_id="account.report_invoice_document">
+        <xpath expr="//i[hasclass('oe_payment_label')]" position="after">
+            <span> </span><span t-esc="payment_vals['invoice_payment_label']"/>
+        </xpath>
+        <xpath expr="//address//.." position="replace">
+            <span></span>
+        </xpath>
+        <xpath expr="//div[@name='customer_code']" position="replace">
+            <span></span>
+        </xpath>
+        <xpath expr="//div[@id='informations']" position="before">
+            <div class="row mt-2 mb-2">
+                <div class="col-auto col-6">
+                    <strong>Cliente</strong><br/>
+                    <address t-field="o.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;,&quot;vat&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+                </div>
+                <div class="col-auto col-6" t-if="o.partner_shipping_id and (o.partner_shipping_id != o.partner_id)">
+                    <strong>Dirección entrega</strong>
+                    <div t-field="o.partner_shipping_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+
+     <record id="group_edit_invoice_due_date" model="res.groups">
+        <field name="name">Editar manualmente fecha vencimiento factura</field>
+    </record>
+</data>
+</odoo>
