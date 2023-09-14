@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="action_payment_way" model="ir.actions.act_window">
+            <field name="name">Formas de pago</field>
+            <field name="res_model">payment.way</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="menu_payment_way"
+            name="Formas de pago"
+			parent="account.root_payment_menu"
+            action="action_payment_way"/>
+</odoo>

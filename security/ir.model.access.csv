@@ -8,3 +8,4 @@ access_generale_sale_quotation,roc_custom.generale.sale.quotation,model_generale
 access_mail_template_extra_report,roc_custom.mail.template.extra.report,model_mail_template_extra_report,base.group_user,1,1,1,0
 access_supplierinfo_import,roc_custom.supplierinfo_import,model_supplierinfo_import,base.group_user,1,1,1,0
 access_change_date_due_wiz,roc_custom.change_date_due_wiz,model_change_date_due_wiz,base.group_user,1,1,1,0
+access_payment_way,roc_custom.payment.way,model_payment_way,base.group_user,1,1,1,0

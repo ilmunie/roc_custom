@@ -9,12 +9,13 @@
                 <field name="invoice_date_due" force_save="1" attrs="{'readonly':[('state','!=','draft')],'invisible':[('invoice_payment_term_id','!=',False)]}"/>
             </xpath>
             <xpath expr="//button[@name='action_post']//.." position="inside">
-                <button name="%(open_change_due_date)d" groups="roc_custom.allow_to_change_due_date" type='action' class="oe_highlight" string="Modificar Vencimiento"
+                <button name="%(open_change_due_date)d" groups="roc_custom.group_edit_invoice_due_date" type='action' class="oe_highlight" string="Modificar Vencimiento"
                 attrs="{'invisible':['|',('state','=','draft'),('payment_state','=','paid')]}"/>
             </xpath>
             <xpath expr="//field[@name='journal_id']//.." position="after">
                 <field name="invoice_date_due" force_save="1" attrs="{'readonly':[('state','!=','draft')],'invisible':['|',('state','=','draft'),('invoice_payment_term_id','=',False)]}"/>
                 <field name="invoice_origin" attrs="{'readonly':[('state','!=','draft')]}"/>
+                <field name="payment_journal_instruction_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True, 'no_open':True}"/>
                 <field name="shipping_domain_id" invisible="1"/>
             </xpath>
             <xpath expr="//field[@name='partner_shipping_id']" position="attributes">

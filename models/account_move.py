@@ -1,16 +1,23 @@
 from odoo import fields, models, _, api
 import json
 
+class PaymentWay(models.Model):
+    _name = 'payment.way'
+
+    name = fields.Char(string='Nombre', required=True)
+    invoice_payment_instructions = fields.Text(string='Instrucciones factura', required=True)
+
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
 
     default_payable_account_id = fields.Many2one('account.account', string="Cuenta a cobrar", domain=[('internal_type','=','receivable'),('deprecated','=',False)])
     invoice_payment_label = fields.Char(string="Etiqueta pago (factura)")
 
+
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-
+    payment_journal_instruction_ids = fields.Many2many(comodel_name='payment.way', string="Medios de pago")
     @api.depends('amount_residual')
     def compute_invoice_date(self):
         for record in self:

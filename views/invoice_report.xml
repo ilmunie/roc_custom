@@ -97,6 +97,17 @@
         <xpath expr="//address//.." position="replace">
             <span></span>
         </xpath>
+
+
+        <xpath expr="//p[@name='payment_communication']" position="after">
+            <t t-if="o.payment_journal_instruction_ids">
+                <t t-foreach="set(o.payment_journal_instruction_ids)" t-as="journal">
+                    <div t-if="not is_html_empty(journal.invoice_payment_instructions)">
+                        <span t-field="journal.invoice_payment_instructions"/>
+                    </div>
+                </t>
+            </t>
+        </xpath>
         <xpath expr="//div[@name='customer_code']" position="replace">
             <span></span>
         </xpath>
