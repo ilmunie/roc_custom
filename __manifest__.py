@@ -13,6 +13,7 @@
         'roc_sales',
         'sale',
         'fleet',
+        'stock',
         'sale_stock',
         'purchase_stock',
         'web_widget_open_tab',
