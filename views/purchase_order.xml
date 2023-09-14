@@ -19,6 +19,9 @@
                 <field name="reception_status" widget="statusbar"/>
                 <field name="invoice_status" widget="statusbar"/>
             </xpath>
+            <xpath expr="//field[@name='picking_type_id']" position="after">
+                <field name="delivery_date_status"/>
+            </xpath>
 
             <xpath expr="//field[@name='product_qty']" position="after">
                     <!-- below fields are used in the widget qty_at_date_widget -->
@@ -36,9 +39,10 @@
                     <field name="display_qty_widget" invisible="1"/>
                     <widget name="qty_at_date_widget_purchase" width="0.2"/>
             </xpath>
-            <xpath expr="//page/field[@name='order_line']/tree/field[@name='date_planned']" position="attributes">
-                <attribute name="optional">show</attribute>
+            <xpath expr="//page/field[@name='order_line']/tree/field[@name='date_planned']" position="replace">
+                <field name="date_planned" optional="show" attrs="{'column_invisible':[('parent.delivery_date_status','=','waiting_info')] , 'required': [('display_type', '=', False)]}" force_save="1"/>
             </xpath>
+
             <xpath expr="//button[@name='action_product_forecast_report']" position="replace">
             </xpath>
             <xpath expr="//button[@name='action_product_forecast_report'][last()]" position="replace">
