@@ -117,6 +117,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='date_order']" position="after">
                 <field name="date_planned" widget="remaining_days"/>
+                <field name="delivery_date_status" optional="hide"/>
                 <field name="picking_type_id" />
                 <field name="sale_order_ids" widget="many2many_tags"/>
 

@@ -5,7 +5,7 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
-    delivery_date_status = fields.Selection(string="Fecha entrega", selection=[('waiting_info','Esperando información'),('date_scheduled','Fecha pactada')],default='waiting_info')
+    delivery_date_status = fields.Selection(string="Coordinación entrega", selection=[('waiting_info','Esperando información'),('date_scheduled','Fecha pactada')],default='waiting_info')
     product_tmp_id = fields.Many2one(related='order_line.product_template_id', string="Plantilla de producto")
     product_id = fields.Many2one(related='order_line.product_id',string="Variante de producto" )
     trigger_compute_rel = fields.Boolean()
