@@ -1,9 +1,18 @@
 from odoo import fields, models, api
-
+import json
 class SaleOrder(models.Model):
     _inherit = "sale.order"
     _order = 'create_date desc'
 
+    @api.depends('partner_id')
+    def get_domain_shipping(self):
+        for record in self:
+            domain = [('id','=',0)]
+            if record.partner_id:
+                domain = ['|',('id', '=', record.partner_id.id), ('parent_id', '=', record.partner_id.id)]
+            record.shipping_domain_id = json.dumps(domain)
+
+    shipping_domain_id = fields.Char(compute=get_domain_shipping)
     def name_get(self):
         res = []
         for rec in self:

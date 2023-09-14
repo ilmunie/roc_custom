@@ -1,4 +1,5 @@
 from odoo import fields, models, _, api
+import json
 
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
@@ -19,7 +20,15 @@ class AccountMove(models.Model):
             record.trigger_compute_invoice_date = res
 
     trigger_compute_invoice_date = fields.Boolean(compute='compute_invoice_date', store=True)
+    @api.depends('partner_id')
+    def get_domain_shipping(self):
+        for record in self:
+            domain = [('id','=',0)]
+            if record.partner_id:
+                domain = ['|',('id', '=', record.partner_id.id), ('parent_id', '=', record.partner_id.id)]
+            record.shipping_domain_id = json.dumps(domain)
 
+    shipping_domain_id = fields.Char(compute=get_domain_shipping)
     def _compute_invoice_date(self):
         ''' Compute the dynamic payment term lines of the journal entry.'''
         self.ensure_one()
