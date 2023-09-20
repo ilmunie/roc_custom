@@ -8,6 +8,8 @@ class PurchaseOrder(models.Model):
     delivery_date_status = fields.Selection(string="Coordinación entrega", selection=[('waiting_info','Esperando información'),('date_scheduled','Fecha pactada')],default='waiting_info')
     product_tmp_id = fields.Many2one(related='order_line.product_template_id', string="Plantilla de producto")
     product_id = fields.Many2one(related='order_line.product_id',string="Variante de producto" )
+    invoice_number = fields.Char(related='picking_ids.invoice_number', copy=False)
+    shipment_number = fields.Char(related='picking_ids.shipment_number', copy=False)
     trigger_compute_rel = fields.Boolean()
 
     def name_get(self):
@@ -41,18 +43,12 @@ class PurchaseOrder(models.Model):
     sale_order_ids = fields.Many2many(comodel_name='sale.order',store=True,compute=compute_sale_origin, string='Órden Venta')
     sale_partner_id = fields.Many2one('res.partner',related='sale_order_ids.partner_id',store=True, string='Cliente')
 
-
     @api.depends('state', 'order_line', 'order_line.qty_received', 'order_line.product_qty')
     def compute_reception_status(self):
         for record in self:
             if record.state in ('purchase', 'done'):
-                partial = False
-                full = True
-                for line in record.order_line:
-                    if not partial and line.qty_received > 0:
-                        partial = True
-                    if full and line.qty_received < line.product_qty:
-                        full = False
+                partial = any(line.qty_received > 0 for line in record.order_line)
+                full = all(line.qty_received >= line.product_qty for line in record.order_line)
                 if full:
                     record.reception_status = 'full_reception'
                 elif partial:

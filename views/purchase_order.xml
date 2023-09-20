@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <odoo>
+
     <record id="purchase_order_view_form_inherit_stock_widget" model="ir.ui.view">
         <field name="name">purchase.order.form.inherit.stock.widget</field>
         <field name="model">purchase.order</field>
@@ -115,6 +116,9 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="create_date"/>
+            </xpath>
             <xpath expr="//field[@name='date_order']" position="after">
                 <field name="date_planned" widget="remaining_days"/>
                 <field name="delivery_date_status" optional="hide"/>
@@ -128,7 +132,6 @@
                 <field name="invoice_status" widget="badge" decoration-success="invoice_status == 'invoiced'" decoration-info="invoice_status == 'to invoice'" optional="show"/>
                 <field name="reception_status" widget="badge" decoration-success="reception_status == 'full_reception'" decoration-warning="reception_status == 'partial_reception'" decoration-info="reception_status == 'waiting_reception'" decoration-muted="reception_status == 'no_confirmed'"/>
             </xpath>
-
         </field>
     </record>
     <record id="purchase_order_view_tree_inherit_custom__" model="ir.ui.view">
@@ -136,6 +139,9 @@
         <field name="model">purchase.order</field>
         <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="create_date"/>
+            </xpath>
             <xpath expr="//field[@name='invoice_status']" position="before">
                 <field name="picking_type_id"/>
                 <field name="sale_order_ids" widget="many2many_tags"/>
@@ -154,6 +160,8 @@
         <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="invoice_number"/>
+                <field name="shipment_number"/>
                 <field name="sale_order_ids"/>
                 <field name="sale_partner_id"/>
                 <field name="product_tmp_id"/>
@@ -167,6 +175,17 @@
                     <filter name="form_sale" string="Asociados a Venta" domain="[('sale_order_ids', '!=', False)]"/>
                     <filter name="form_mrp" string="Asociados a Producción" domain="[('mrp_production_ids', '!=', False)]"/>
                     <separator/>
+                    <filter name="not_invoiced" string="Para facturar" domain="[('invoice_status', '=', 'to invoice')]" help="Purchase orders that include lines not invoiced."/>
+                    <filter name="invoiced" string="Facturas recibidas" domain="[('invoice_status', '=', 'invoiced')]" help="Purchase orders that have been invoiced."/>
+                    <separator/>
+                    <filter name="waiting_reception" string="Esperando recepción" domain="[('reception_status', '=', 'waiting_reception')]"/>
+                    <filter name="partial_reception" string="Recepción parcial" domain="[('reception_status', '=', 'partial_reception')]"/>
+                    <filter name="full_reception" string="Recepción completa" domain="[('reception_status', '=', 'full_reception')]"/>
+            </xpath>
+            <xpath expr="//filter[@name='order_date']" position="after">
+                <separator/>
+                <filter string="Estado recepción" name="reception_status" domain="[]" context="{'group_by': 'reception_status'}"/>
+                <filter string="Estado facturación" name="invoice_status" domain="[]" context="{'group_by': 'invoice_status'}"/>
             </xpath>
         </field>
     </record>
@@ -176,6 +195,8 @@
         <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="invoice_number"/>
+                <field name="shipment_number"/>
                 <field name="sale_order_ids"/>
                 <field name="mrp_production_ids"/>
                 <field name="sale_partner_id"/>
@@ -188,7 +209,6 @@
                     <separator/>
                     <filter name="form_sale" string="Asociados a Venta" domain="[('sale_order_ids', '!=', False)]"/>
                     <filter name="form_mrp" string="Asociados a Producción" domain="[('mrp_production_ids', '!=', False)]"/>
-
                     <separator/>
                     <filter name="draft" string="Presupuestos" domain="[('state', 'in', ('draft', 'sent', 'to approve'))]"/>
                     <filter name="to_approve" string="To Approve" domain="[('state', '=', 'to approve')]"/>
@@ -199,7 +219,26 @@
                     <filter name="late_rfqs" string="Late RFQs" domain="[('state', 'in', ['draft', 'sent', 'to approve']),('date_order', '&lt;', datetime.datetime.now())]"/>
                     <separator/>
                     <filter string="Warnings" name="activities_exception" domain="[('activity_exception_decoration', '!=', False)]"/>
+                    <separator/>
+                    <filter name="waiting_reception" string="Esperando recepción" domain="[('reception_status', '=', 'waiting_reception')]"/>
+                    <filter name="partial_reception" string="Recepción parcial" domain="[('reception_status', '=', 'partial_reception')]"/>
+                    <filter name="full_reception" string="Recepción completa" domain="[('reception_status', '=', 'full_reception')]"/>
             </xpath>
+            <xpath expr="//filter[@name='order_date']" position="after">
+                <separator/>
+                <filter string="Estado recepción" name="reception_status" domain="[]" context="{'group_by': 'reception_status'}"/>
+                <filter string="Estado facturación" name="invoice_status" domain="[]" context="{'group_by': 'invoice_status'}"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="action_check_recepcion_status" model="ir.actions.server">
+        <field name="name">Actualizar estado recepción</field>
+        <field name="model_id" ref="model_purchase_order"/>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+                action = records.compute_reception_status()
         </field>
     </record>
 </odoo>

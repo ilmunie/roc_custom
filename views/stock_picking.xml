@@ -57,17 +57,20 @@
 
 
 
-
+            <xpath expr="//field[@name='location_id']" position="after">
+                <field name="purchase_id" attrs="{'invisible':[('purchase_id','=',False)]}"/>
+                <field name="sale_id" attrs="{'invisible':[('sale_id','=',False)]}"/>
+            </xpath>
             <xpath expr="//field[@name='origin']" position="after">
                 <label for="see_invoice_number" string="N° Factura" attrs="{'invisible':[('picking_type_code','!=','incoming')]}"/>
                 <div class="o_row" attrs="{'invisible':[('picking_type_code','!=','incoming')]}">
-                    <field name="see_invoice_number" attrs="{'readonly':[('state','in',('done','cancel'))]}"/>
-                    <field class="oe_inline" name="invoice_number" attrs="{'readonly':[('state','in',('done','cancel'))],'invisible':[('see_invoice_number','=',False)],'required':[('picking_type_code','=','supplier'),('shipment_number','=',False)]}" />
+                    <field name="see_invoice_number"/>
+                    <field class="oe_inline" name="invoice_number" attrs="{'invisible':[('see_invoice_number','=',False)],'required':[('picking_type_code','=','supplier'),('shipment_number','=',False)]}" />
                 </div>
                 <label for="see_shipment_number" string="N° Remito" attrs="{'invisible':[('picking_type_code','!=','incoming')]}"/>
                 <div class="o_row" >
-                    <field name="see_shipment_number" attrs="{'invisible':[('picking_type_code','!=','incoming')],'readonly':[('state','in',('done','cancel'))]}" />
-                    <field class="oe_inline" name="shipment_number" attrs="{'readonly':[('state','in',('done','cancel'))],'invisible':[('see_shipment_number','=',False)],'required':[('picking_type_code','=','supplier'),('invoice_number','=',False)]}" />
+                    <field name="see_shipment_number" attrs="{'invisible':[('picking_type_code','!=','incoming')]}" />
+                    <field class="oe_inline" name="shipment_number" attrs="{'invisible':[('see_shipment_number','=',False)],'required':[('picking_type_code','=','supplier'),('invoice_number','=',False)]}" />
                 </div>
             </xpath>
         </field>
