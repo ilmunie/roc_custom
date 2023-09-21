@@ -8,7 +8,11 @@
                 <xpath expr="//field[@name='state']" position="after">
                     <field name="mrp_production_ids" widget="many2many_tags"/>
                     <field name="purchase_order_ids" widget="many2many_tags"/>
+                    <field name="opportunity_id"/>
                 </xpath>
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="delivery_status" widget="badge" decoration-success="delivery_status == 'full_delivery'" decoration-warning="delivery_status == 'partial_delivery'" decoration-info="delivery_status == 'waiting_delivery'" decoration-muted="delivery_status == 'no_confirmed'"/>
+            </xpath>
             </field>
         </record>
         <record id="view_sales_tree_custom_" model="ir.ui.view">
@@ -20,7 +24,14 @@
                     <field name="state"/>
                     <field name="mrp_production_ids" widget="many2many_tags"/>
                     <field name="purchase_order_ids" widget="many2many_tags"/>
+                    <field name="opportunity_id"/>
                 </xpath>
+            <xpath expr="//field[@name='invoice_status']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_status']" position="after">
+                <field name="delivery_status" widget="badge" decoration-success="delivery_status == 'full_delivery'" decoration-warning="delivery_status == 'partial_delivery'" decoration-info="delivery_status == 'waiting_delivery'" decoration-muted="delivery_status == 'no_confirmed'"/>
+            </xpath>
             </field>
         </record>
         <record id="view_sales_order_custom" model="ir.ui.view">
@@ -28,6 +39,18 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//field[@name='qty_delivered']" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </xpath>
+                <xpath expr="//header[last()]" position="inside">
+
+                    <button name="%(action_sale_purchase_order_wizard)d" type="action" string="Nueva compra" class="btn-primary" attrs="{'invisible':[('state','in',['done','cancel'])]}"/>
+                </xpath>
+
+                <xpath expr="//field[@name='order_line']" position="after">
+                    <field name="delivery_status" widget="statusbar"/>
+                    <field name="invoice_status" widget="statusbar"/>
+                </xpath>
                 <xpath expr="//notebook[last()]" position="inside">
                     <page string="Documentos generados">
                         <group string="Órdenes de producción" attrs="{'invisible':[('mrp_production_ids','=',[])]}"></group>
@@ -39,6 +62,10 @@
                         <field name="shipping_domain_id" invisible="1"/>
                     </page>
                 </xpath>
+            <field name="payment_term_id" position="after">
+                <field name="opportunity_id"/>
+            </field>
+
                 <xpath expr="//button[@name='action_view_purchase_orders']" position="attributes">
                     <attribute name="invisible">0</attribute>
                 </xpath>
@@ -59,9 +86,17 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_sales_order_filter"/>
             <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="opportunity_id"/>
+                </xpath>
                 <xpath expr="//field[@name='order_line']" position="before">
                 <field name="product_tmp_id"/>
                 <field name="product_id"/>
+                </xpath>
+                <xpath expr="//filter[@name='order_month']" position="after">
+                    <separator/>
+                    <filter string="Estado entrega" name="delivery_status" domain="[]" context="{'group_by': 'delivery_status'}"/>
+                    <filter string="Estado facturación" name="invoice_status" domain="[]" context="{'group_by': 'invoice_status'}"/>
                 </xpath>
                 <xpath expr="//field[@name='order_line']" position="after">
 
@@ -71,5 +106,14 @@
                 </xpath>
             </field>
         </record>
-
+    <record id="action_check_delivery_status" model="ir.actions.server">
+        <field name="name">Actualizar estado entrega</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+                action = records.compute_delivery_status()
+        </field>
+    </record>
 </odoo>

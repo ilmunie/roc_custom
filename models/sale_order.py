@@ -4,6 +4,23 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
     _order = 'create_date desc'
 
+    @api.depends('state', 'order_line', 'order_line.qty_delivered', 'order_line.product_uom_qty')
+    def compute_delivery_status(self):
+        for record in self:
+            if record.state in ('sale', 'done'):
+                partial = any(line.qty_delivered > 0 for line in record.order_line)
+                full = all(line.qty_delivered >= line.product_uom_qty for line in record.order_line)
+                if full:
+                    record.delivery_status = 'full_delivery'
+                elif partial:
+                    record.delivery_status = 'partial_delivery'
+                else:
+                    record.delivery_status = 'waiting_delivery'
+            else:
+                record.delivery_status = 'no_confirmed'
+
+    delivery_status = fields.Selection(string='Estado de envío', selection=[('no_confirmed', 'No confirmado'), ('waiting_delivery', 'Esperando entrega'), ('partial_delivery', 'Entrega parcial'), ('full_delivery','Entregado')],store=True, compute=compute_delivery_status)
+
     @api.depends('partner_id')
     def get_domain_shipping(self):
         for record in self:

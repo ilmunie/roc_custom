@@ -197,7 +197,27 @@
             <xpath expr="//field[@name='team_id']" position="attributes">
                 <attribute name="domain">[('id','!=',False)]</attribute>
             </xpath>
+            <xpath expr="//button[@name='action_schedule_meeting']/.." position="inside">
+
+                <button class="oe_stat_button" type="object" attrs="{'invisible': ['|', ('invoice_count', '=', 0), ('type', '=', 'lead')]}" name="action_open_so_account_move" icon="fa-book">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value"><field name="invoice_total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/></span>
+                        <span class="o_stat_text"> Facturas</span>
+                        <field name="invoice_count" invisible="1"/>
+                    </div>
+                </button>
+                <button class="oe_stat_button" type="object" attrs="{'invisible': ['|', ('invoice_count', '=', 0), ('type', '=', 'lead')]}" name="action_open_so_account_move_unpaid" icon="fa-bullhorn">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value"><field name="invoice_unpaid_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/></span>
+                        <span class="o_stat_text"> Debe</span>
+                        <field name="invoice_unpaid_count" invisible="1"/>
+                    </div>
+                </button>
+            </xpath>
+
+
             <xpath expr="//field[@name='team_id']" position="after">
+
                 <field name="customer_concern"/>
                 <field name="type_of_client"/>
                 <field name="referred_professional" context="{'default_professional':True}"/>

@@ -16,6 +16,15 @@ class AccountJournal(models.Model):
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    @api.depends('invoice_line_ids.sale_line_ids.order_id.invoice_ids')
+    def get_so(self):
+        for record in self:
+            po = self.env['sale.order'].search([('invoice_ids','=',record.id)])
+            record.sale_order_id = po[0].id if po else False
+            record.opportunity_id = po[0].opportunity_id.id if po and po[0].opportunity_id else False
+
+    sale_order_id = fields.Many2one('sale.order',string="Órden de venta", compute=get_so, store=True)
+    opportunity_id = fields.Many2one('crm.lead', compute=get_so, store=True, string="Oportunidad")
 
     payment_journal_instruction_ids = fields.Many2many(comodel_name='payment.way', string="Medios de pago")
     @api.depends('amount_residual')
