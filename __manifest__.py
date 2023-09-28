@@ -12,6 +12,7 @@
         'roc_crm',
         'roc_sales',
         'roc_quotation',
+        'account',
         'sale',
         'fleet',
         'stock',

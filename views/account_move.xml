@@ -27,7 +27,6 @@
                 <attribute name="context">{'default_parent_id': partner_id, 'default_type': 'delivery'}</attribute>
                 <attribute name="options">{'no_quick_create': True}</attribute>
             </xpath>
-
 		</field>
     </record>
     <record id="account_move_tree_view_inherit" model="ir.ui.view">
@@ -55,7 +54,21 @@
                 <field name="opportunity_id"/>
                 <field name="invoice_origin"/>
             </xpath>
+            <xpath expr="//filter[@name='invoicedate']" position="before">
+                <filter string="Diario" name="journal_id" context="{'group_by': 'journal_id'}"/>
+                <separator/>
+            </xpath>
+
         </field>
     </record>
-
+        <record id="action_account_resequence_billin_manager" model="ir.actions.act_window">
+            <field name="name">Resecuenciación</field>
+            <field name="res_model">account.resequence.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account.account_resequence_view"/>
+            <field name="target">new</field>
+            <field name="groups_id" eval="[(6, 0, [ref('account.group_account_manager')])]"/>
+            <field name="binding_model_id" ref="account.model_account_move" />
+            <field name="binding_view_types">list,form</field>
+        </record>
 </odoo>
