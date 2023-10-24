@@ -9,9 +9,7 @@
     'website': '',
     'depends': [
         'crm',
-        'roc_crm',
-        'roc_sales',
-        'roc_quotation',
+        'roc_sol',
         'account',
         'sale',
         'fleet',

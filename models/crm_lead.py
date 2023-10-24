@@ -2,49 +2,32 @@ from odoo import fields, models, api
 from lxml import etree
 from datetime import timedelta
 
-class CrmLeadVisit(models.Model):
-    _name = 'crm.lead.visit'
-
-
-
-
-
-    @api.model
-    def name_get(self):
-        res = []
-        for rec in self:
-            name = ''
-            if rec.visit_user_id:
-                name = rec.visit_user_id.display_name + " | "
-            if rec.visit_vehicle:
-                name += rec.visit_vehicle.display_name + "     |     "
-            name += rec.lead_id.display_name + ' (' + rec.visit_status + ' | ' + rec.lead_id.stage_id.display_name + ')'
-            res.append((rec.id, name))
-        return res
-
-    lead_id = fields.Many2one('crm.lead', readonly="1", force_save="1")
-    tag_ids = fields.Many2many(related="lead_id.tag_ids", string="Etiquetas", readonly=False)
-    visit_user_ids = fields.Many2many(related="lead_id.visit_user_ids", readonly=False, string="Personal visita")
-    intrest_tag_ids = fields.Many2many(related="lead_id.intrest_tag_ids", string="Productos de Interés")
-    lead_stage_id = fields.Many2one(related="lead_id.stage_id", string="Etapa")
-    lead_team_id = fields.Many2one(related="lead_id.team_id", string="Equipo de ventas")
-    visit_user_id = fields.Many2one('res.users', readonly="1", force_save="1", string="Asignado")
-    visit_vehicle = fields.Many2one(related='lead_id.visit_vehicle',store=True, readonly=False, string="Vehículo")
-    partner_id = fields.Many2one(related='lead_id.partner_id', string="Cliente")
-    calendar_date = fields.Datetime(related='lead_id.calendar_date', string="Fecha visita")
-    date_schedule_visit = fields.Datetime(related='lead_id.date_schedule_visit' ,store=True, readonly=False, string="Fecha a visitar")
-    user_id = fields.Many2one(related='lead_id.user_id',store=True, string="Comercial")
-    visit_duration = fields.Float(related='lead_id.visit_duration', store=True, readonly=False, string="Tiempo visita (hs.)")
-    visited = fields.Boolean(related='lead_id.visited', store=True, readonly=False, string="Visita terminada")
-    visit_status = fields.Char(related='lead_id.visit_status', string="Estado visita")
-    date_visited = fields.Datetime(related='lead_id.date_visited', store=True, string="Visitado el")
-
-
-
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
+
+    work_type_id = fields.Many2one(
+        string="Tipo de obra",
+        comodel_name='crm.work.type', tracking=True
+    )
+    customer_concern = fields.Selection([
+        ('low', 'Bajo'),
+        ('medium', 'Medio'),
+        ('high', 'Alto')],
+        string="Interés del cliente", tracking=True
+    )
+    installation = fields.Boolean(
+        string="¿Busca instalación?",
+        default=False, tracking=True
+    )
+    type_of_client = fields.Selection([
+        ('standard', 'Estándar'),
+        ('profesional', 'Profesional'),
+        ('preferential', 'Preferente'),
+        ('vip', 'VIP')],
+        string="Tipo de cliente", tracking=True
+    )
 
     def action_view_sale_quotation(self):
         action = self.env["ir.actions.actions"]._for_xml_id("sale.action_quotations_with_onboarding")
@@ -151,6 +134,7 @@ class CrmLead(models.Model):
             else:
                 res = record.date_schedule_visit
             record.calendar_date = res
+
     calendar_date = fields.Datetime(compute=get_calendar_date, store=True)
     date_schedule_visit = fields.Datetime(string="A visitar")
     visit_duration = fields.Float(string="Tiempo visita (hs.)")
@@ -220,7 +204,6 @@ class CrmLead(models.Model):
 
     referred_professional = fields.Many2one('res.partner', domain=[('professional','=',True)], string="Profesional vinculado")
 
-    type_of_client = fields.Selection(selection_add=[('profesional','Profesional')])
     team_id = fields.Many2one(
         'crm.team', 'Sales Team',
         ondelete="set null", tracking=True)
@@ -237,7 +220,6 @@ class CrmLead(models.Model):
             record.link_to_form = html
     link_to_form = fields.Html(compute=get_link_html)
 
-    work_type_id = fields.Many2one('crm.work.type', tracking=True)
     source_id = fields.Many2one('utm.source', tracking=True)
     priority = fields.Selection(tracking=True)
     @api.model
