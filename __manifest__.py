@@ -12,6 +12,7 @@
         'roc_sol',
         'account',
         'sale',
+        'sale_crm',
         'fleet',
         'stock',
         'sale_stock',
