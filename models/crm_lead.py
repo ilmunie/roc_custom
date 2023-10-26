@@ -2,13 +2,23 @@ from odoo import fields, models, api
 from lxml import etree
 from datetime import timedelta
 
+class CrmWorkType(models.Model):
+    _name = 'crm.work.type'
+    _description = 'Tipo de obra'
+
+    name = fields.Char(
+        string="Tipo de obra",
+    )
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
 
-
+    work_type_id = fields.Many2one('crm.work.type',
+        string="Tipo de obra",
+        comodel_name='crm.work.type', tracking=True
+    )
     customer_concern = fields.Selection([
         ('low', 'Bajo'),
         ('medium', 'Medio'),

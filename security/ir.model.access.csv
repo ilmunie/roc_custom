@@ -11,3 +11,5 @@ access_change_date_due_wiz,roc_custom.change_date_due_wiz,model_change_date_due_
 access_payment_way,roc_custom.payment.way,model_payment_way,base.group_user,1,1,1,0
 access_sale_purchase_order_wizard,roc_custom.sale_purchase_order_wizard,model_sale_purchase_order_wizard,base.group_user,1,1,1,0
 access_sale_purchase_order_wizard_line,roc_custom.sale_purchase_order_wizard_line,model_sale_purchase_order_wizard_line,base.group_user,1,1,1,0
+access_crm_work_type_salesman,access_crm_work_type_salesman,model_crm_work_type,sales_team.group_sale_salesman,1,1,1,0
+access_crm_work_type_manager,access_crm_work_type_manager,model_crm_work_type,sales_team.group_sale_manager,1,1,1,1
