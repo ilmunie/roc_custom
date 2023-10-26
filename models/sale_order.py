@@ -21,6 +21,9 @@ class SaleOrder(models.Model):
 
     delivery_status = fields.Selection(string='Estado de envío', selection=[('no_confirmed', 'No confirmado'), ('waiting_delivery', 'Esperando entrega'), ('partial_delivery', 'Entrega parcial'), ('full_delivery','Entregado')],store=True, compute=compute_delivery_status)
 
+    door_location = fields.Char(
+        string="Ubicación puerta",
+    )
     @api.depends('partner_id')
     def get_domain_shipping(self):
         for record in self:

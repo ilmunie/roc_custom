@@ -7,6 +7,7 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+
     work_type_id = fields.Many2one(
         string="Tipo de obra",
         comodel_name='crm.work.type', tracking=True
@@ -28,7 +29,18 @@ class CrmLead(models.Model):
         ('vip', 'VIP')],
         string="Tipo de cliente", tracking=True
     )
-
+    type_of_contact = fields.Selection([
+        ('basic', 'Contacto básico'),
+        ('qualified', 'Contacto cualificado'),
+        ('highly qualified', 'Contacto muy cualificado')],
+        string="Tipo de contacto", tracking=True
+    )
+    safety_level = fields.Selection([
+        ('low', 'Bajo'),
+        ('medium', 'Medio'),
+        ('high', 'Alto')],
+        string="Nivel de seguridad", tracking=True
+    )
     def action_view_sale_quotation(self):
         action = self.env["ir.actions.actions"]._for_xml_id("sale.action_quotations_with_onboarding")
         action['context'] = {

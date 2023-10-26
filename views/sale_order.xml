@@ -64,6 +64,8 @@
                 </xpath>
             <field name="payment_term_id" position="after">
                 <field name="opportunity_id"/>
+                <field name="door_location"/>
+
             </field>
 
                 <xpath expr="//button[@name='action_view_purchase_orders']" position="attributes">

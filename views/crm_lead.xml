@@ -221,6 +221,8 @@
                 <field name="customer_concern"/>
                 <field name="type_of_client"/>
                 <field name="referred_professional" context="{'default_professional':True}"/>
+                <field name="type_of_contact"/>
+                <field name="safety_level"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="attributes">
                 <attribute name="options">{'create': False,'create_edit': False, 'color_field': 'color'}</attribute>
@@ -262,6 +264,7 @@
             <xpath expr="//field[@name='website']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
+
             <xpath expr="//button[@name='%(crm.crm_lead_lost_action)d']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
@@ -280,19 +283,6 @@
             <field name="date_deadline" position="after">
                 <field name="pending_visit_date" readonly="1"/>
             </field>
-
-            <xpath expr="//page[last()]" position="after">
-                <page string="Campos a eliminar">
-                    <group>
-
-                        <field name="source_url"/>
-                        <field name="request"/>
-                        <field name="type_of_contact"/>
-                        <field name="safety_level"/>
-                        <field name="category_id"/>
-                    </group>
-                </page>
-            </xpath>
         </field>
     </record>
 
@@ -398,6 +388,11 @@
                     <filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />
                     <filter string="Alta prioridad" name="high_priority" domain="['|',('priority','=',3),('priority','=',2)]" />
                 <separator orientation="vertical"/>
+                    <filter string="Alta seguridad" name="high_sec" domain="['|',('safety_level','=','medium'),('safety_level','=','high')]" />
+                    <filter string="Contacto cualificado" name="high_contact" domain="['|',('type_of_contact','=','qualified'),('type_of_contact','=','highly qualified')]" />
+                    <filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />
+                    <filter string="Alta prioridad" name="high_priority" domain="['|',('priority','=',3),('priority','=',2)]" />
+                <separator orientation="vertical"/>
                     <filter string="Cliente Profesional" name="type_client_profesional" domain="[('type_of_client','=','profesional')]" />
                     <filter string="Cliente Preferente" name="type_client_preferential" domain="[('type_of_client','=','preferential')]" />
                     <filter string="Cliente VIP" name="type_client_vip" domain="[('type_of_client','=','vip')]" />
@@ -412,9 +407,11 @@
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
-                    <filter string="Prioridad" name="priority" context="{'group_by':'priority'}"/>
                     <filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
                     <filter string="Tipo Cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
+                    <filter string="Nivel seguridad" name="safety_level" context="{'group_by':'safety_level'}"/>
+                    <filter string="Calidad contacto" name="type_of_contact" context="{'group_by':'type_of_contact'}"/>
+                    <filter string="Prioridad" name="priority" context="{'group_by':'priority'}"/>
                 <separator orientation="vertical"/>
                 <filter string="Por profesional" name="referred_professional" domain="[('referred_professional', '!=', False)]" context="{'group_by':'referred_professional'}"/>
                 <separator orientation="vertical"/>
