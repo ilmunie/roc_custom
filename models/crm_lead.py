@@ -8,10 +8,7 @@ class CrmLead(models.Model):
     _order = 'create_date desc'
 
 
-    work_type_id = fields.Many2one(
-        string="Tipo de obra",
-        comodel_name='crm.work.type', tracking=True
-    )
+
     customer_concern = fields.Selection([
         ('low', 'Bajo'),
         ('medium', 'Medio'),
