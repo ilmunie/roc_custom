@@ -2,7 +2,7 @@
 <odoo>
 
 <record id="crm_lead_oppor_custom" model="ir.ui.view">
-        <field name="name">crm_lead_tree_custom</field>
+        <field name="name">crm_lead_tree_custom_opp</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
         <field name="arch" type="xml">
