@@ -39,7 +39,7 @@
         </field>
     </record>
 
-
+<!--
     <record id="crm_lead_tree_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom</field>
         <field name="model">crm.lead</field>
@@ -61,7 +61,6 @@
                     <field name="state_id" optional="hide" options="{'no_open': True, 'no_create': True}"/>
                     <field name="country_id" optional="hide" options="{'no_open': True, 'no_create': True}"/>
                     <field name="partner_id" invisible="1"/>
-                    <!-- Explicit domain due to multi edit -> real company domain would be complicated -->
                     <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
                     <field name="user_id" invisible="0" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
 
@@ -86,7 +85,7 @@
 
             </xpath>
         </field>
-    </record>
+    </record>-->
     <record id="crm_lead_tree_original" model="ir.ui.view">
         <field name="name">crm_lead_tree_original</field>
         <field name="model">crm.lead</field>
