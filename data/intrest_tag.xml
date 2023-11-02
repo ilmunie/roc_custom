@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <odoo>
 <data noupdate="1">
+
+    <record id="odoo" model="crm.lead.type">
+        <field name="name">Odoo</field>
+    </record>
     <record id="tag_1" model="intrest.tag">
         <field name="name">Blindadas</field>
     </record>
