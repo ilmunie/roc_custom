@@ -3,14 +3,6 @@ from lxml import etree
 from datetime import timedelta
 
 
-class CrmLeadType(models.Model):
-    _name = 'crm.lead.type'
-    _description = 'Aux lead problem'
-
-    name = fields.Char(
-        string="Lead Type",
-    )
-
 class CrmWorkType(models.Model):
     _name = 'crm.work.type'
     _description = 'Tipo de obra'
@@ -23,7 +15,10 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
-    crm_lead_type_id = fields.Many2one('crm.lead.type')
+#aux field
+    source_url = fields.Char(
+        string="URL de procedencia",
+    )
     work_type_id = fields.Many2one(
         string="Tipo de obra",
         comodel_name='crm.work.type', tracking=True
@@ -363,3 +358,4 @@ class CrmLead(models.Model):
     lost_reason_id = fields.Many2one(
         'lead.lost.reason', string='Motivo de la pérdida', index=True, tracking=True)
     lost_observations = fields.Text(string='Aclaraciones pérdida', tracking=True)
+
