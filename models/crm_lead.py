@@ -15,6 +15,15 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'type' in vals and vals['type'] == 'odoo':
+                vals['type'] = 'lead'            
+        #import pdb;pdb.set_trace()
+        res = super(CrmLead, self).create(vals_list=vals_list)
+        return res
 #aux field
     source_url = fields.Char(
         string="URL de procedencia",
