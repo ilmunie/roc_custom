@@ -289,7 +289,14 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.view_crm_case_leads_filter"/>
         <field name="arch" type="xml">
-
+            <xpath expr="//filter[@name='assigned_to_me']" position="before">
+                <filter string="Leads" name="leads" domain="[('type','=','lead')]"/>
+                <filter string="Oportunidades" name="opportunities" domain="[('type','=','opportunity')]"/>
+                 <separator orientation="vertical"/>
+            </xpath>
+            <xpath expr="//filter[@name='date_closed']" position="before">
+                        <filter string="Fecha conversión" name="date_conversion" context="{'group_by':'date_conversion:week'}"/>
+            </xpath>
             <xpath expr="//filter[@name='assigned_to_me']" position="after">
                     <filter string="Mis Leads" name="my_leads" domain="['|',('activity_user_id','=',uid),('user_id','=',uid)]" help="Próxima tarea mía o soy el comercial"/>
             </xpath>
@@ -332,7 +339,13 @@
             <xpath expr="//filter[@name='compaign']" position="before">
                 <separator orientation="vertical"/>
             </xpath>
+            <xpath expr="//filter[@name='salesperson']" position="before">
+                <filter string="Nombre" name="name" context="{'group_by':'name'}"/>
+                <separator orientation="vertical"/>
+            </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
+                <separator orientation="vertical"/>
+                    <filter string="Tipo" name="type" context="{'group_by':'type'}"/>
                 <separator orientation="vertical"/>
                     <filter string="Prioridad" name="priority" context="{'group_by':'priority'}"/>
                     <filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
@@ -353,6 +366,10 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
         <field name="arch" type="xml">
+            <xpath expr="//filter[@name='salesperson']" position="before">
+                <filter string="Nombre" name="name" context="{'group_by':'name'}"/>
+                <separator orientation="vertical"/>
+            </xpath>
             <xpath expr="//field[@name='phone_mobile_search']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
