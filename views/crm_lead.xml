@@ -39,7 +39,7 @@
         </field>
     </record>
 
-<!--
+
     <record id="crm_lead_tree_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom</field>
         <field name="model">crm.lead</field>
@@ -85,7 +85,7 @@
 
             </xpath>
         </field>
-    </record>-->
+    </record>
     <record id="crm_lead_tree_original" model="ir.ui.view">
         <field name="name">crm_lead_tree_original</field>
         <field name="model">crm.lead</field>
