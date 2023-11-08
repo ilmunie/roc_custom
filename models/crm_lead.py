@@ -16,6 +16,8 @@ class CrmLead(models.Model):
     _order = 'create_date desc'
 
 
+
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -172,6 +174,15 @@ class CrmLead(models.Model):
     visit_duration = fields.Float(string="Tiempo visita (hs.)")
     visited = fields.Boolean(string="Visita terminada")
     date_visited = fields.Datetime(string="Visitado el")
+    @api.depends('date_visited', 'create_date')
+    def _compute_days_to_visit(self):
+        for lead in self:
+            if lead.date_visited:
+                lead.days_to_convert = (fields.Datetime.from_string(lead.date_visited) - fields.Datetime.from_string(lead.create_date)).days
+            else:
+                lead.days_to_convert = 0
+    days_to_visit = fields.Float('Días para visita', compute='_compute_days_to_visit', store=True)
+
     visit_user_ids = fields.Many2many(comodel_name='res.users', string="Personal visita")
     visit_vehicle = fields.Many2one('fleet.vehicle', string="Vehículo")
     crm_lead_visit_ids = fields.One2many('crm.lead.visit','lead_id')

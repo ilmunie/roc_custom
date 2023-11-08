@@ -16,6 +16,7 @@
         'fleet',
         'stock',
         'sale_stock',
+        'crm_enterprise',
         'purchase_stock',
         'web_widget_open_tab',
         'web_m2x_options',
