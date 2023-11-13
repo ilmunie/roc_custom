@@ -18,7 +18,7 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
-    mobile_partner = fields.Char(related='partner_id.mobile', readonly=False, tracking=True)
+    mobile_partner = fields.Char(related='partner_id.mobile', readonly=False, tracking=True, string="Móvil")
 
     def default_get(self, fields):
         res = super(CrmLead, self).default_get(fields)
