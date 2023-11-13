@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <odoo>
-
 <record id="crm_lead_oppor_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom_opp</field>
         <field name="model">crm.lead</field>
@@ -80,6 +79,7 @@
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
                     <field name="installation"/>
+                    <field name="lead_stage_id" widget="badge"/>
 
                 </tree>
 
@@ -128,6 +128,7 @@
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
                     <field name="installation"/>
+                    <field name="lead_stage_id" widget="badge"/>
 
                 </tree>
         </field>
@@ -159,27 +160,21 @@
             parent = "crm.crm_menu_root"
             action = "roc_custom.crm_lead_my_leads"/>
 
-
+<!--
     <record id="crm_lead_form_custom" model="ir.ui.view">
         <field name="name">crm_lead_form_custom</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
 
-            <!--
-        <xpath expr="//group[@name='lead_info']//field[@name='street']" position="attributes">
-                <attribute name="invisible">[('partner_id','!=',True)]</attribute>
+            <xpath expr="//field[@name='stage_id']" position="before">
+                        <field name="lead_stage_id" widget="statusbar"
+                               options="{'clickable': '1'}"
+                               attrs="{'invisible': ['|', ('active', '=', False), ('type', '=', 'opportunity')]}"/>
             </xpath>
-        <xpath expr="//group[@name='lead_partner']//field[@name='street']" position="after">
-                <field name="partner_street" placeholder="Street..." class="o_address_street"/>
-            </xpath>
-            <xpath expr="//group[@name='lead_partner']//field[@name='street2']" position="after">
-                <field name="partner_street2" placeholder="Street..." class="o_address_street"/>
-            </xpath>-->
 
             <xpath expr="//header[last()]" position="inside">
-                <button name="%(open_generale_sale_quotation_wizard)d" string="Generar presupuestos" type="action" class="oe_highlight"
-                attrs="{'invisible': [('type','=','lead')]}"/>
+
             </xpath>
             <xpath expr="//group[@name='lead_partner']//field[@name='partner_id']" position="attributes">
                 <attribute name="invisible">0</attribute>
@@ -198,30 +193,13 @@
             </xpath>
             <xpath expr="//button[@name='action_schedule_meeting']/.." position="inside">
 
-                <button class="oe_stat_button" type="object" attrs="{'invisible': ['|', ('invoice_count', '=', 0), ('type', '=', 'lead')]}" name="action_open_so_account_move" icon="fa-book">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value"><field name="invoice_total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/></span>
-                        <span class="o_stat_text"> Facturas</span>
-                        <field name="invoice_count" invisible="1"/>
-                    </div>
-                </button>
-                <button class="oe_stat_button" type="object" attrs="{'invisible': ['|', ('invoice_count', '=', 0), ('type', '=', 'lead')]}" name="action_open_so_account_move_unpaid" icon="fa-bullhorn">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value"><field name="invoice_unpaid_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/></span>
-                        <span class="o_stat_text"> Debe</span>
-                        <field name="invoice_unpaid_count" invisible="1"/>
-                    </div>
-                </button>
+
             </xpath>
 
 
             <xpath expr="//field[@name='team_id']" position="after">
 
-                <field name="customer_concern"/>
-                <field name="type_of_client"/>
-                <field name="referred_professional" context="{'default_professional':True}"/>
-                <field name="type_of_contact"/>
-                <field name="safety_level"/>
+
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="attributes">
                 <attribute name="options">{'create': False,'create_edit': False, 'color_field': 'color'}</attribute>
@@ -233,25 +211,13 @@
                 <attribute name="options">{'create': False,'create_edit': False, 'color_field': 'color'}</attribute>
             </xpath>
             <xpath expr="//group[@name='lead_priority']//field[@name='tag_ids']" position="before">
-                <field name="work_type_id" options="{'create': False,'create_edit': False}"/>
-                <field name="installation"/>
-                <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
-                <field string="Origen" name="source_id" options="{'create': False,'create_edit': False}"/>
-                <field string="Medio" name="medium_id" options="{'create': False,'create_edit': False}"/>
+
             </xpath>
+
             <xpath expr="//group[@name='opportunity_partner']//field[@name='phone']//.." position="after">
                 <field name="mobile"/>
 
-                <label class="o_form_label oe_inline" for="date_schedule_visit" attrs="{'invisible':[('visited','=',True)]}"/>
-                <div class="o_row oe_inline" attrs="{'invisible':[('visited','=',True)]}">
-                    <field name="date_schedule_visit" class="oe_inline o_datepicker_input"/>
-                    <field name="visit_duration" class="oe_inline" />
-                    <span class="o_duration_suffix"> hs.</span>
-                </div>
-                <field name="visited"/>
-                <field name="date_visited" attrs="{'invisible':[('visited','=',False)]}"/>
-                <field name="visit_user_ids" widget="many2many_tags" attrs="{'required':[('date_schedule_visit','!=',False)]}"/>
-                <field name="visit_vehicle"/>
+
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="before">
                 <field name="work_type_id" options="{'create': False,'create_edit': False}"/>
@@ -280,7 +246,7 @@
                 </group>
             </xpath>
         </field>
-    </record>
+    </record>-->
 
 
 
@@ -344,6 +310,8 @@
                 <separator orientation="vertical"/>
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
+                <separator orientation="vertical"/>
+                    <filter string="Etapa" name="lead_stage_id" context="{'group_by':'lead_stage_id'}"/>
                 <separator orientation="vertical"/>
                     <filter string="Tipo" name="type" context="{'group_by':'type'}"/>
                 <separator orientation="vertical"/>
@@ -542,7 +510,6 @@
                         <group>
                             <field name="partner_id"/>
                             <field name="user_id"  />
-                            <field name="lead_stage_id"  />
                         </group>
                         <group>
                             <field name="lead_team_id" avatar_field="avatar_128"/>
@@ -590,13 +557,10 @@
                 <aggregate name="days_to_convert" string="Days To Opportunity" group_operator="avg" field="days_to_convert"/>
                 <aggregate name="days_to_visit" string="Dias para visita" group_operator="avg" field="days_to_visit"/>
             </xpath>
-
             <xpath expr="//aggregate[@name='days_exceeding_closing']" position="after">
                 <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False)]" group_operator="count" invisible="0"/>
                 <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
             </xpath>
-
-
         </field>
 </record>
 

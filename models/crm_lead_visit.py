@@ -1,4 +1,4 @@
-from odoo import fields, models, api
+from odoo import fields, models, api, SUPERUSER_ID
 
 class CrmLeadVisit(models.Model):
     _name = 'crm.lead.visit'

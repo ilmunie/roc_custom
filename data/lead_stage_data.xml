@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<odoo>
+<data noupdate="1">
+
+    <record id="lead_stage_new" model="crm.lead.stage">
+        <field name="sequence" eval="1"/>
+        <field name="name">Nuevas</field>
+    </record>
+    <record id="lead_stage_waiting_data" model="crm.lead.stage">
+        <field name="sequence" eval="2"/>
+        <field name="name">Esperando información</field>
+    </record>
+</data>
+</odoo>
+
+
+
+
+
+
+
+
+

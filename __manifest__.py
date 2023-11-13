@@ -24,6 +24,7 @@
     ],
     'data': [
         'security/groups.xml',
+        'data/lead_stage_data.xml',
         'wizards/change_date_due_wiz.xml',
         'wizards/lost_reason.xml',
         'wizards/crm_convert_opp_wizard.xml',
@@ -31,6 +32,8 @@
         'wizards/generate_sale_quotation_wizard.xml',
         'wizards/supplierinfo_import_view.xml',
         'views/purchase_order_report.xml',
+        'views/crm_lead_form_view.xml',
+        'views/crm_lead_stage_views.xml',
         'views/sales_complementary_models.xml',
         'views/stock_picking.xml',
         'views/account_journal_view.xml',

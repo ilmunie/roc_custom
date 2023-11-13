@@ -1,7 +1,10 @@
-from odoo import fields, models, api
-from lxml import etree
-from datetime import timedelta
+from odoo import fields, models, api, SUPERUSER_ID
 
+class CrmLeadStage(models.Model):
+    _name = "crm.lead.stage"
+
+    name = fields.Char(string="Name", required=True)
+    sequence = fields.Integer(string="Sequence")
 
 class CrmWorkType(models.Model):
     _name = 'crm.work.type'
@@ -15,8 +18,21 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+    mobile_partner = fields.Char(related='partner_id.mobile', readonly=False, tracking=True)
 
+    def default_get(self, fields):
+        res = super(CrmLead, self).default_get(fields)
+        sorted_stages = self.env['crm.lead.stage'].search([], order='sequence', limit=1).mapped('id')
+        res['lead_stage_id'] = sorted_stages[0] if sorted_stages else False
+        return res
 
+    @api.model
+    def _read_group_lead_stage_ids(self, stages, domain, order):
+        search_domain = []
+        # perform search
+        stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
+        return stages.browse(stage_ids)
+    lead_stage_id = fields.Many2one('crm.lead.stage', string='Etapa Lead', index=True, tracking=True,copy=False, ondelete='restrict', group_expand='_read_group_lead_stage_ids')
 
     @api.model_create_multi
     def create(self, vals_list):
