@@ -47,6 +47,9 @@
                     <button name="%(action_sale_purchase_order_wizard)d" type="action" string="Nueva compra" class="btn-primary" attrs="{'invisible':[('state','in',['done','cancel'])]}"/>
                 </xpath>
 
+                <xpath expr="//field[@name='sale_order_template_id']" position="before">
+                    <field name="journal_id"/>
+                </xpath>
                 <xpath expr="//field[@name='order_line']" position="after">
                     <field name="delivery_status" widget="statusbar"/>
                     <field name="invoice_status" widget="statusbar"/>

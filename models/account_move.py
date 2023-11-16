@@ -20,7 +20,12 @@ class AccountMove(models.Model):
     def get_so(self):
         for record in self:
             po = self.env['sale.order'].search([('invoice_ids','=',record.id)])
-            record.sale_order_id = po[0].id if po else False
+            if po:
+                record.sale_order_id = po[0].id
+                if po[0].journal_id:
+                    record.journal_id = po[0].journal_id.id
+            else:
+                record.sale_order_id = False
             record.opportunity_id = po[0].opportunity_id.id if po and po[0].opportunity_id else False
 
     sale_order_id = fields.Many2one('sale.order',string="Órden de venta", compute=get_so, store=True)
@@ -187,3 +192,4 @@ class AccountMove(models.Model):
         res = super(AccountMove, self)._get_reconciled_vals(partial, amount, counterpart_line)
         res['invoice_payment_label'] = counterpart_line.journal_id.invoice_payment_label or ''
         return res
+
