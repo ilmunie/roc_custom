@@ -39,14 +39,14 @@ class CrmLead(models.Model):
             if record.lead_stage_change_ids:
                 record.datetime_in_lead_stage = sorted(record.lead_stage_change_ids, key=lambda r: r.date, reverse=True)[0].date
             else:
-                record.datetime_in_lead_stage = False
+                record.datetime_in_lead_stage = record.create_date
     @api.depends('stage_change_ids')
     def compute_datetime_last_stage(self):
         for record in self:
             if record.stage_change_ids:
                 record.datetime_in_stage = sorted(record.stage_change_ids, key=lambda r: r.date, reverse=True)[0].date
             else:
-                record.datetime_in_stage = False
+                record.datetime_in_stage = record.create_date
 
 
     datetime_in_lead_stage = fields.Datetime(compute=compute_datetime_last_lead_stage, store=True, string="Cambio de etapa")
