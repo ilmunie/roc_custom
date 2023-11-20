@@ -1,10 +1,17 @@
 <?xml version="1.0"?>
 <odoo>
+
+
+
+
 <record id="crm_lead_oppor_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom_opp</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
         <field name="arch" type="xml">
+
+
+
 
             <xpath expr="//field[@name='name']" position="before">
                 <field name="link_to_form" string="         " />
@@ -26,6 +33,7 @@
                 <attribute name="optional">hide</attribute>
             </xpath>
             <xpath expr="//field[@name='stage_id']" position="after">
+                <field name="datetime_in_stage" widget="remaining_days"/>
                     <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
                     <field name="customer_concern"/>
                     <field name="type_of_client"/>
@@ -79,8 +87,8 @@
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
                     <field name="installation"/>
-                    <field name="lead_stage_id" widget="badge"/>
-
+                    <field name="lead_stage_id"/>
+                <field name="datetime_in_lead_stage" widget="remaining_days"/>
                 </tree>
 
             </xpath>
@@ -129,6 +137,7 @@
                     <field name="activity_ids" widget="list_activity"/>
                     <field name="installation"/>
                     <field name="lead_stage_id" widget="badge"/>
+                <field name="datetime_in_lead_stage" widget="remaining_days"/>
 
                 </tree>
         </field>
@@ -136,13 +145,14 @@
         <record model="ir.actions.act_window" id="crm_lead_my_leads">
             <field name="name">Leads</field>
             <field name="res_model">crm.lead</field>
-            <field name="view_mode">tree,kanban,graph,pivot,calendar,form,activity</field>
+            <field name="view_mode">kanban,tree,graph,pivot,calendar,form,activity</field>
             <field name="view_id" ref="roc_custom.crm_lead_tree_original"/>
             <field name="domain">['|', ('type','=','lead'), ('type','=',False)]</field>
             <field name="search_view_id" ref="crm.view_crm_case_leads_filter"/>
             <field name="context">{
                     'default_type':'lead',
                     'search_default_my_leads':1,
+                    'search_default_lead_stage_id':1,
                 }
             </field>
             <field name="help" type="html">
@@ -311,7 +321,7 @@
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
-                    <filter string="Etapa" name="lead_stage_id" context="{'group_by':'lead_stage_id'}"/>
+                    <filter string="Etapa Lead" name="lead_stage_id" context="{'group_by':'lead_stage_id'}"/>
                 <separator orientation="vertical"/>
                     <filter string="Tipo" name="type" context="{'group_by':'type'}"/>
                 <separator orientation="vertical"/>
@@ -326,6 +336,8 @@
                 <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <separator orientation="vertical"/>
                 <filter string="Motivo de pérdida" name="lost_reason_id" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
+                <separator orientation="vertical"/>
+                <filter string="Tiempo en etapa" name="datetime_in_lead_stage" context="{'group_by':'datetime_in_lead_stage'}"/>
             </xpath>
         </field>
     </record>
@@ -443,6 +455,10 @@
                     <div class="o_kanban_record_subtitle">
                         <field name="visit_status_date"/>
                     </div>
+                </xpath>
+                <xpath expr="//field[@name='name']" position="after">
+                    <span>  </span>
+                    <field name="datetime_in_stage" widget="remaining_days"/>
                 </xpath>
         </field>
     </record>

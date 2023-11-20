@@ -21,6 +21,9 @@
         'web_widget_open_tab',
         'web_m2x_options',
         'web_domain_field',
+        'activity_automation',
+        'mrp',
+        'entrivis_kanban_many2many_tags',
     ],
     'data': [
         'security/groups.xml',

@@ -10,6 +10,18 @@
         <field name="sequence" eval="2"/>
         <field name="name">Esperando información</field>
     </record>
+    <record id="lead_stage_first_reminder" model="crm.lead.stage">
+        <field name="sequence" eval="2"/>
+        <field name="name">Primer recordatorio</field>
+    </record>
+    <record id="lead_stage_second_reminder" model="crm.lead.stage">
+        <field name="sequence" eval="3"/>
+        <field name="name">Segundo recordatorio</field>
+    </record>
+    <record id="lead_stage_third_reminder" model="crm.lead.stage">
+        <field name="sequence" eval="4"/>
+        <field name="name">Tercer recordatorio</field>
+    </record>
 </data>
 </odoo>
 

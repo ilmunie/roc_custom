@@ -1,5 +1,20 @@
 from odoo import fields, models, api, SUPERUSER_ID
 
+class CrmStageChange(models.Model):
+    _name = "crm.stage.change"
+
+    date = fields.Datetime()
+    stage_id = fields.Many2one('crm.stage')
+    opportunity_id = fields.Many2one('crm.lead')
+
+
+class CrmLeadStageChange(models.Model):
+    _name = "crm.lead.stage.change"
+
+    date = fields.Datetime()
+    lead_stage_id = fields.Many2one('crm.lead.stage')
+    lead_id = fields.Many2one('crm.lead')
+
 class CrmLeadStage(models.Model):
     _name = "crm.lead.stage"
 
@@ -17,6 +32,76 @@ class CrmWorkType(models.Model):
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
+
+    @api.depends('lead_stage_change_ids')
+    def compute_datetime_last_lead_stage(self):
+        for record in self:
+            if record.lead_stage_change_ids:
+                record.datetime_in_lead_stage = sorted(record.lead_stage_change_ids, key=lambda r: r.date, reverse=True)[0].date
+            else:
+                record.datetime_in_lead_stage = False
+    @api.depends('stage_change_ids')
+    def compute_datetime_last_stage(self):
+        for record in self:
+            if record.stage_change_ids:
+                record.datetime_in_stage = sorted(record.stage_change_ids, key=lambda r: r.date, reverse=True)[0].date
+            else:
+                record.datetime_in_stage = False
+
+
+    datetime_in_lead_stage = fields.Datetime(compute=compute_datetime_last_lead_stage, store=True, string="Cambio de etapa")
+    datetime_in_stage = fields.Datetime(compute=compute_datetime_last_stage, store=True, string="Cambio de etapa")
+    lead_stage_change_ids = fields.One2many('crm.lead.stage.change','lead_id')
+    stage_change_ids = fields.One2many('crm.stage.change','opportunity_id')
+
+
+
+    @api.depends('stage_id')
+    def trigger_crm_stage_change(self):
+        for record in self:
+            if record.stage_id:
+                self.env['crm.stage.change'].create({
+                    'opportunity_id': record.id,
+                    'date': fields.Datetime.now(),
+                    'stage_id': record.stage_id.id
+                })
+
+            record.trigger_crm_lead_stage_change = False if record.trigger_crm_lead_stage_change else True
+    trigger_crm_stage_change = fields.Boolean(compute=trigger_crm_stage_change, store=True)
+
+    @api.depends('lead_stage_id')
+    def trigger_crm_lead_stage_change(self):
+        for record in self:
+            if record.lead_stage_id:
+                self.env['crm.lead.stage.change'].create({
+                    'lead_id': record.id,
+                    'date': fields.Datetime.now(),
+                    'lead_stage_id': record.lead_stage_id.id
+                })
+
+            record.trigger_crm_lead_stage_change = False if record.trigger_crm_lead_stage_change else True
+    trigger_crm_lead_stage_change = fields.Boolean(compute=trigger_crm_lead_stage_change, store=True)
+    @api.depends('message_ids')
+    def get_last_message(self):
+        for record in self:
+            last_email_from_partner = False
+            if record.message_ids:
+                last_message_id = sorted(record.message_ids.filtered(lambda x: x.body), key=lambda r: r.create_date, reverse=True)
+                emails = []
+                if record.partner_id:
+                    emails.append(record.partner_id.email)
+                if record.email_from:
+                    emails.append(record.email_from)
+                if last_message_id and last_message_id[0].email_from in emails:
+                    last_email_from_partner = True
+            record.last_email_from_partner = last_email_from_partner
+
+
+
+    last_email_from_partner = fields.Boolean(compute=get_last_message, store=True)
+
+
+
 
     mobile_partner = fields.Char(related='partner_id.mobile', readonly=False, tracking=True, string="Móvil")
 

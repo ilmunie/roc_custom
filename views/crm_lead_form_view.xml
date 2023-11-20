@@ -331,6 +331,7 @@
                                         <field name="date_conversion"/>
                                         <field name="date_closed"/>
                                         <field name="type" invisible="1"/>
+                                        <field name="last_email_from_partner"/>
                                     </group>
                                 </group>
                             </page>
