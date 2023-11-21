@@ -3,6 +3,13 @@
 
 from odoo import fields, models, _
 
+class CrmTag(models.Model):
+    _inherit = 'crm.tag'
+
+    closer_follow = fields.Boolean(string="Seguimiento especial")
+
+
+
 class IntrestTag(models.Model):
     _name = 'intrest.tag'
 
@@ -15,3 +22,32 @@ class LeadLostReason(models.Model):
 
     name = fields.Char('Description', required=True, translate=True)
 
+
+class CrmStageChange(models.Model):
+    _name = "crm.stage.change"
+
+    date = fields.Datetime()
+    stage_id = fields.Many2one('crm.stage')
+    opportunity_id = fields.Many2one('crm.lead')
+
+
+class CrmLeadStageChange(models.Model):
+    _name = "crm.lead.stage.change"
+
+    date = fields.Datetime()
+    lead_stage_id = fields.Many2one('crm.lead.stage')
+    lead_id = fields.Many2one('crm.lead')
+
+class CrmLeadStage(models.Model):
+    _name = "crm.lead.stage"
+
+    name = fields.Char(string="Name", required=True)
+    sequence = fields.Integer(string="Sequence")
+
+class CrmWorkType(models.Model):
+    _name = 'crm.work.type'
+    _description = 'Tipo de obra'
+
+    name = fields.Char(
+        string="Tipo de obra",
+    )

@@ -35,7 +35,8 @@
             <xpath expr="//field[@name='stage_id']" position="after">
                 <field name="datetime_in_stage" widget="remaining_days"/>
                     <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
-                    <field name="customer_concern"/>
+                   <!-- <field name="customer_concern"/>-->
+                    <field name="company_concern" widget="priority"/>
                     <field name="type_of_client"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
@@ -76,7 +77,9 @@
                     <field name="referred" invisible="1"/>
                     <field name="medium_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
-                    <field name="customer_concern"/>
+                    <!--<field name="customer_concern"/>-->
+                    <field name="company_concern" widget="priority"/>
+
                     <field name="type_of_client"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
@@ -122,7 +125,9 @@
                     <field name="referred" invisible="1"/>
                     <field name="medium_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
-                    <field name="customer_concern"/>
+                    <!--<field name="customer_concern"/>-->
+                    <field name="company_concern" widget="priority"/>
+
                     <field name="type_of_client"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
 
@@ -295,12 +300,15 @@
             </xpath>
             <xpath expr="//filter[@name='unassigned_leads']" position="after">
                 <separator orientation="vertical"/>
+                <filter string="Seguimiento especial" name="tag_closer_follow" domain="[('tag_ids.closer_follow','=',True)]"/>
+                <separator orientation="vertical"/>
                 <filter string="Busca instalación" name="installation" domain="[('installation','=',True)]"/>
                 <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
                 <separator orientation="vertical"/>
                     <filter string="Asociadas a profesional" name="with_referred_professional" domain="[('referred_professional', '!=', False)]"/>
                 <separator orientation="vertical"/>
-                    <filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />
+                    <!--<filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />-->
+                    <filter string="Alto interés Roconsa" name="high_company_concern" domain="[('company_concern','in',['3','4','5'])]" />
                     <filter string="Alta prioridad" name="high_priority" domain="['|',('priority','=',3),('priority','=',2)]" />
                 <separator orientation="vertical"/>
                     <filter string="Cliente Profesional" name="type_client_profesional" domain="[('type_of_client','=','profesional')]" />
@@ -326,7 +334,8 @@
                     <filter string="Tipo" name="type" context="{'group_by':'type'}"/>
                 <separator orientation="vertical"/>
                     <filter string="Prioridad" name="priority" context="{'group_by':'priority'}"/>
-                    <filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
+                    <!--<filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>-->
+                    <filter string="Interés Roconsa" name="company_concern" context="{'group_by':'company_concern'}"/>
                     <filter string="Tipo Cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
                 <separator orientation="vertical"/>
                 <filter string="Por profesional" name="referred_professional" domain="[('referred_professional', '!=', False)]" context="{'group_by':'referred_professional'}"/>
@@ -369,6 +378,8 @@
             </xpath>
             <xpath expr="//filter[@name='inactive']" position="after">
                 <separator orientation="vertical"/>
+                <filter string="Seguimiento especial" name="tag_closer_follow" domain="[('tag_ids.closer_follow','=',True)]"/>
+                <separator orientation="vertical"/>
                 <filter string="Sin visitas programadas" name="no_visit" domain="[('visit_status','=','Sin visitas programadas')]"/>
                 <filter string="Visita programada" name="waiting_visit" domain="[('visit_status','=','A visitar')]"/>
                 <filter string="Visitado" name="visited" domain="[('visit_status','=','Visitado')]"/>
@@ -378,13 +389,12 @@
                 <separator orientation="vertical"/>
                     <filter string="Asociadas a profesional" name="with_referred_professional" domain="[('referred_professional', '!=', False)]"/>
                 <separator orientation="vertical"/>
-                    <filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />
+                    <!--<filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />-->
+                    <filter string="Alto interés Roconsa" name="high_company_concern" domain="[('company_concern','in',['1','2','3'])]" />
                     <filter string="Alta prioridad" name="high_priority" domain="['|',('priority','=',3),('priority','=',2)]" />
                 <separator orientation="vertical"/>
                     <filter string="Alta seguridad" name="high_sec" domain="['|',('safety_level','=','medium'),('safety_level','=','high')]" />
                     <filter string="Contacto cualificado" name="high_contact" domain="['|',('type_of_contact','=','qualified'),('type_of_contact','=','highly qualified')]" />
-                    <filter string="Alto interés" name="high_customer_concern" domain="[('customer_concern','=','high')]" />
-                    <filter string="Alta prioridad" name="high_priority" domain="['|',('priority','=',3),('priority','=',2)]" />
                 <separator orientation="vertical"/>
                     <filter string="Cliente Profesional" name="type_client_profesional" domain="[('type_of_client','=','profesional')]" />
                     <filter string="Cliente Preferente" name="type_client_preferential" domain="[('type_of_client','=','preferential')]" />
@@ -400,7 +410,8 @@
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
-                    <filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>
+                    <!--<filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>-->
+                    <filter string="Interés Roconsa" name="company_concern" context="{'group_by':'company_concern'}"/>
                     <filter string="Tipo Cliente" name="type_of_client" context="{'group_by':'type_of_client'}"/>
                     <filter string="Nivel seguridad" name="safety_level" context="{'group_by':'safety_level'}"/>
                     <filter string="Calidad contacto" name="type_of_contact" context="{'group_by':'type_of_contact'}"/>
@@ -441,19 +452,25 @@
                     <field name="phone_resume" widget="copy_phone"/>
                 </div>
                             </field>
+                <xpath expr="//div[hasclass('oe_kanban_footer')]//field[@name='priority']" position="before">
+                    <span>Cliente</span>
+                </xpath>
+
                 <xpath expr="//div[hasclass('oe_kanban_footer')]" position="inside">
                     <div class="o_kanban_record_subtitle">
-                        <field name="intrest_tag_ids" widget="many2many_tags"/>
-                        <strong><field name="team_id" widget="badge" /></strong>
-                        <field name="work_type_id" widget="badge" attrs="{'invisible':[('work_type_id','=',False)]}"/>
+                        <!--<field name="intrest_tag_ids" widget="many2many_tags"/>-->
+                        <strong><field name="team_id" widget="badge"/></strong>
+                        <span> | </span><field widget="priority" name="company_concern"/>
+                        <!--<field name="work_type_id" widget="badge" attrs="{'invisible':[('work_type_id','=',False)]}"/>-->
                         <br/>
+                        <!--
                         <div>
-                            <span attrs="{'invisible':[('customer_concern','=',False)]}">Interés </span><strong><field attrs="{'invisible':[('customer_concern','=',False)]}" name="customer_concern"/></strong>
                             <span attrs="{'invisible':['|',('type_of_client','=',False),('customer_concern','=',False)]}"> | </span>
-                        <span attrs="{'invisible':[('type_of_client','=',False)]}" >Cliente </span><strong><field attrs="{'invisible':[('type_of_client','=',False)]}" name="type_of_client"/></strong></div>
+                        <span attrs="{'invisible':[('type_of_client','=',False)]}" >Cliente </span><strong><field attrs="{'invisible':[('type_of_client','=',False)]}" name="type_of_client"/></strong></div>-->
                     </div>
-                    <div class="o_kanban_record_subtitle">
+                    <div class="o_kanban_record_subtitle" attrs="{'invisible':[('stage_name','!=','Visita')]}">
                         <field name="visit_status_date"/>
+                        <field name="stage_name" invisible="1"/>
                     </div>
                 </xpath>
                 <xpath expr="//field[@name='name']" position="after">

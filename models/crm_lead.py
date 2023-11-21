@@ -1,34 +1,5 @@
 from odoo import fields, models, api, SUPERUSER_ID
 
-class CrmStageChange(models.Model):
-    _name = "crm.stage.change"
-
-    date = fields.Datetime()
-    stage_id = fields.Many2one('crm.stage')
-    opportunity_id = fields.Many2one('crm.lead')
-
-
-class CrmLeadStageChange(models.Model):
-    _name = "crm.lead.stage.change"
-
-    date = fields.Datetime()
-    lead_stage_id = fields.Many2one('crm.lead.stage')
-    lead_id = fields.Many2one('crm.lead')
-
-class CrmLeadStage(models.Model):
-    _name = "crm.lead.stage"
-
-    name = fields.Char(string="Name", required=True)
-    sequence = fields.Integer(string="Sequence")
-
-class CrmWorkType(models.Model):
-    _name = 'crm.work.type'
-    _description = 'Tipo de obra'
-
-    name = fields.Char(
-        string="Tipo de obra",
-    )
-
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
@@ -135,6 +106,17 @@ class CrmLead(models.Model):
         string="Tipo de obra",
         comodel_name='crm.work.type', tracking=True
     )
+
+    stage_name = fields.Char(related="stage_id.name")
+    company_concern = fields.Selection([
+        ('1', 'Bajo'),
+        ('2', 'Normal'),
+        ('3', 'Alto'),
+        ('4', 'Muy Alto'),
+        ('5', 'Urgente')],
+        string="Interés Roconsa", tracking=True
+    )
+
     customer_concern = fields.Selection([
         ('low', 'Bajo'),
         ('medium', 'Medio'),
@@ -283,8 +265,7 @@ class CrmLead(models.Model):
             else:
                 lead.days_to_convert = 0
     days_to_visit = fields.Float('Días para visita', compute='_compute_days_to_visit', store=True)
-
-    visit_user_ids = fields.Many2many(comodel_name='res.users', string="Personal visita")
+    visit_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita")
     visit_vehicle = fields.Many2one('fleet.vehicle', string="Vehículo")
     crm_lead_visit_ids = fields.One2many('crm.lead.visit','lead_id')
     @api.depends('visited','date_schedule_visit')

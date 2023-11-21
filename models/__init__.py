@@ -10,3 +10,4 @@ from . import mrp_production
 from . import mail_template
 from . import account_move
 from . import crm_lead_visit
+from . import hr_employee

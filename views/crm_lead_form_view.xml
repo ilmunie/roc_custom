@@ -180,10 +180,10 @@
                                     <field name="safety_level" widget="radio" options="{'horizontal': True}"/>
                                 </div>
                                 <field name="installation"/>
-                                <field name="type_of_contact" widget="radio" />
                                 <field name="priority" widget="priority"/>
-                                <field name="customer_concern" widget="radio" options="{'horizontal': True}"/>
-
+                                <field name="type_of_contact" widget="radio" />
+                                <!--<field name="customer_concern" widget="radio" options="{'horizontal': True}"/>-->
+                                <field name="company_concern" widget="priority"/>
                                 <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True, 'no_open': True, 'no_create': True}"/>
 
                             </group>
@@ -252,9 +252,10 @@
                                     <field name="safety_level" widget="radio" options="{'horizontal': True}"/>
                                 </div>
                                 <field name="installation"/>
-                                <field name="type_of_contact" widget="radio" />
                                 <field name="priority" widget="priority"/>
-                                <field name="customer_concern" widget="radio" options="{'horizontal': True}"/>
+                                <field name="type_of_contact" widget="radio" />
+                                <field name="company_concern" widget="priority"/>
+                                <!--<field name="customer_concern" widget="radio" options="{'horizontal': True}"/>-->
                                 <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True, 'no_open': True, 'no_create': True}"/>
 
                             </group>

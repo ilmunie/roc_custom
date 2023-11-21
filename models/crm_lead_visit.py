@@ -34,3 +34,6 @@ class CrmLeadVisit(models.Model):
     date_visited = fields.Datetime(related='lead_id.date_visited', store=True, string="Visitado el")
 
 
+
+
+
