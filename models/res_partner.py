@@ -5,6 +5,7 @@ from odoo.exceptions import ValidationError
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
+    default_purchase_picking_type_id = fields.Many2one('stock.picking.type', string="Recibir en")
     phone = fields.Char(widget="phone")
     mobile = fields.Char(widget="mobile")
     professional = fields.Boolean(string="Profesional")

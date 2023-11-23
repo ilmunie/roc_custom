@@ -5,6 +5,12 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    @api.onchange('partner_id')
+    def onchange_partner_set_picking_type(self):
+        for record in self:
+            if record.partner_id and record.partner_id.default_purchase_picking_type_id:
+                record.picking_type_id = record.partner_id.default_purchase_picking_type_id.id
+
     delivery_date_status = fields.Selection(string="Coordinación entrega", selection=[('waiting_info','Esperando información'),('date_scheduled','Fecha pactada')],default='waiting_info')
     product_tmp_id = fields.Many2one(related='order_line.product_template_id', string="Plantilla de producto")
     product_id = fields.Many2one(related='order_line.product_id',string="Variante de producto" )

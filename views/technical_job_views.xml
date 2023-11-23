@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="technical_job_search_view" model="ir.ui.view">
+            <field name="name">technical.job.search.view</field>
+            <field name="model">technical.job</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+            <search string="Search Jobs">
+                <field name="user_id"/>
+                <filter string="Mis trabajos" help="My Meetings" name="mymeetings" domain="[('user_id', 'in', [uid])]"/>
+                <separator/>
+                <filter string="Date" name="filter_start_date" date="date_schedule"/>
+                <separator/>
+                <filter string="Planificados" name="busy" domain="[('job_status', '=', 'to_do')]"/>
+                <filter string="Stand by" name="free" domain="[('job_status', '=', 'stand_by')]"/>
+                <filter string="Terminados" name="free" domain="[('job_status', '=', 'done')]"/>
+                <filter string="Cancelados" name="free" domain="[('job_status', '=', 'cancel')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Fecha" name="responsible" domain="[]" context="{'group_by': 'user_id'}"/>
+                    <filter string="Estado" name="status" domain="[]" context="{'group_by': 'job_status'}"/>
+                    <filter string="Tipo" name="job_type" domain="[]" context="{'group_by': 'job_type_id'}"/>
+                    <filter string="Empleado" name="job_employee_ids" domain="[]" context="{'group_by': 'job_employee_id'}"/>
+                    <filter string="Vehiculo" name="job_vehicle_ids" domain="[]" context="{'group_by': 'job_vehicle_id'}"/>
+                    <filter string="Responsable" name="user_id" domain="[]" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+            </field>
+    </record>
+
+
+    <record id="technical_job_calendar_view" model="ir.ui.view">
+            <field name="name">technical.job.calendar.view</field>
+            <field name="model">technical.job</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <calendar string="Calendario de trabajos" quick_add="False" event_open_popup="False"  date_delay="job_duration" create="1" mode="week" date_start="date_schedule" color="job_status" >
+                    <field name="source_document_display_name" filters="True" invisible="True"/>
+                    <field name="html_link_to_src_doc"/>
+                    <field name="job_status" filters="True"/>
+                    <field name="job_type_id" filters="True"/>
+                    <field name="job_employee_id" avatar_field="avatar_128" filters="True"/>
+                    <field name="job_vehicle_id" filters="True" />
+                    <field name="user_id" avatar_field="avatar_128" filters="True"/>
+                    <field name="html_data_src_doc"/>
+                </calendar>
+            </field>
+        </record>
+        <record id="technical_job_form_view" model="ir.ui.view">
+            <field name="name">technical.job.form.view</field>
+            <field name="model">technical.job</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <form string="Trabajo Técnico" >
+                    <header>
+                        <field name="job_status" widget="statusbar" options="{'clickable':True}"/>
+                    </header>
+                    <sheet>
+                    <group>
+                        <group>
+                            <field name="html_link_to_src_doc" readonly="True"/>
+                            <field name="source_document_display_name" invisible="True"/>
+                            <field name="res_model" invisible="True"/>
+                            <field name="res_id" invisible="True"/>
+                            <field name="job_type_id"/>
+                            <field name="date_status" widget="remaining_days"/>
+                        </group>
+                        <group>
+                            <label class="o_form_label oe_inline" for="date_schedule"/>
+                            <div class="o_row oe_inline" >
+                                    <field name="date_schedule" class="oe_inline o_datepicker_input"/>
+                                    <field name="job_duration" class="oe_inline" />
+                                    <span class="o_duration_suffix"> hs.</span>
+                            </div>
+                            <field name="job_employee_ids" widget="many2many_tags"/>
+                            <field name="job_vehicle_ids" widget="many2many_tags"/>
+                            <field name="user_id"/>
+                            <field name="schedule_id" invisible="True"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="html_data_src_doc" readonly="True"/>
+                    </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+    <record id="action_technical_job" model="ir.actions.act_window">
+        <field name="name">Calendario de Trabajos</field>
+        <field name="res_model">technical.job</field>
+        <field name="view_mode">calendar,tree,form</field>
+        <field name="view_id" ref="roc_custom.technical_job_calendar_view"/>
+        <field name="search_view_id" ref="roc_custom.technical_job_search_view"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+           No se encontraron trabajos técnicos.
+          </p><p>
+            Este calendario comparte los trabajos técnicos de las oportunidades y de los albaranes de entrega.
+          </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_crm_job"
+        name="Calendario de Trabajos"
+        sequence="10"
+        parent="crm.crm_menu_root"
+        action="roc_custom.action_technical_job"/>
+</odoo>

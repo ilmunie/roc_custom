@@ -3,7 +3,6 @@ access_intrest_tag,roc_custom.intrest_tag,model_intrest_tag,base.group_user,1,1,
 access_intrest_tag,roc_custom.intrest_tag,model_intrest_tag,sales_team.group_sale_manager,1,1,1,1
 access_lead_lost_reason,roc_custom.lead.lost.reason,model_lead_lost_reason,base.group_user,1,1,1,0
 access_lost_reason_wizard,roc_custom.lost.reason.wizard,model_lost_reason_wizard,base.group_user,1,1,1,0
-access_crm_lead_visit,roc_custom.crm_lead_visit,model_crm_lead_visit,base.group_user,1,1,1,0
 access_generale_sale_quotation,roc_custom.generale.sale.quotation,model_generale_sale_quotation,base.group_user,1,1,1,0
 access_mail_template_extra_report,roc_custom.mail.template.extra.report,model_mail_template_extra_report,base.group_user,1,1,1,0
 access_supplierinfo_import,roc_custom.supplierinfo_import,model_supplierinfo_import,base.group_user,1,1,1,0
@@ -17,3 +16,8 @@ access_crm_lead_stage_public,roc_custom.model_crm_lead_stage_public,model_crm_le
 access_crm_lead_stage_manager,roc_custom.model_crm_lead_stage_manager,model_crm_lead_stage,sales_team.group_sale_manager,1,1,1,1
 access_crm_lead_stage_change,roc_custom.model_crm_lead_stage_change,model_crm_lead_stage_change,base.group_user,1,1,1,1
 access_crm_stage_change,roc_custom.model_crm_stage_change,model_crm_stage_change,base.group_user,1,1,1,1
+access_technical_job,roc_custom.technical_job,model_technical_job,base.group_user,1,1,1,1
+access_technical_job_type_public,roc_custom.technical_job_type_public,model_technical_job_type,base.group_user,1,0,0,0
+access_technical_job_type_manager,roc_custom.technical_job_type_manager,model_technical_job_type,sales_team.group_sale_manager,1,1,1,1
+access_technical_job_schedule,roc_custom.technical_job_schedule,model_technical_job_schedule,base.group_user,1,1,1,1
+access_modify_tags_massive,roc_custom.modify_tags_massive,model_modify_tags_massive,base.group_user,1,1,1,1

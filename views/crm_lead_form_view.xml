@@ -40,6 +40,15 @@
                                     <span class="o_stat_text" attrs="{'invisible': [('calendar_event_count', '&gt;', 1)]}"> Meeting</span>
                                 </div>
                             </button>
+
+                            <button name="action_schedule_job" type="object" class="oe_stat_button" icon="fa-wrench" attrs="{'invisible':[('type','=','lead')]}" readonly="True">
+                                <div class="o_stat_info">
+                                    <field name="active_technical_job_count"/>
+                                    <span>/</span>
+                                    <field name="technical_job_count"/>
+                                    <span class="o_stat_text" >Trabajos Técnicos</span>
+                                </div>
+                            </button>
                             <button name="action_show_potential_duplicates" type="object"
                                 class="oe_stat_button" icon="fa-star"
                                 attrs="{'invisible': [('duplicate_lead_count', '&lt;', 1)]}">
@@ -194,6 +203,7 @@
                             <group name="lead_right_bottom" string="Origen">
                                 <field string="Medio" name="medium_id" options="{'create': False,'create_edit': False}"/>
                                 <field string="Origen" name="source_id" options="{'create': False,'create_edit': False}"/>
+                                <field string="Campaña" name="campaign_id" options="{'create': False,'create_edit': False}"/>
                                 <field name="type_of_client"/>
                                 <field name="referred_professional" context="{'default_professional':True}"/>
                             </group>
@@ -259,22 +269,12 @@
                                 <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True, 'no_open': True, 'no_create': True}"/>
 
                             </group>
-                            <group name="assigned_users" string="Project Team">
+                            <group name="assigned_users" string="Equipo">
                                 <field name="team_id" options="{'no_open': True, 'no_create': True}"/>
                                 <field name="user_id" options="{'no_open': True, 'no_create': True}" context="{'default_sales_team_id': team_id}" widget="many2one_avatar_user"/>
                             </group>
-                            <group name="processing" string="Processing">
+                            <group name="processing" string="Procesamiento">
                                 <field name="date_deadline"/>
-                                <label class="o_form_label oe_inline" for="date_schedule_visit" attrs="{'invisible':[('visited','=',True)]}"/>
-                                <div class="o_row oe_inline" attrs="{'invisible':[('visited','=',True)]}">
-                                    <field name="date_schedule_visit" class="oe_inline o_datepicker_input"/>
-                                    <field name="visit_duration" class="oe_inline" />
-                                    <span class="o_duration_suffix"> hs.</span>
-                                </div>
-                                <field name="visited"/>
-                                <field name="date_visited" attrs="{'invisible':[('visited','=',False)]}"/>
-                                <field name="visit_user_ids" widget="many2many_tags" attrs="{'required':[('date_schedule_visit','!=',False)]}"/>
-                                <field name="visit_vehicle"/>
                                 <field name="lost_reason_id" attrs="{'invisible': [('active', '=', True)]}"/>
                             </group>
                         </group>
@@ -335,6 +335,21 @@
                                         <field name="last_email_from_partner"/>
                                     </group>
                                 </group>
+                            </page>
+                            <page string="Trabajos Técnicos" attrs="{'invisible':[('type','=','lead')]}">
+                                <field name="show_technical_schedule_job_ids">
+                                    <tree>
+                                        <field name="job_type_id"/>
+                                        <field name="job_employee_ids" widget="many2many_tags"/>
+                                        <field name="job_vehicle_ids" widget="many2many_tags"/>
+                                        <field name="date_schedule"/>
+                                        <field name="job_duration"/>
+                                        <field name="job_status" widget="badge"/>
+                                        <field name="date_status" widget="remaining_days"/>
+                                        <field name="user_id"/>
+                                    </tree>
+                                </field>
+
                             </page>
                         </notebook>
                     </sheet>

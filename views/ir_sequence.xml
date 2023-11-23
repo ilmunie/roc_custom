@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_sequence_crm_Custom" model="ir.ui.view">
+            <field name="name">ir.sequence.crm.custom</field>
+            <field name="model">ir.sequence</field>
+            <field name="inherit_id" ref="base.sequence_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook[last()]" position="inside">
+                    <page string="CRM" groups="base.group_no_one">
+                        <group>
+                            <field name="opportunity_sequence"/>
+                            <field name="opportunity_domain_to_check" widget="domain" options="{'in_dialog': True, 'model': 'crm.lead'}"
+                                   attrs="{'invisible':[('opportunity_sequence','!=',True)]}"/>
+                        </group>
+
+                    </page>
+                </xpath>
+            </field>
+    </record>
+</odoo>

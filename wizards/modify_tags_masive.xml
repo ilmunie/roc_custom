@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="modify_tags_massive_wizard_view" model="ir.ui.view">
+            <field name="name">modify.tags.massive</field>
+            <field name="model">modify.tags.massive</field>
+            <field name="arch" type="xml">
+                <form string="Modificación masiva de etiquetas">
+                    <group>
+                        <field name="action" />
+                        <field name="tag_ids" widget="many2many_tags" options="{'create_edit': false}"/>
+                    </group>
+                    <footer>
+                        <button name="action_done" string="Submit" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="open_modify_tags_massive" model="ir.actions.act_window">
+            <field name="name">Modificación masiva de etiquetas</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">modify.tags.massive</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="modify_tags_massive_wizard_view"/>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="crm.model_crm_lead" />
+
+        </record>
+</odoo>

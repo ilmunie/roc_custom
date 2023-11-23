@@ -4,6 +4,24 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+
+    @api.depends('type')
+    def autocomplete_name(self):
+        for record in self:
+            if record.type == 'opportunity':
+                ir_sequences = self.env['ir.sequence'].search([('opportunity_sequence','=',True)])
+                for sequence in ir_sequences:
+                    domain_to_check = eval(sequence.opportunity_domain_to_check) if sequence.opportunity_domain_to_check else []
+                    domain_to_check.insert(0,('id','=',record.id))
+                    matching_rec = self.env['crm.lead'].search(domain_to_check)
+                    if not matching_rec:
+                        continue
+                    else:
+                        name = sequence.next_by_id()
+                        record.name = name
+                        break
+            record.trigger_name_autocomplete = False if record.trigger_name_autocomplete else True
+    trigger_name_autocomplete = fields.Boolean(compute=autocomplete_name, store=True )
     @api.depends('lead_stage_change_ids')
     def compute_datetime_last_lead_stage(self):
         for record in self:
@@ -94,8 +112,19 @@ class CrmLead(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if 'type' in vals and vals['type'] == 'odoo':
-                vals['type'] = 'lead'            
-        #import pdb;pdb.set_trace()
+                vals['type'] = 'lead'
+            if 'utm_medium_text' in vals and vals['utm_medium_text']:
+                mediums = self.env['utm.medium'].search([('name','ilike',vals['utm_medium_text'])])
+                if mediums:
+                    vals['medium_id'] = mediums[0].id
+                else:
+                    vals['medium_id'] = self.env['utm.medium'].create({'name': vals['utm_medium_text']}).id
+            if 'utm_campaign_text' in vals and vals['utm_campaign_text']:
+                campaigns = self.env['utm.campaign'].search([('name','ilike',vals['utm_campaign_text'])])
+                if campaigns:
+                    vals['campaign_id'] = campaigns[0].id
+                else:
+                    vals['campaign_id'] = self.env['utm.campaign'].create({'name': vals['utm_campaign_text']}).id
         res = super(CrmLead, self).create(vals_list=vals_list)
         return res
 #aux field
@@ -243,89 +272,8 @@ class CrmLead(models.Model):
     invoice_unpaid_count = fields.Integer(compute=compute_sale_move_values)
     invoice_unpaid_amount = fields.Float(compute=compute_sale_move_values)
 
-    @api.depends('date_schedule_visit','date_visited','visited')
-    def get_calendar_date(self):
-        for record in self:
-            if record.visited:
-                res = record.date_visited
-            else:
-                res = record.date_schedule_visit
-            record.calendar_date = res
-
-    calendar_date = fields.Datetime(compute=get_calendar_date, store=True)
-    date_schedule_visit = fields.Datetime(string="A visitar")
-    visit_duration = fields.Float(string="Tiempo visita (hs.)")
-    visited = fields.Boolean(string="Visita terminada")
-    date_visited = fields.Datetime(string="Visitado el")
-    @api.depends('date_visited', 'create_date')
-    def _compute_days_to_visit(self):
-        for lead in self:
-            if lead.date_visited:
-                lead.days_to_convert = (fields.Datetime.from_string(lead.date_visited) - fields.Datetime.from_string(lead.create_date)).days
-            else:
-                lead.days_to_convert = 0
-    days_to_visit = fields.Float('Días para visita', compute='_compute_days_to_visit', store=True)
-    visit_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita")
-    visit_vehicle = fields.Many2one('fleet.vehicle', string="Vehículo")
-    crm_lead_visit_ids = fields.One2many('crm.lead.visit','lead_id')
-    @api.depends('visited','date_schedule_visit')
-    def get_visit_status(self):
-        for record in self:
-            if record.visited:
-                res = f"Visitado"
-            elif record.date_schedule_visit:
-                res = f"A visitar"
-            else:
-                res = "Sin visitas programadas"
-            record.visit_status = res
-
-    visit_status = fields.Char(compute=get_visit_status, store=True, string="Estado visita")
-    @api.depends('visited','date_schedule_visit')
-    def get_visit_status(self):
-        for record in self:
-            if record.visited:
-                res = f"Visitado el {record.date_visited.strftime('%Y-%m-%d') or ''}"
-            elif record.date_schedule_visit:
-                res = f"A visitar {record.date_schedule_visit.strftime('%Y-%m-%d') or ''}"
-            else:
-                res = "Sin visitas programadas"
-            record.visit_status_date = res
-
-    visit_status_date = fields.Char(compute=get_visit_status, store=True, string="Estado visita")
-    @api.depends('visit_user_ids')
-    def recompute_visit_calendar(self):
-        for record in self:
-            record.crm_lead_visit_ids.unlink()
-            create_vals = []
-            for user in record.visit_user_ids:
-                vals = {
-                    'lead_id': record.id,
-                    'visit_user_id': user.id,
-                }
-                create_vals.append(vals)
-            self.env['crm.lead.visit'].create(create_vals)
-            res = False if record.trigger_recompute_visit_calendar else True
-            record.trigger_recompute_visit_calendar = res
-
-
-
-    trigger_recompute_visit_calendar = fields.Boolean(compute='recompute_visit_calendar', store=True)
-
-    def write(self, vals):
-        res = super(CrmLead, self).write(vals)
-        if 'visited' in vals and vals['visited']:
-            self.date_visited = fields.datetime.now()
-        return res
-
-
-
-    partner_street = fields.Char(related='partner_id.street', readonly=False)
-    partner_street2 = fields.Char(related='partner_id.street2', readonly=False)
-    partner_zip = fields.Char(related='partner_id.zip', readonly=False)
-    partner_city = fields.Char(related='partner_id.city', readonly=False)
-    partner_state_id = fields.Many2one(related='partner_id.state_id', readonly=False)
-    partner_country_id = fields.Many2one(related='partner_id.country_id', readonly=False)
-    partner_lang = fields.Selection(related='partner_id.lang', readonly=False)
+    utm_medium_text = fields.Char(string="Medio Txt")
+    utm_campaign_text = fields.Char(string="Campaña Txt")
 
     referred_professional = fields.Many2one('res.partner', domain=[('professional','=',True)], string="Profesional vinculado")
 

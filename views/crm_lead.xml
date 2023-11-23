@@ -24,7 +24,6 @@
             <xpath expr="//field[@name='phone']" position="replace">
                 <field name="phone_resume" widget="copy_phone"/>
                 <field name="date_deadline"/>
-                <field name="visit_status_date"/>
             </xpath>
             <xpath expr="//field[@name='my_activity_date_deadline']" position="attributes">
                 <attribute name="optional">hide</attribute>
@@ -54,7 +53,7 @@
         <field name="inherit_id" ref="crm.crm_case_tree_view_leads"/>
         <field name="arch" type="xml">
             <xpath expr="//tree[last()]" position="replace">
-                <tree string="Leads" sample="1" multi_edit="1" editable="top">
+                <tree string="Leads" sample="1" multi_edit="1" >
                     <field name="link_to_form" string="         " />
                      <field name="date_deadline" invisible="1"/>
                     <field name="create_date" optional="show"/>
@@ -380,9 +379,10 @@
                 <separator orientation="vertical"/>
                 <filter string="Seguimiento especial" name="tag_closer_follow" domain="[('tag_ids.closer_follow','=',True)]"/>
                 <separator orientation="vertical"/>
+                <!--
                 <filter string="Sin visitas programadas" name="no_visit" domain="[('visit_status','=','Sin visitas programadas')]"/>
                 <filter string="Visita programada" name="waiting_visit" domain="[('visit_status','=','A visitar')]"/>
-                <filter string="Visitado" name="visited" domain="[('visit_status','=','Visitado')]"/>
+                <filter string="Visitado" name="visited" domain="[('visit_status','=','Visitado')]"/>-->
                 <separator orientation="vertical"/>
                 <filter string="Busca instalación" name="installation" domain="[('installation','=',True)]"/>
                 <filter string="Sin instalación" name="no_installation" domain="[('installation','!=',True)]"/>
@@ -423,9 +423,10 @@
                 <filter string="Productos de interés" name="intrest_tag_ids" context="{'group_by':'intrest_tag_ids'}"/>
                 <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <separator orientation="vertical"/>
+                <!--
                 <filter string="Estado visita" name="visit_status_date" context="{'group_by':'visit_status_date'}"/>
                 <filter string="Personal visita" name="visit_user_ids" context="{'group_by':'visit_user_ids'}"/>
-                <filter string="Vehículo" name="visit_vehicle" context="{'group_by':'visit_vehicle'}"/>
+                <filter string="Vehículo" name="visit_vehicle" context="{'group_by':'visit_vehicle'}"/>-->
 
                 <separator orientation="vertical"/>
                 <filter string="Motivo de pérdida" name="lost_reason_id" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
@@ -438,6 +439,15 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
         <field name="arch" type="xml">
+
+                <xpath expr="//kanban[last()]" position="attributes">
+                    <attribute name="quick_create">false</attribute>
+                </xpath>
+
+
+            <progressbar field="activity_state" position="replace">
+                <progressbar field="activity_state" colors="{&quot;planned&quot;: &quot;success&quot;, &quot;today&quot;: &quot;warning&quot;, &quot;overdue&quot;: &quot;danger&quot;}" shelp="This bar allows to filter the opportunities based on scheduled activities."/>
+            </progressbar>
             <field name="activity_ids" position="after">
                 <field name="referred_professional"/>
             </field>
@@ -468,10 +478,10 @@
                             <span attrs="{'invisible':['|',('type_of_client','=',False),('customer_concern','=',False)]}"> | </span>
                         <span attrs="{'invisible':[('type_of_client','=',False)]}" >Cliente </span><strong><field attrs="{'invisible':[('type_of_client','=',False)]}" name="type_of_client"/></strong></div>-->
                     </div>
-                    <div class="o_kanban_record_subtitle" attrs="{'invisible':[('stage_name','!=','Visita')]}">
+                    <!--<div class="o_kanban_record_subtitle" attrs="{'invisible':[('stage_name','!=','Visita')]}">
                         <field name="visit_status_date"/>
                         <field name="stage_name" invisible="1"/>
-                    </div>
+                    </div>-->
                 </xpath>
                 <xpath expr="//field[@name='name']" position="after">
                     <span>  </span>
@@ -479,92 +489,6 @@
                 </xpath>
         </field>
     </record>
-
-        <record id="lead_visit_gantt_view_custom" model="ir.ui.view">
-            <field name="name">lead.visit.gantt.view.custom</field>
-            <field name="model">crm.lead.visit</field>
-            <field name="arch" type="xml">
-                <gantt date_start="calendar_date" date_stop="calendar_date">
-                    <field name="lead_id" />
-                </gantt>
-            </field>
-        </record>
-
-        <record id="lead_visit_calendar_view" model="ir.ui.view">
-            <field name="name">lead.visit.calendar.view</field>
-            <field name="model">crm.lead.visit</field>
-            <field name="priority" eval="2"/>
-            <field name="arch" type="xml">
-                <calendar string="Calendario de visitas" event_open_popup="true"  date_delay="visit_duration" create="0" mode="week" date_start="calendar_date" color="visit_vehicle" >
-                    <field name="lead_id"/>
-                    <field name="visit_status" filters="True"/>
-                    <field name="lead_team_id" avatar_field="avatar_128"/>
-                    <field name="partner_id" avatar_field="avatar_128"/>
-                    <field name="user_id" avatar_field="avatar_128" />
-                    <field name="visit_user_id" avatar_field="avatar_128"/>
-                    <field name="visit_vehicle" avatar_field="avatar_128"/>
-                    <field name="tag_ids"/>
-                    <field name="intrest_tag_ids"/>
-                </calendar>
-            </field>
-        </record>
-        <record id="lead_visit_form_view" model="ir.ui.view">
-            <field name="name">lead.visit.form.view</field>
-            <field name="model">crm.lead.visit</field>
-            <field name="priority" eval="2"/>
-            <field name="arch" type="xml">
-                <form string="Visita" >
-                    <group>
-                        <group>
-                            <field name="lead_id"/>
-                            <field name="visit_status"/>
-                        </group>
-                        <group>
-                            <label class="o_form_label oe_inline" for="date_schedule_visit" attrs="{'invisible':[('visited','=',True)]}"/>
-                            <div class="o_row oe_inline" attrs="{'invisible':[('visited','=',True)]}">
-                                    <field name="date_schedule_visit" class="oe_inline o_datepicker_input"/>
-                                    <field name="visit_duration" class="oe_inline" />
-                                    <span class="o_duration_suffix"> hs.</span>
-                            </div>
-                            <field name="visited"/>
-                            <field name="date_visited" attrs="{'invisible':[('visited','=',False)]}"/>
-                        </group>
-                    </group>
-
-                    <group>
-                        <group>
-                            <field name="visit_user_ids" widget="many2many_tags" />
-                        </group>
-                        <group>
-                            <field name="visit_vehicle" />
-                        </group>
-                    </group>
-                    <group>
-                        <group>
-                            <field name="partner_id"/>
-                            <field name="user_id"  />
-                        </group>
-                        <group>
-                            <field name="lead_team_id" avatar_field="avatar_128"/>
-                            <field name="intrest_tag_ids" widget="many2many_tags"/>
-                            <field name="tag_ids" widget="many2many_tags"/>
-                        </group>
-                    </group>
-                </form>
-            </field>
-        </record>
-    <record model="ir.actions.act_window" id="action_crm_lead_visit">
-        <field name="name">Calendario de visitas</field>
-        <field name="res_model">crm.lead.visit</field>
-        <field name="view_mode">calendar,gantt</field>
-        <field name="view_id" ref="roc_custom.lead_visit_calendar_view" />
-    </record>
-    <menuitem
-        id="menu_crm_visit"
-        name="Calendario de visitas"
-        sequence="10"
-        parent="crm.crm_menu_root"
-        action="roc_custom.action_crm_lead_visit"/>
 
 <record id="crm_lead_dashboard_view_custom" model="ir.ui.view">
         <field name="name">crm_lead_dashboard_custom</field>

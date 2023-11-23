@@ -19,7 +19,8 @@ class AccountMove(models.Model):
     @api.depends('invoice_line_ids.sale_line_ids.order_id.invoice_ids')
     def get_so(self):
         for record in self:
-            po = self.env['sale.order'].search([('invoice_ids','=',record.id)])
+            #import pdb;pdb.set_trace()
+            po = self.env['sale.order'].search([('invoice_ids', '!=', False),('invoice_ids', '=', record.id)])
             if po:
                 record.sale_order_id = po[0].id
                 if po[0].journal_id:
