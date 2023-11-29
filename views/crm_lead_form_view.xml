@@ -12,11 +12,11 @@
                         <button name="action_set_won_rainbowman" string="Won"
                             type="object" class="oe_highlight" data-hotkey="w" title="Mark as won"
                             attrs="{'invisible': ['|','|', ('active','=',False), ('probability', '=', 100), ('type', '=', 'lead')]}"/>
-                        <button name="%(crm.crm_lead_lost_action)d" string="Lost" data-hotkey="l" title="Mark as lost"
+                        <button name="%(crm.crm_lead_lost_action)d" string="Perdido" data-hotkey="l" title="Marcar como perdido"
                             type="action" context="{'default_lead_id': active_id}" attrs="{'invisible': ['|', ('type', 'not in', ('lead','opportunity')), '&amp;',('active', '=', False),('probability', '&lt;', 100)]}"/>
-                        <button name="%(crm.action_crm_lead2opportunity_partner)d" string="Convert to Opportunity" type="action" help="Convert to Opportunity"
+                        <button name="%(crm.action_crm_lead2opportunity_partner)d" string="Convertir a oportunidad" type="action" help="Convertir a oportunidad"
                             class="oe_highlight" attrs="{'invisible': ['|', ('type', '=', 'opportunity'), ('active', '=', False)]}" data-hotkey="v"/>
-                        <button name="toggle_active" string="Restore" type="object" data-hotkey="z"
+                        <button name="toggle_active" string="Reactivar" type="object" data-hotkey="z"
                             attrs="{'invisible': ['|', ('probability', '&gt;', 0), ('active', '=', True)]}"/>
                         <button name="%(open_generale_sale_quotation_wizard)d" string="Generar presupuestos" type="action" class="oe_highlight"
                         attrs="{'invisible': [('type','=','lead')]}"/>
@@ -36,8 +36,8 @@
                                 context="{'partner_id': partner_id}">
                                 <div class="o_stat_info">
                                     <field name="calendar_event_count" class="o_stat_value"/>
-                                    <span class="o_stat_text" attrs="{'invisible': [('calendar_event_count', '&lt;', 2)]}"> Meetings</span>
-                                    <span class="o_stat_text" attrs="{'invisible': [('calendar_event_count', '&gt;', 1)]}"> Meeting</span>
+                                    <span class="o_stat_text" attrs="{'invisible': [('calendar_event_count', '&lt;', 2)]}"> Reuniones</span>
+                                    <span class="o_stat_text" attrs="{'invisible': [('calendar_event_count', '&gt;', 1)]}"> Reunión</span>
                                 </div>
                             </button>
 
@@ -46,7 +46,7 @@
                                     <field name="active_technical_job_count"/>
                                     <span>/</span>
                                     <field name="technical_job_count"/>
-                                    <span class="o_stat_text" >Trabajos Técnicos</span>
+                                    <span class="o_stat_text" >Órdenes de trabajo</span>
                                 </div>
                             </button>
                             <button name="action_show_potential_duplicates" type="object"
@@ -54,8 +54,8 @@
                                 attrs="{'invisible': [('duplicate_lead_count', '&lt;', 1)]}">
                                 <div class="o_stat_info">
                                     <field name="duplicate_lead_count" class="o_stat_value"/>
-                                    <span class="o_stat_text" attrs="{'invisible': [('duplicate_lead_count', '&lt;', 2)]}">Similar Leads</span>
-                                    <span class="o_stat_text" attrs="{'invisible': [('duplicate_lead_count', '&gt;', 1)]}">Similar Lead</span>
+                                    <span class="o_stat_text" attrs="{'invisible': [('duplicate_lead_count', '&lt;', 2)]}">Leads similares</span>
+                                    <span class="o_stat_text" attrs="{'invisible': [('duplicate_lead_count', '&gt;', 1)]}">Lead similar</span>
                                 </div>
                             </button>
                             <button class="oe_stat_button" type="object" attrs="{'invisible': ['|', ('invoice_count', '=', 0), ('type', '=', 'lead')]}" name="action_open_so_account_move" icon="fa-book">
@@ -212,7 +212,7 @@
                             <group name="opportunity_left" string="Información del cliente">
                                 <field name="partner_id"
                                     widget="res_partner_many2one"
-                                    string="Customer"
+                                    string="Cliente"
                                     context="{'res_partner_search_mode': type == 'opportunity' and 'customer' or False,
                                         'default_name': contact_name or partner_name,
                                         'default_street': street,

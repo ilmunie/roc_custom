@@ -4,7 +4,14 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+    def sync_expected_revenue(self):
+        for record in self:
+            amount = sum(record.order_ids.filtered(lambda x: x.state in ('done', 'sale')).mapped('amount_untaxed'))
+            record.expected_revenue = amount
 
+    sale_amount_total = fields.Monetary(compute='_compute_sale_data', string="Sum of Orders", help="Untaxed Total of Confirmed Orders", currency_field='company_currency', store=True)
+    quotation_count = fields.Integer(compute='_compute_sale_data', string="Number of Quotations", store=True)
+    sale_order_count = fields.Integer(compute='_compute_sale_data', string="Number of Sale Orders", store=True)
     @api.depends('type')
     def autocomplete_name(self):
         for record in self:
@@ -108,11 +115,32 @@ class CrmLead(models.Model):
         return stages.browse(stage_ids)
     lead_stage_id = fields.Many2one('crm.lead.stage', string='Etapa Lead', index=True, tracking=True,copy=False, ondelete='restrict', group_expand='_read_group_lead_stage_ids')
 
+    @api.model
+    def _read_group_stage_ids(self, stages, domain, order):
+        # retrieve team_id from the context and write the domain
+        # - ('id', 'in', stages.ids): add columns that should be present
+        # - OR ('fold', '=', False): add default columns that are not folded
+        # - OR ('team_ids', '=', team_id), ('fold', '=', False) if team_id: add team columns that are not folded
+        team_id = self._context.get('default_team_id')
+        if team_id:
+            search_domain = [('active','=',True),'|', ('id', 'in', stages.ids), '|', ('team_id', '=', False), ('team_id', '=', team_id)]
+        else:
+            search_domain = [('active','=',True),'|', ('id', 'in', stages.ids), ('team_id', '=', False)]
+
+        # perform search
+        stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
+        return stages.browse(stage_ids)
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if 'type' in vals and vals['type'] == 'odoo':
                 vals['type'] = 'lead'
+            if 'sale_team_text' in vals and vals['sale_team_text']:
+                sale_teams = self.env['crm.team'].search([('name','ilike',vals['sale_team_text'])])
+                if sale_teams:
+                    vals['team_id'] = sale_teams[0].id
+                else:
+                    vals['team_id'] = self.env['crm.team'].create({'name': vals['sale_team_text']}).id
             if 'utm_medium_text' in vals and vals['utm_medium_text']:
                 mediums = self.env['utm.medium'].search([('name','ilike',vals['utm_medium_text'])])
                 if mediums:
@@ -274,6 +302,7 @@ class CrmLead(models.Model):
 
     utm_medium_text = fields.Char(string="Medio Txt")
     utm_campaign_text = fields.Char(string="Campaña Txt")
+    sale_team_text = fields.Char(string="Equipo de ventas Txt")
 
     referred_professional = fields.Many2one('res.partner', domain=[('professional','=',True)], string="Profesional vinculado")
 

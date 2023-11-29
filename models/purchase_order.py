@@ -1,10 +1,17 @@
 from odoo import fields, models, api
 import json
+from odoo.exceptions import UserError
 
 class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    def recreate_picking(self):
+        for record in self:
+            if record.state in ('done','purchase'):
+                record._create_picking()
+            else:
+                raise UserError('No se puede regenerar las transferencias de un pedido no confirmado')
     @api.onchange('partner_id')
     def onchange_partner_set_picking_type(self):
         for record in self:

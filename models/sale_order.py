@@ -25,6 +25,20 @@ class SaleOrder(models.Model):
     door_location = fields.Char(
         string="Ubicación puerta",
     )
+
+    def action_confirm(self):
+        res = super(SaleOrder, self).action_confirm()
+        for record in self:
+            if record.opportunity_id:
+                record.opportunity_id.sync_expected_revenue()
+        return res
+    def action_cancel(self):
+        res = super(SaleOrder, self).action_cancel()
+        for record in self:
+            if record.opportunity_id:
+                record.opportunity_id.sync_expected_revenue()
+        return res
+
     @api.depends('partner_id')
     def get_domain_shipping(self):
         for record in self:

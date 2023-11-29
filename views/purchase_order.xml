@@ -43,6 +43,9 @@
             <xpath expr="//page/field[@name='order_line']/tree/field[@name='date_planned']" position="replace">
                 <field name="date_planned" optional="show" attrs="{'column_invisible':[('parent.delivery_date_status','=','waiting_info')] , 'required': [('display_type', '=', False)]}" force_save="1"/>
             </xpath>
+            <xpath expr="//page/field[@name='order_line']/tree/field[@name='qty_received']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
 
             <xpath expr="//button[@name='action_product_forecast_report']" position="replace">
             </xpath>
@@ -241,4 +244,14 @@
                 action = records.compute_reception_status()
         </field>
     </record>
+        <record id="action_recreate_picking" model="ir.actions.server">
+            <field name="name">Regenerar Movimientos de Almacén</field>
+            <field name="type">ir.actions.server</field>
+            <field name="state">code</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+            <field name="code">
+records.recreate_picking()
+            </field>
+        </record>
 </odoo>

@@ -3,10 +3,17 @@
 
 from odoo import fields, models, _
 
+class CrmStage(models.Model):
+    _inherit = 'crm.stage'
+
+    active = fields.Boolean(default=True)
+
 class CrmTag(models.Model):
     _inherit = 'crm.tag'
+    _order = 'sequence'
 
     closer_follow = fields.Boolean(string="Seguimiento especial")
+    sequence = fields.Integer(string="Orden")
 
 
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record model="model.validation" id="model_validation_lead_won_withouth_sale">
+            <field name="name">CRM: opportunity won without sale</field>
+            <field name="active_rec" eval="True"/>
+            <field name="model_id" eval="ref('crm.model_crm_lead')"/>
+            <field name="domain_trigger" eval="[]"/>
+        </record>
+        <record model="model.validation.line" id="model_validation_lead_won_withouth_sale_line">
+            <field name="config_id" eval="ref('roc_custom.model_validation_lead_won_withouth_sale')"/>
+            <field name="domain_condition">match</field>
+            <field name="domain_to_check" eval="[('stage_id.is_won','=',True),('sale_amount_total','=',0)]"/>
+            <field name="validation_type">exception</field>
+            <field name="validation_message">No puede marcar una oportunidad como ganado sin un presupuesto de venta confirmado.
+            </field>
+            <field name="register_in_chatter" eval="False"/>
+            <field name="active_rec" eval="True"/>
+        </record>
+    </data>
+</odoo>

@@ -14,6 +14,7 @@
         'hr',
         'sale',
         'sale_crm',
+        'validation_builder',
         'fleet',
         'stock',
         'sale_stock',
@@ -29,6 +30,7 @@
     'data': [
         'security/groups.xml',
         'data/lead_stage_data.xml',
+        'data/validation_builder_data.xml',
         #'data/ir_secuence_data.xml',
         'wizards/change_date_due_wiz.xml',
         'wizards/lost_reason.xml',

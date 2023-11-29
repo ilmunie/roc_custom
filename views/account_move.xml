@@ -20,7 +20,8 @@
                 <field name="opportunity_id" attrs="{'invisible':[('opportunity_id','=',False)]}"/>
             </xpath>
             <xpath expr="//field[@name='payment_reference']" position="before">
-                <field name="payment_journal_instruction_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True, 'no_open':True}"/>
+                <field name="payment_journal_instruction_ids" widget="many2many_tags" options="{'no_create':True,'no_create_and_edit':True, 'no_open':True}"
+                attrs="{'invisible':[('move_type','!=','out_invoice')]}"/>
             </xpath>
             <xpath expr="//field[@name='partner_shipping_id']" position="attributes">
                 <attribute name="domain">shipping_domain_id</attribute>
