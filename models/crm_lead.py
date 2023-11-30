@@ -4,6 +4,18 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+    @api.depends('type')
+    def followers_customization(self):
+        for record in self:
+            if record.type == 'lead':
+                wiz = self.env['mail.wizard.invite'].create({'res_model':record._name, 'res_id':record.id})
+                wiz.write({'partner_ids': [(6,0, [self.env.ref('roc_custom.partner_lead_follower').id,])],'send_mail': False})
+                wiz.add_followers()
+            else:
+                if self.env.ref('roc_custom.partner_lead_follower').id in record.message_follower_ids.mapped('partner_id.id'):
+                    record.message_follower_ids = [(3, record.message_follower_ids.filtered(lambda x: x.partner_id.id == self.env.ref('roc_custom.partner_lead_follower').id)[0].id)]
+            record.trigger_followers_customization = False if record.trigger_followers_customization else True
+    trigger_followers_customization = fields.Boolean(compute='followers_customization', store=True)
     def sync_expected_revenue(self):
         for record in self:
             amount = sum(record.order_ids.filtered(lambda x: x.state in ('done', 'sale')).mapped('amount_untaxed'))
@@ -90,15 +102,21 @@ class CrmLead(models.Model):
                     emails.append(record.email_from)
                 if last_message_id and last_message_id[0].email_from in emails:
                     last_email_from_partner = True
+            if last_email_from_partner:
+                if record.type == 'lead_id':
+                    stage = self.env['crm.lead.stage'].search([('name','=','Procesamiento Roconsa')])
+                    if stage:
+                        record.lead_stage_id = stage[0].id
+                else:
+                    stage = self.env['crm.stage'].search([('name','=','Procesamiento Roconsa')])
+                    if stage:
+                        record.stage_id = stage[0].id
+
             record.last_email_from_partner = last_email_from_partner
 
 
 
     last_email_from_partner = fields.Boolean(compute=get_last_message, store=True)
-
-
-
-
     mobile_partner = fields.Char(related='partner_id.mobile', readonly=False, tracking=True, string="Móvil")
 
     def default_get(self, fields):

@@ -29,6 +29,7 @@
     ],
     'data': [
         'security/groups.xml',
+        'data/res_partner.xml',
         'data/lead_stage_data.xml',
         'data/validation_builder_data.xml',
         #'data/ir_secuence_data.xml',

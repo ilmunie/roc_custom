@@ -5,6 +5,18 @@ from odoo.exceptions import ValidationError
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
+    def default_get(self, fields):
+        #import pdb;pdb.set_trace()
+        res = super(ResPartner, self).default_get(fields)
+        lead_id = self.env.context.get('active_id',False)
+        if lead_id:
+            lead = self.env['crm.lead'].browse(lead_id)
+            if lead:
+                vals = lead._prepare_customer_values(self)
+                vals['name'] = lead.contact_name if lead.contact_name else lead.email_from
+                res.update(vals)
+        return res
+
     default_purchase_picking_type_id = fields.Many2one('stock.picking.type', string="Recibir en")
     phone = fields.Char(widget="phone")
     mobile = fields.Char(widget="mobile")

@@ -224,8 +224,8 @@
             action = "roc_custom.crm_lead_my_leads"/>
 
     <menuitem
-            id ="menu_crm_leads_original"
-            name = "Opportunidades Perdidas"
+            id ="menu_crm_leads_lost"
+            name = "Oportunidades Perdidas"
             parent = "crm.crm_menu_sales"
             action = "roc_custom.crm_lost_opp"/>
 

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<odoo>
+<data noupdate="0">
+    <record id="partner_lead_follower" model="res.partner">
+        <field name="name">Info General Puertas</field>
+        <field name="active" eval="True"/>
+       <field name="email">infogralpuertas@roconsa.com</field>
+    </record>
+</data>
+</odoo>
