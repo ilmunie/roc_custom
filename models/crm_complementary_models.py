@@ -28,7 +28,7 @@ class LeadLostReason(models.Model):
     _description = 'Lead Lost Reason'
 
     name = fields.Char('Description', required=True, translate=True)
-
+    is_not_a_lost = fields.Boolean(string="No se considera pérdida")
 
 class CrmStageChange(models.Model):
     _name = "crm.stage.change"

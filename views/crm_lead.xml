@@ -550,11 +550,12 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm_enterprise.crm_lead_dashboard_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//aggregate[@name='days_to_convert']" position="after">
-                <aggregate name="days_to_visit" string="Dias para visita" group_operator="avg" field="days_to_visit"/>
+
+            <xpath expr="//formula[@name='opportunity_percent']" position="before">
+                <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
             </xpath>
             <xpath expr="//aggregate[@name='opportunities']" position="after">
-                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False)]" group_operator="count" invisible="0"/>
+                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason_id.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
                 <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
             </xpath>
 
@@ -565,12 +566,13 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm_enterprise.crm_opportunity_view_dashboard"/>
         <field name="arch" type="xml">
+
             <xpath expr="//aggregate[@name='days_to_close']" position="before">
                 <aggregate name="days_to_convert" string="Days To Opportunity" group_operator="avg" field="days_to_convert"/>
-                <aggregate name="days_to_visit" string="Dias para visita" group_operator="avg" field="days_to_visit"/>
+                <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
             </xpath>
             <xpath expr="//aggregate[@name='days_exceeding_closing']" position="after">
-                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False)]" group_operator="count" invisible="0"/>
+                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason_id.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
                 <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
             </xpath>
         </field>
