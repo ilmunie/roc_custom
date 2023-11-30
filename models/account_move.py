@@ -16,6 +16,9 @@ class AccountJournal(models.Model):
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    nif = fields.Char(related='partner_id.vat', store=True, string="NIF")
+
     @api.depends('invoice_line_ids.sale_line_ids.order_id.invoice_ids')
     def get_so(self):
         for record in self:

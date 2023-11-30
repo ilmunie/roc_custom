@@ -98,7 +98,7 @@
                                     <div class="o_row">
                                         <field name="recurring_plan" class="oe_inline" placeholder="E.g. Monthly"
                                                attrs="{'required': [('recurring_revenue', '!=', 0)]}" options="{'no_create': True, 'no_open': True}"/>
-                                        <span class="oe_grey p-2"> at </span>
+                                        <span class="oe_grey p-2"> a </span>
                                     </div>
                                 </div>
                                 <div class="col">
@@ -210,7 +210,7 @@
                         </group>
                         <group name="opportunity_sheet" attrs="{'invisible': [('type','=','lead')]}">
                             <group name="opportunity_left" string="Información del cliente">
-                                <field name="partner_id"
+                                <field name="partner_id" attrs="{'required':[('type','=','opportunity')]}"
                                     widget="res_partner_many2one"
                                     string="Cliente"
                                     context="{'res_partner_search_mode': type == 'opportunity' and 'customer' or False,

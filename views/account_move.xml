@@ -52,6 +52,7 @@
 		<field name="inherit_id" ref="account.view_account_invoice_filter"/>
 		<field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
+                <field name="nif"/>
                 <field name="opportunity_id"/>
                 <field name="invoice_origin"/>
             </xpath>
