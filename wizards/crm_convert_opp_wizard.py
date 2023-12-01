@@ -20,12 +20,3 @@ class Lead2OpportunityPartner(models.TransientModel):
     safety_level = fields.Selection(related='lead_id.safety_level', readonly=False)
     type_of_client = fields.Selection(related='lead_id.type_of_client', readonly=False)
 
-    def action_apply(self):
-        return super(Lead2OpportunityPartner, self).action_apply()
-
-
-
-
-
-
-            
