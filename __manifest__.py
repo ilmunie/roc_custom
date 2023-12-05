@@ -32,7 +32,7 @@
         'data/res_partner.xml',
         'data/lead_stage_data.xml',
         'data/validation_builder_data.xml',
-        #'data/ir_secuence_data.xml',
+        'data/ir_cron_data.xml',
         'wizards/change_date_due_wiz.xml',
         'wizards/lost_reason.xml',
         'wizards/crm_convert_opp_wizard.xml',

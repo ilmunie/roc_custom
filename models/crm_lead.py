@@ -94,6 +94,7 @@ class CrmLead(models.Model):
     def get_last_message(self):
         for record in self:
             last_email_from_partner = False
+            #import pdb;pdb.set_trace()
             if record.message_ids:
                 last_message_id = sorted(record.message_ids.filtered(lambda x: x.body), key=lambda r: r.create_date, reverse=True)
                 emails = []

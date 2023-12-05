@@ -5,7 +5,32 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-
+            <xpath expr="//notebook[last()]" position="inside">
+                <page string="Órdenes de trabajo" attrs="{'invisible':[('state','in',('draft','cancel'))]}">
+                    <field name="show_technical_schedule_job_ids">
+                        <tree>
+                            <field name="job_type_id"/>
+                            <field name="job_employee_ids" widget="many2many_tags"/>
+                            <field name="job_vehicle_ids" widget="many2many_tags"/>
+                            <field name="date_schedule"/>
+                            <field name="job_duration"/>
+                            <field name="job_status" widget="badge"/>
+                            <field name="date_status" widget="remaining_days"/>
+                            <field name="user_id"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_schedule_job" type="object" class="oe_stat_button" icon="fa-wrench" attrs="{'invisible':[('state','in',('draft','cancel'))]}" readonly="True">
+                    <div class="o_stat_info">
+                        <field name="active_technical_job_count"/>
+                        <span>/</span>
+                        <field name="technical_job_count"/>
+                        <span class="o_stat_text" >Órdenes de trabajo</span>
+                    </div>
+                </button>
+            </xpath>
             <xpath expr="//tree/field[@name='product_id']" position="attributes">
                 <attribute name="optional">hide</attribute>
                 <attribute name="string">Product Variant</attribute>

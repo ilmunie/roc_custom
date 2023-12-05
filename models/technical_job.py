@@ -9,6 +9,28 @@ class TechnicalJobType(models.Model):
 class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
 
+
+    @api.model
+    def name_get(self):
+        res = []
+        for rec in self:
+            name = ''
+            if rec.source_document_display_name:
+                name = rec.source_document_display_name
+            if rec.job_type_id:
+                if name:
+                    name += " | "
+                name += rec.job_type_id.name
+            if rec.job_employee_ids:
+                if name:
+                    name += " | "
+                name += ','.join(rec.job_employee_ids.mapped('name'))
+            if rec.job_vehicle_ids:
+                if name:
+                    name += " | "
+                name += ','.join(rec.job_vehicle_ids.mapped('name'))
+            res.append((rec.id, name))
+        return res
     def get_data_src_doc(self):
         for record in self:
             html = '<table>'
@@ -52,11 +74,11 @@ class TechnicalJobSchedule(models.Model):
     job_type_id = fields.Many2one('technical.job.type', string="Tipo trabajo")
     res_model = fields.Char()
     res_id = fields.Integer()
-    job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita")
+    job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita", domain=[('technical','=',True)])
     job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Vehículo")
     date_schedule = fields.Datetime(string="Fecha a visitar")
     user_id = fields.Many2one('res.users', store=True, string="Responsable")
-    job_duration = fields.Float(string="Tiempo visita (hs.)")
+    job_duration = fields.Float(string="Tiempo trabajo (hs.)")
     job_status = fields.Selection(
         selection=[('to_do', 'Planificado'), ('stand_by', 'Stand By'), ('done', 'Terminado'), ('cancel', 'Cancelado')],
         string="Estado", default='to_do')
@@ -89,6 +111,9 @@ class TechnicalJobSchedule(models.Model):
 class TechnicalJob(models.Model):
     _name = 'technical.job'
 
+    def clean_technical_job(self):
+        self.env['technical.job'].search([('active','=',False)]).unlink()
+        return
     @api.model
     def name_get(self):
         res = []
@@ -174,6 +199,7 @@ class TechnicalJobMixin(models.AbstractModel):
             'default_schedule_id': self.technical_schedule_job_ids.filtered(lambda x: not x.date_schedule)[0].id,
             'default_res_id': self.id,
             'default_res_model': self._name,
+            'default_user_id': self.env.user.id,
             'default_mode': "week",
             'initial_date': False,
         }
@@ -201,3 +227,28 @@ class CrmLead(models.Model,TechnicalJobMixin):
             if not address:
                 address = "Sin datos de dirección"
             lead.address_label = address
+
+class StockPicking(models.Model,TechnicalJobMixin):
+    _inherit = 'stock.picking'
+
+    def get_job_data(self):
+        return self.address_label
+
+    address_label = fields.Char(
+        string='Address Label',
+        compute='_compute_address_label',
+    )
+
+    @api.depends('partner_id','partner_id.street','partner_id.street2','partner_id.city','partner_id.zip')
+    def _compute_address_label(self):
+        for picking in self:
+            address = ''
+            partner = picking.partner_id
+            if partner:
+                address_components = [partner.street, partner.street2, partner.city, partner.zip]
+                if partner.state_id:
+                    address_components.append(partner.state_id.name)
+                address = ', '.join(filter(None, address_components))
+                if not address:
+                    address = "Sin datos de dirección"
+            picking.address_label = address

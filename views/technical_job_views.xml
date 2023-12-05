@@ -17,11 +17,16 @@
                 <filter string="Cancelados" name="free" domain="[('job_status', '=', 'cancel')]"/>
                 <separator/>
                 <group expand="0" string="Group By">
-                    <filter string="Fecha" name="responsible" domain="[]" context="{'group_by': 'user_id'}"/>
-                    <filter string="Estado" name="status" domain="[]" context="{'group_by': 'job_status'}"/>
+                    <filter string="Coordinación" name="schedule_id" domain="[]" context="{'group_by': 'schedule_id'}"/>
                     <filter string="Tipo" name="job_type" domain="[]" context="{'group_by': 'job_type_id'}"/>
+                    <separator/>
+                    <filter string="Fecha" name="date" domain="[]" context="{'group_by': 'date_schedule'}"/>
+                    <filter string="Estado" name="status" domain="[]" context="{'group_by': 'job_status'}"/>
+                    <separator/>
                     <filter string="Empleado" name="job_employee_ids" domain="[]" context="{'group_by': 'job_employee_id'}"/>
                     <filter string="Vehiculo" name="job_vehicle_ids" domain="[]" context="{'group_by': 'job_vehicle_id'}"/>
+                    <filter string="Tipo" name="job_type" domain="[]" context="{'group_by': 'job_type_id'}"/>
+                    <separator/>
                     <filter string="Responsable" name="user_id" domain="[]" context="{'group_by': 'user_id'}"/>
                 </group>
             </search>
@@ -29,6 +34,23 @@
     </record>
 
 
+    <record id="technical_job_tree_view" model="ir.ui.view">
+            <field name="name">technical.job.tree.view</field>
+            <field name="model">technical.job</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <tree string="Trabajos">
+                    <field name="display_name"/>
+                    <field name="html_link_to_src_doc"/>
+                    <field name="job_status" />
+                    <field name="job_type_id" />
+                    <field name="job_employee_id" avatar_field="avatar_128"/>
+                    <field name="job_vehicle_id" />
+                    <field name="user_id" avatar_field="avatar_128"/>
+                    <field name="html_data_src_doc"/>
+                </tree>
+            </field>
+        </record>
     <record id="technical_job_calendar_view" model="ir.ui.view">
             <field name="name">technical.job.calendar.view</field>
             <field name="model">technical.job</field>
@@ -107,5 +129,11 @@
         name="Calendario de Trabajos"
         sequence="10"
         parent="crm.crm_menu_root"
+        action="roc_custom.action_technical_job"/>
+    <menuitem
+        id="menu_inventory_job"
+        name="Calendario de Trabajos"
+        sequence="2"
+        parent="stock.menu_stock_root"
         action="roc_custom.action_technical_job"/>
 </odoo>

@@ -6,6 +6,9 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    date_approve = fields.Datetime('Confirmation Date', readonly=False, index=True, copy=False, tracking=True)
+
+
     def recreate_picking(self):
         for record in self:
             if record.state in ('done','purchase'):
