@@ -56,6 +56,7 @@
         'views/purchase_order.xml',
         'views/sale_order.xml',
         'views/res_partner.xml',
+        'views/product_product_views.xml',
         'views/mrp_production.xml',
         'views/crm_complementary_models_views.xml',
         'views/technical_job_views.xml',

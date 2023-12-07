@@ -1,8 +1,10 @@
 from odoo import fields, models, api, SUPERUSER_ID
 
+
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
+
 
     @api.depends('type')
     def followers_customization(self):
@@ -41,7 +43,7 @@ class CrmLead(models.Model):
                         record.name = name
                         break
             record.trigger_name_autocomplete = False if record.trigger_name_autocomplete else True
-    trigger_name_autocomplete = fields.Boolean(compute=autocomplete_name, store=True )
+    trigger_name_autocomplete = fields.Boolean(compute=autocomplete_name, store=True)
     @api.depends('lead_stage_change_ids')
     def compute_datetime_last_lead_stage(self):
         for record in self:

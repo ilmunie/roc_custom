@@ -166,6 +166,7 @@
         <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="origin"/>
                 <field name="invoice_number"/>
                 <field name="shipment_number"/>
                 <field name="sale_order_ids"/>
@@ -201,6 +202,7 @@
         <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="origin"/>
                 <field name="invoice_number"/>
                 <field name="shipment_number"/>
                 <field name="sale_order_ids"/>
