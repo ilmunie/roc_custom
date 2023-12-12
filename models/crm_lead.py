@@ -456,7 +456,5 @@ class CrmLead(models.Model):
                 res+= record.phone
             record.phone_resume = res
     phone_resume = fields.Char(string="Contacto",compute="compute_phone_resume")
-    lost_reason_id = fields.Many2one(
-        'lead.lost.reason', string='Motivo de la pérdida', index=True, tracking=True)
-    lost_observations = fields.Text(string='Aclaraciones pérdida', tracking=True)
+
 

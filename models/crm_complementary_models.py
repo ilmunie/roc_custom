@@ -24,10 +24,8 @@ class IntrestTag(models.Model):
 
 
 class LeadLostReason(models.Model):
-    _name = "lead.lost.reason"
-    _description = 'Lead Lost Reason'
+    _inherit = "crm.lost.reason"
 
-    name = fields.Char('Description', required=True, translate=True)
     is_not_a_lost = fields.Boolean(string="No se considera pérdida")
 
 class CrmStageChange(models.Model):

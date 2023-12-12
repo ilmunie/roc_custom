@@ -178,8 +178,7 @@
                     <field name="create_date"  widget="remaining_days" optional="show"/>
                     <field name="date_closed"  optional="hide"/>
                     <field name="date_closed"  widget="remaining_days" optional="show"/>
-                    <field name="lost_reason_id" string="Lead"/>
-                    <field name="lost_observations" optional="hide"/>
+                    <field name="lost_reason" string="Motivo de pérdida"/>
                     <field name="partner_id"/>
                     <field name="contact_name" optional="show"/>
                     <field name="phone_resume" widget="copy_phone"/>
@@ -207,7 +206,7 @@
             <field name="domain">[('active','=',False)]</field>
             <field name="search_view_id" ref="crm.view_crm_case_leads_filter"/>
             <field name="context">{
-                    'search_default_lost_reason_id':1,
+                    'search_default_lost_reason':1,
                 }
             </field>
             <field name="help" type="html">
@@ -398,7 +397,7 @@
                 <filter string="Productos de interés" name="intrest_tag_ids" context="{'group_by':'intrest_tag_ids'}"/>
                 <filter string="Etiquetas" name="tag_ids" context="{'group_by':'tag_ids'}"/>
                 <separator orientation="vertical"/>
-                <filter string="Motivo de pérdida" name="lost_reason_id" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
+                <filter string="Motivo de pérdida" name="lost_reason" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason'}"/>
                 <separator orientation="vertical"/>
                 <filter string="Tiempo en etapa" name="datetime_in_lead_stage" context="{'group_by':'datetime_in_lead_stage'}"/>
             </xpath>
@@ -484,7 +483,7 @@
                 <filter string="Vehículo" name="visit_vehicle" context="{'group_by':'visit_vehicle'}"/>-->
 
                 <separator orientation="vertical"/>
-                <filter string="Motivo de pérdida" name="lost_reason_id" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason_id'}"/>
+                <filter string="Motivo de pérdida" name="lost_reason" domain="['&amp;', ('probability', '=', 0), ('active', '=', False)]" context="{'group_by':'lost_reason'}"/>
             </xpath>
         </field>
     </record>
@@ -555,7 +554,7 @@
                 <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
             </xpath>
             <xpath expr="//aggregate[@name='opportunities']" position="after">
-                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason_id.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
+                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
                 <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
             </xpath>
 
@@ -572,7 +571,7 @@
                 <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
             </xpath>
             <xpath expr="//aggregate[@name='days_exceeding_closing']" position="after">
-                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason_id.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
+                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
                 <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
             </xpath>
         </field>

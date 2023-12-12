@@ -34,7 +34,6 @@
         'data/validation_builder_data.xml',
         'data/ir_cron_data.xml',
         'wizards/change_date_due_wiz.xml',
-        'wizards/lost_reason.xml',
         'wizards/crm_convert_opp_wizard.xml',
         'wizards/modify_tags_masive.xml',
         'wizards/sale_purchase_order_wizard_view.xml',

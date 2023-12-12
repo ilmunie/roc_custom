@@ -1,9 +1,14 @@
 <?xml version="1.0"?>
 <odoo>
-    <record model="ir.actions.act_window" id="crm_action_conf_lost_reason">
-        <field name="name">Motivos de pérdida</field>
-        <field name="res_model">lead.lost.reason</field>
-        <field name="view_mode">tree,form</field>
+    <record id="crm_lost_reason_view_tree_roc_custom" model="ir.ui.view">
+		<field name="name">crm_lost_reason_view_tree_roc_custom</field>
+		<field name="model">crm.lost.reason</field>
+		<field name="inherit_id" ref="crm.crm_lost_reason_view_tree"/>
+		<field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="is_not_a_lost"/>
+            </xpath>
+        </field>
     </record>
     <record model="ir.actions.act_window" id="crm_action_conf_origin">
         <field name="name">Origen</field>
@@ -35,11 +40,7 @@
         name="Maestros"
         parent = "crm.crm_menu_config"
         sequence="15"/>
-    <menuitem
-            id ="menu_crm_conf_lost_reason"
-            name = "Motivos de pérdida"
-            parent = "roc_custom.menu_crm_conf_conf"
-            action = "roc_custom.crm_action_conf_lost_reason"/>
+
     <menuitem
             id ="menu_crm_conf_origin"
             name = "Origen"
