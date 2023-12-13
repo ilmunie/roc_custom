@@ -550,14 +550,36 @@
         <field name="inherit_id" ref="crm_enterprise.crm_lead_dashboard_view"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//formula[@name='opportunity_percent']" position="before">
-                <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
-            </xpath>
-            <xpath expr="//aggregate[@name='opportunities']" position="after">
-                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
-                <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
+            <xpath expr="//aggregate[@name='leads']" position="attributes">
+                <attribute name="string">Ingresaron</attribute>
             </xpath>
 
+            <xpath expr="//aggregate[@name='expected_revenue']" position="replace">
+            </xpath>
+            <xpath expr="//aggregate[@name='prorated_revenue']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//aggregate[@name='days_to_convert']" position="replace">
+            </xpath>
+            <xpath expr="//aggregate[@name='days_to_assign']" position="replace">
+            </xpath>
+
+            <xpath expr="//aggregate[@name='leads']" position="after">
+                <aggregate name="no_count" string="No corresponden" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',True)]" group_operator="count" invisible="0"/>
+                <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
+                <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
+                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
+            </xpath>
+
+            <xpath expr="//formula[@name='opportunity_percent']" position="replace">
+                <aggregate name="expected_revenue" string="Ventas estimadas" field="expected_revenue" group_operator="sum" widget="monetary"/>
+                <formula name="valid_percent" string="Validez" value="record.no_count/(record.leads)" widget="percentage"/>
+                <formula name="opportunity_percent" string="Conversión" value="record.opportunities/(record.leads - record.no_count)" widget="percentage"/>
+                <formula name="won_percent" string="Ganados" value="record.opportunities/(record.leads - record.no_count)" widget="percentage"/>
+                <formula name="lost_percent" string="Pérdida" value="record.won/(record.leads - record.no_count)" widget="percentage"/>
+                <aggregate name="days_to_assign" domain="['|',('lost_reason.is_not_a_lost','!=', True),('lost_reason','=', False)]" string="Días de asignación" field="day_open" group_operator="avg" value_label="days"/>
+                <aggregate name="days_to_convert" domain="['|',('lost_reason.is_not_a_lost','!=', True),('lost_reason','=', False)]" string="Días de conversión" group_operator="avg" field="days_to_convert"/>
+            </xpath>
         </field>
 </record>
 <record id="crm_lead_dashboard_opp_view_custom" model="ir.ui.view">
