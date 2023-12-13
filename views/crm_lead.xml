@@ -575,8 +575,8 @@
                 <aggregate name="expected_revenue" string="Ventas estimadas" field="expected_revenue" group_operator="sum" widget="monetary"/>
                 <formula name="valid_percent" string="Validez" value="record.no_count/(record.leads)" widget="percentage"/>
                 <formula name="opportunity_percent" string="Conversión" value="record.opportunities/(record.leads - record.no_count)" widget="percentage"/>
-                <formula name="won_percent" string="Ganados" value="record.opportunities/(record.leads - record.no_count)" widget="percentage"/>
-                <formula name="lost_percent" string="Pérdida" value="record.won/(record.leads - record.no_count)" widget="percentage"/>
+                <formula name="won_percent" string="Ganados" value="record.won/(record.leads - record.no_count)" widget="percentage"/>
+                <formula name="lost_percent" string="Pérdida" value="record.lost/(record.leads - record.no_count)" widget="percentage"/>
                 <aggregate name="days_to_assign" domain="['|',('lost_reason.is_not_a_lost','!=', True),('lost_reason','=', False)]" string="Días de asignación" field="day_open" group_operator="avg" value_label="days"/>
                 <aggregate name="days_to_convert" domain="['|',('lost_reason.is_not_a_lost','!=', True),('lost_reason','=', False)]" string="Días de conversión" group_operator="avg" field="days_to_convert"/>
             </xpath>
