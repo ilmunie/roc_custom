@@ -1,8 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_intrest_tag,roc_custom.intrest_tag,model_intrest_tag,base.group_user,1,1,0,0
 access_intrest_tag,roc_custom.intrest_tag,model_intrest_tag,sales_team.group_sale_manager,1,1,1,1
-access_lead_lost_reason,roc_custom.lead.lost.reason,model_lead_lost_reason,base.group_user,1,1,1,0
-access_lost_reason_wizard,roc_custom.lost.reason.wizard,model_lost_reason_wizard,base.group_user,1,1,1,0
 access_generale_sale_quotation,roc_custom.generale.sale.quotation,model_generale_sale_quotation,base.group_user,1,1,1,0
 access_mail_template_extra_report,roc_custom.mail.template.extra.report,model_mail_template_extra_report,base.group_user,1,1,1,0
 access_supplierinfo_import,roc_custom.supplierinfo_import,model_supplierinfo_import,base.group_user,1,1,1,0

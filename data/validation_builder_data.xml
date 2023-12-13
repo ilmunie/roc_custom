@@ -17,5 +17,47 @@
             <field name="register_in_chatter" eval="False"/>
             <field name="active_rec" eval="True"/>
         </record>
+        <record model="model.validation" id="model_validation_supplier_invoice_validations">
+            <field name="name">SUPPLIER INVOICE GENERIC ACCOUNT VALIDATION</field>
+            <field name="active_rec" eval="True"/>
+            <field name="model_id" eval="ref('account.model_account_move_line')"/>
+            <field name="domain_trigger" eval="[('id','!=',1)]"/>
+        </record>
+        <record model="model.validation.line" id="model_validation_supplier_invoice_validations_line_1">
+            <field name="config_id" eval="ref('roc_custom.model_validation_supplier_invoice_validations')"/>
+            <field name="domain_condition">match</field>
+            <field name="domain_to_check" eval='["&amp;","&amp;",["account_internal_type","=","payable"],["account_id.name","=","Acreedores Prestación Servicio"],["move_id.move_type","=","in_invoice"]]'/>
+            <field name="validation_type">warning</field>
+            <field name="validation_message">ESTA UTILIZANDO UNA CUENTA GENERICA A PAGAR GENÉRICA EN PROVEEDOR
+            </field>
+            <field name="register_in_chatter" eval="False"/>
+            <field name="active_rec" eval="True"/>
+        </record>
+        <record model="model.validation.line" id="model_validation_supplier_invoice_validations_line_2">
+            <field name="config_id" eval="ref('roc_custom.model_validation_supplier_invoice_validations')"/>
+            <field name="domain_condition">match</field>
+            <field name="domain_to_check" eval='["&amp;",["account_id.name","=","Compra de Mercaderías"],["move_id.move_type","=","in_invoice"]]'/>
+            <field name="validation_type">warning</field>
+            <field name="validation_message">ESTA UTILIZANDO UNA CUENTA GENERICA DE GASTOS EN EL PRODUCTO
+            </field>
+            <field name="register_in_chatter" eval="False"/>
+            <field name="active_rec" eval="True"/>
+        </record>
+        <record model="model.validation" id="model_validation_customer_invoice_validations">
+            <field name="name">CUSTOMER INVOICE GENERIC ACCOUNT VALIDATION</field>
+            <field name="active_rec" eval="True"/>
+            <field name="model_id" eval="ref('account.model_account_move_line')"/>
+            <field name="domain_trigger" eval="[('id','!=',1)]"/>
+        </record>
+        <record model="model.validation.line" id="model_validation_customer_invoice_validations_line_1">
+            <field name="config_id" eval="ref('roc_custom.model_validation_customer_invoice_validations')"/>
+            <field name="domain_condition">match</field>
+            <field name="domain_to_check" eval='["&amp;",["account_id.name","=","Ventas"],["move_id.move_type","=","out_invoice"]]'/>
+            <field name="validation_type">warning</field>
+            <field name="validation_message">ESTA UTILIZANDO UNA CUENTA GENERICA DE INGRESOS EN EL PRODUCTO
+            </field>
+            <field name="register_in_chatter" eval="False"/>
+            <field name="active_rec" eval="True"/>
+        </record>
     </data>
 </odoo>
