@@ -347,7 +347,7 @@
                     <field name="zip" string="Código postal"/>
             </xpath>
             <xpath expr="//field[@name='name']" position="after">
-                    <field name="phone_mobile_search"/>
+                    <field name="phone_resume"/>
                     <field name="street" string="Dirección"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="after">
@@ -433,7 +433,7 @@
                     <field name="zip" string="Código postal"/>
             </xpath>
             <xpath expr="//field[@name='name']" position="after">
-                    <field name="phone_mobile_search"/>
+                    <field name="phone_resume"/>
                     <field name="street" string="Dirección"/>
             </xpath>
             <xpath expr="//field[@name='tag_ids']" position="after">

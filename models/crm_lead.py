@@ -500,7 +500,7 @@ class CrmLead(models.Model):
                 if len(res)>1:
                     res += '/'
                 res+= record.phone
-            record.phone_resume = res
-    phone_resume = fields.Char(string="Contacto",compute="compute_phone_resume")
+            record.phone_resume = res.replace(" ", "")
+    phone_resume = fields.Char(string="Teléfono/Móvil",compute="compute_phone_resume", store=True)
 
 
