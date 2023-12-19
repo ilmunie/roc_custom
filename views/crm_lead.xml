@@ -327,6 +327,9 @@
                 <filter string="Leads" name="leads" domain="[('type','=','lead')]"/>
                 <filter string="Oportunidades" name="opportunities" domain="[('type','=','opportunity')]"/>
                  <separator orientation="vertical"/>
+                <filter string="En procesamiento" name="in_process" domain="[('stage_id.is_won', '!=', True),('active', '!=', False)]"/>
+                <filter string="Terminadas" name="done" domain="['|',('active', '=', False),('stage_id.is_won', '=', True)]"/>
+                 <separator orientation="vertical"/>
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="before">
                         <filter string="Fecha conversión" name="date_conversion" context="{'group_by':'date_conversion:week'}"/>
@@ -382,6 +385,8 @@
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
+                    <filter string="Estado de procesamiento" name="won_status" context="{'group_by':'won_status'}"/>
+                <separator orientation="vertical"/>
                     <filter string="Etapa Lead" name="lead_stage_id" context="{'group_by':'lead_stage_id'}"/>
                 <separator orientation="vertical"/>
                     <filter string="Tipo" name="type" context="{'group_by':'type'}"/>
@@ -408,6 +413,12 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
         <field name="arch" type="xml">
+            <xpath expr="//filter[@name='assigned_to_me']" position="before">
+                 <separator orientation="vertical"/>
+                <filter string="En procesamiento" name="in_process" domain="[('stage_id.is_won', '!=', True),('active', '!=', False)]"/>
+                <filter string="Terminadas" name="done" domain="['|',('active', '=', False),('stage_id.is_won', '=', True)]"/>
+                 <separator orientation="vertical"/>
+            </xpath>
             <xpath expr="//filter[@name='salesperson']" position="before">
                 <filter string="Nombre" name="name" context="{'group_by':'name'}"/>
                 <separator orientation="vertical"/>
@@ -463,6 +474,8 @@
                 <separator orientation="vertical"/>
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
+                <separator orientation="vertical"/>
+                    <filter string="Estado de procesamiento" name="won_status" context="{'group_by':'won_status'}"/>
                 <separator orientation="vertical"/>
                     <!--<filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>-->
                     <filter string="Interés Roconsa" name="company_concern" context="{'group_by':'company_concern'}"/>
@@ -565,10 +578,10 @@
             </xpath>
 
             <xpath expr="//aggregate[@name='leads']" position="after">
-                <aggregate name="no_count" string="No corresponden" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',True)]" group_operator="count" invisible="0"/>
+                <aggregate name="no_count" string="No corresponden" field="id" domain="[('won_status','=','lost'),('lost_reason.is_not_a_lost','=',True)]" group_operator="count" invisible="0"/>
                 <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
                 <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
-                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
+                <aggregate name="lost" string="Perdidos" field="id" domain="[('won_status','=','lost')]" group_operator="count" invisible="0"/>
             </xpath>
 
             <xpath expr="//formula[@name='opportunity_percent']" position="replace">
@@ -593,7 +606,7 @@
                 <aggregate name="qty_opp" string="Convertidos" field="id" domain="[('type','=','opportunity')]" group_operator="count" invisible="0"/>
             </xpath>
             <xpath expr="//aggregate[@name='days_exceeding_closing']" position="after">
-                <aggregate name="lost" string="Perdidos" field="id" domain="[('active','=',False),('lost_reason.is_not_a_lost','=',False)]" group_operator="count" invisible="0"/>
+                <aggregate name="lost" string="Perdidos" field="id" domain="[('won_status','=','lost')]" group_operator="count" invisible="0"/>
                 <aggregate name="won" string="Ganados" field="id" domain="[('won_status','=','won')]" group_operator="count" invisible="0"/>
             </xpath>
         </field>
