@@ -5,50 +5,50 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
-    def _merge_get_fields(self):
-        res = super(CrmLead, self)._merge_get_fields()
-        res.append('source_url')
-        res.append('work_type_id')
-        res.append('referred_professional')
-        return res
-
-    def _merge_dependences(self, opportunities):
-        res = super(CrmLead, self)._merge_dependences(opportunities)
-        self._merge_roconsa_fields(opportunities)
-        return res
-
-    def _merge_roconsa_fields(self, opportunities):
-        self.ensure_one()
-        self.company_concern = max(opportunities.mapped('company_concern')) if opportunities else False
-        self.customer_concern = max(opportunities.mapped('customer_concern')) if opportunities else False
-
-        self.safety_level = 'high' if any(opportunity.safety_level == 'high' for opportunity in opportunities) else False
-        if not self.safety_level:
-            self.safety_level = 'medium' if any(lead.safety_level == 'medium' for lead in opportunities) else False
-        if not self.safety_level:
-            self.safety_level = 'low' if any(lead.safety_level == 'low' for lead in opportunities) else False
-
-        self.type_of_contact = 'highly qualified' if any(lead.type_of_contact == 'highly qualified' for lead in opportunities) else False
-        if not self.type_of_contact:
-            self.type_of_contact = 'qualified' if any(lead.type_of_contact == 'qualified' for lead in opportunities) else False
-        if not self.type_of_contact:
-            self.type_of_contact = 'basic' if any(lead.type_of_contact == 'basic' for lead in opportunities) else False
-
-
-        self.type_of_client = 'vip' if any(lead.type_of_client == 'vip' for lead in opportunities) else False
-        if not self.type_of_client:
-            self.type_of_client = 'preferential' if any(lead.type_of_client == 'preferential' for lead in opportunities) else False
-        if not self.type_of_client:
-            self.type_of_client = 'profesional' if any(lead.type_of_client == 'profesional' for lead in opportunities) else False
-        if not self.type_of_client:
-            self.type_of_client = 'standard' if any(lead.type_of_client == 'standard' for lead in opportunities) else False
-        self.installation = True if any(lead.installation for lead in opportunities) else False
-        tags = []
-        for lead in opportunities.filtered(lambda x: x.intrest_tag_ids):
-            tags.extend(lead.mapped('intrest_tag_ids.id'))
-
-        self.intrest_tag_ids = [(6, 0, tags)]
-        return False
+    #def _merge_get_fields(self):
+    #    res = super(CrmLead, self)._merge_get_fields()
+    #    res.append('source_url')
+    #    res.append('work_type_id')
+    #    res.append('referred_professional')
+    #    return res
+#
+#    #def _merge_dependences(self, opportunities):
+#    #    res = super(CrmLead, self)._merge_dependences(opportunities)
+#    #    self._merge_roconsa_fields(opportunities)
+#    #    return res
+#
+#    #def _merge_roconsa_fields(self, opportunities):
+#    #    self.ensure_one()
+#    #    self.company_concern = max(opportunities.mapped('company_concern')) if opportunities else False
+#    #    self.customer_concern = max(opportunities.mapped('customer_concern')) if opportunities else False
+#
+#    #    self.safety_level = 'high' if any(opportunity.safety_level == 'high' for opportunity in opportunities) else False
+#    #    if not self.safety_level:
+#    #        self.safety_level = 'medium' if any(lead.safety_level == 'medium' for lead in opportunities) else False
+#    #    if not self.safety_level:
+#    #        self.safety_level = 'low' if any(lead.safety_level == 'low' for lead in opportunities) else False
+#
+    #    self.type_of_contact = 'highly qualified' if any(lead.type_of_contact == 'highly qualified' for lead in opportunities) else False
+    #    if not self.type_of_contact:
+    #        self.type_of_contact = 'qualified' if any(lead.type_of_contact == 'qualified' for lead in opportunities) else False
+    #    if not self.type_of_contact:
+    #        self.type_of_contact = 'basic' if any(lead.type_of_contact == 'basic' for lead in opportunities) else False
+#
+#
+    #    self.type_of_client = 'vip' if any(lead.type_of_client == 'vip' for lead in opportunities) else False
+    #    if not self.type_of_client:
+    #        self.type_of_client = 'preferential' if any(lead.type_of_client == 'preferential' for lead in opportunities) else False
+    #    if not self.type_of_client:
+    #        self.type_of_client = 'profesional' if any(lead.type_of_client == 'profesional' for lead in opportunities) else False
+    #    if not self.type_of_client:
+    #        self.type_of_client = 'standard' if any(lead.type_of_client == 'standard' for lead in opportunities) else False
+    #    self.installation = True if any(lead.installation for lead in opportunities) else False
+    #    tags = []
+    #    for lead in opportunities.filtered(lambda x: x.intrest_tag_ids):
+    #        tags.extend(lead.mapped('intrest_tag_ids.id'))
+#
+    #    self.intrest_tag_ids = [(6, 0, tags)]
+    #    return False
 
 
     @api.depends('type')
