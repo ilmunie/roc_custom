@@ -1,5 +1,6 @@
 from odoo import fields, models, _, api
 import json
+from odoo.exceptions import ValidationError
 
 class PaymentWay(models.Model):
     _name = 'payment.way'
@@ -16,6 +17,16 @@ class AccountJournal(models.Model):
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+
+
+    @api.constrains("ref", "partner_id")
+    def _check_supplier_invoice_duplicity(self):
+        for rec in self:
+            if rec.ref and rec.partner_id and rec.move_type and rec.move_type in ('in_invoice', 'in_refund'):
+                matching_rec = self.env['account.move'].search([('partner_id','=',rec.partner_id.id),('move_type','=', rec.move_type),('ref','=',rec.ref),('id','!=',rec.id)])
+                if matching_rec:
+                    raise ValidationError("Ya existe una factura/reembolso para este proveedor con la misma referencia")
     @api.depends('aux_payment_date','aux_journal_id')
     def trigger_create_pay(self):
         for record in self:
