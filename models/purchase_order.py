@@ -63,8 +63,8 @@ class PurchaseOrder(models.Model):
     def compute_reception_status(self):
         for record in self:
             if record.state in ('purchase', 'done'):
-                partial = any(line.qty_received > 0 for line in record.order_line)
-                full = all(line.qty_received >= line.product_qty for line in record.order_line)
+                partial = any(line.qty_received > 0 for line in record.order_line.filtered(lambda x: x.product_id and x.product_id.detailed_type != 'service'))
+                full = all(line.qty_received >= line.product_qty for line in record.order_line.filtered(lambda x: x.product_id and x.product_id.detailed_type != 'service'))
                 if full:
                     record.reception_status = 'full_reception'
                 elif partial:
