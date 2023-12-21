@@ -26,10 +26,8 @@ import os
 import xlrd
 from odoo import _, exceptions, fields, models, api
 
-class AccontMover(models.Model):
-    _inherit = "account.move"
-    aux_payment_date = fields.Date()
-    aux_journal_id = fields.Many2one('account.journal')
+
+
 class SupplierinfoImport(models.TransientModel):
     _name = "supplierinfo.import"
     _description = "Supplierinfo Import"
@@ -224,42 +222,42 @@ class SupplierinfoImport(models.TransientModel):
             sheet = book.sheets()[0]
             for curr_row in range(1, sheet.nrows):
                 vals = {}
-                invoice_name = str(self._read_cell(sheet, curr_row, 9) or '')
-                if not invoice_name:
-                    message.append(f'<span>FILA {curr_row}: ERROR FALTA NUMERO FACTURA</span>')
-                    continue
-                else:
-                    if self.env['account.move'].search([('ref','=',invoice_name),('move_type','=','in_invoice')]):
-                        message.append(f'<span>FILA {curr_row}: FACTURA YA CREADA {invoice_name}</span>')
-                        continue
-                partner_id, mess, error = self.get_supplier(sheet, curr_row)
-                if mess:
-                    message.append(mess)
-                if error:
-                    continue
-                vals['partner_id'] = partner_id
-                product_lines, mess, error = self.get_product_lines(sheet, curr_row)
-                if mess:
-                    message.append(mess)
-                if error:
-                    continue
-                vals['invoice_line_ids'] = product_lines
-                #pdb.set_trace()
-                vals['invoice_date'] = self._read_cell(sheet, curr_row, 10) or False
-                vals['date'] = self._read_cell(sheet, curr_row, 10) or False
-                vals['invoice_date_due'] = self._read_cell(sheet, curr_row, 11) or False
-                vals['journal_id'] = 2
-                vals['ref'] = invoice_name
-                vals['move_type'] = 'in_invoice'
-                date_payment = self._read_cell(sheet, curr_row, 12) or False
+                invoice_name = str(self._read_cell(sheet, curr_row, 1) or '')
+                #if not invoice_name:
+                #    message.append(f'<span>FILA {curr_row}: ERROR FALTA NUMERO FACTURA</span>')
+                #    continue
+                #else:
+                #    if self.env['account.move'].search([('ref','=',invoice_name),('move_type','=','in_invoice')]):
+                #        message.append(f'<span>FILA {curr_row}: FACTURA YA CREADA {invoice_name}</span>')
+                #        continue
+                #partner_id, mess, error = self.get_supplier(sheet, curr_row)
+                #if mess:
+                #    message.append(mess)
+                #if error:
+                #    continue
+                #vals['partner_id'] = partner_id
+                #product_lines, mess, error = self.get_product_lines(sheet, curr_row)
+                #if mess:
+                #    message.append(mess)
+                #if error:
+                #    continue
+                #vals['invoice_line_ids'] = product_lines
+                ##pdb.set_trace()
+                #vals['invoice_date'] = self._read_cell(sheet, curr_row, 10) or False
+                #vals['date'] = self._read_cell(sheet, curr_row, 10) or False
+                #vals['invoice_date_due'] = self._read_cell(sheet, curr_row, 11) or False
+                #vals['journal_id'] = 2
+                #vals['ref'] = invoice_name
+                #vals['move_type'] = 'in_invoice'
+                date_payment = self._read_cell(sheet, curr_row, 2) or False
                 if date_payment:
-                    payment_method = self._read_cell(sheet, curr_row, 13)
+                    payment_method = self._read_cell(sheet, curr_row, 3)
                     journal_id = False
                     #pdb.set_trace()
-                    if payment_method == 'EFECTIVO':
+                    if payment_method in ['EFECTIVO','METALICO']:
                         journal_id = 7
                     else:
-                        cc = self._read_cell(sheet, curr_row, 14)
+                        cc = self._read_cell(sheet, curr_row, 4)
                         if cc:
                             rp_bank = self.env['res.partner.bank'].search([('acc_number','=',cc)])
                             if rp_bank:

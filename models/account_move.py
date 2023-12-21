@@ -16,6 +16,27 @@ class AccountJournal(models.Model):
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    @api.depends('aux_payment_date','aux_journal_id')
+    def trigger_create_pay(self):
+        for record in self:
+            if record.aux_payment_date and record.aux_journal_id:
+                payment = self.env['account.payment'].create({
+                    'date': record.aux_payment_date,
+                    'payment_type': 'outbound',
+                    'partner_type': 'supplier',
+                    'partner_id': record.partner_id.id,
+                    'amount': abs(record.amount_total_signed),
+                    'currency_id': self.env.user.company_id.currency_id.id,
+                    'journal_id': record.aux_journal_id.id,
+                })
+                payment.action_post()
+                receivable_line = payment.line_ids.filtered('debit')
+                record.js_assign_outstanding_line(receivable_line.id)
+            record.trigger_create_payment = False if record.trigger_create_payment else False
+
+    trigger_create_payment = fields.Boolean(compute=trigger_create_pay, store=True)
+    aux_payment_date = fields.Date()
+    aux_journal_id = fields.Many2one('account.journal')
 
     nif = fields.Char(related='partner_id.vat', store=True, string="NIF")
 
