@@ -5,6 +5,13 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+    def write(self, vals):
+        res = super(CrmLead, self).write(vals)
+        for record in self:
+            if record.type == 'opportunity' and not record.date_conversion:
+                record.date_conversion = fields.Datetime.now()
+        return res
+
     #def _merge_get_fields(self):
     #    res = super(CrmLead, self)._merge_get_fields()
     #    res.append('source_url')
