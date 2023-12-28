@@ -39,6 +39,7 @@ class AccountMove(models.Model):
                     'amount': abs(record.amount_total_signed),
                     'currency_id': self.env.user.company_id.currency_id.id,
                     'journal_id': record.aux_journal_id.id,
+                    'destination_account_id': record.line_ids.filtered(lambda x: x.account_id.user_type_id.name in ('Por cobrar', 'Receivable'))[0].account_id.id,
                 })
                 payment.action_post()
                 if record.move_type == 'in_invoice':
