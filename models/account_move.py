@@ -8,6 +8,9 @@ class PaymentWay(models.Model):
     name = fields.Char(string='Nombre', required=True)
     invoice_payment_instructions = fields.Text(string='Instrucciones factura', required=True)
 
+class AccountPayment(models.Model):
+    _inherit = 'account.payment'
+
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
 
