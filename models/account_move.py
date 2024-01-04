@@ -22,6 +22,36 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
 
+    def check_for_generic_account_config(self):
+        active_records = self.browse(self.env.context.get('active_ids',[]))
+        moves_with_wrong_accounting = []
+        for move in active_records:
+            if move.move_type in ('out_invoice'):
+                debit_generic_line = move.line_ids.filtered(lambda x: x.debit > 0 and x.account_id.id != x.move_id.journal_id.default_payable_account_id.id and x.account_id.code != "477000000")
+                if debit_generic_line:
+                    moves_with_wrong_accounting.append(move.id)
+                    continue
+                credit_generic_line = move.line_ids.filtered(lambda x: x.credit > 0 and x.account_id.code == '700000000')
+                if credit_generic_line:
+                    moves_with_wrong_accounting.append(move.id)
+                    continue
+            elif move.move_type in ('in_invoice', 'in_refund'):
+                debit_generic_line = move.line_ids.filtered(lambda x: x.debit > 0 and x.account_id.code == "600000000")
+                if debit_generic_line:
+                    moves_with_wrong_accounting.append(move.id)
+                    continue
+                credit_generic_line = move.line_ids.filtered(lambda x: x.credit > 0 and x.account_id.code == '410000000')
+                if credit_generic_line:
+                    moves_with_wrong_accounting.append(move.id)
+                    continue
+        return {
+            'name': _('Asignación genérica de cuentas contables'),
+            'res_model': 'account.move',
+            'type': 'ir.actions.act_window',
+            'domain': [('id', 'in', moves_with_wrong_accounting)],
+            'views': [(self.env.ref('account.view_out_invoice_tree').id, 'tree'),(self.env.ref('account.view_move_form').id,'form')] if move.move_type in ('out_invoice') else [(self.env.ref('account.view_in_invoice_bill_tree').id, 'tree'),(self.env.ref('account.view_move_form').id,'form')],
+        }
+
 
     @api.constrains("ref", "partner_id")
     def _check_supplier_invoice_duplicity(self):
