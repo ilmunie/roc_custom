@@ -1,8 +1,42 @@
 from odoo import api, fields, models, SUPERUSER_ID, _
 
+class Lead2OpportunityMassConvert(models.TransientModel):
+    _inherit = 'crm.lead2opportunity.partner.mass'
+
+    @api.depends('lead_tomerge_ids')
+    def _compute_duplicated_lead_ids(self):
+        for convert in self:
+            duplicated = self.env['crm.lead']
+            for lead in convert.lead_tomerge_ids:
+                duplicated_leads = self.env['crm.lead']._get_lead_duplicates_custom(
+                    partner=lead.partner_id,
+                    email=lead.partner_id and lead.partner_id.email or lead.email_from,
+                    phone=lead.partner_id.phone if lead.partner_id else lead.phone,
+                    mobile=lead.partner_id.mobile if lead.partner_id else lead.mobile,
+                    include_lost=False)
+
+                if len(duplicated_leads) > 1:
+                    duplicated += lead
+            convert.duplicated_lead_ids = duplicated.ids
 
 class Lead2OpportunityPartner(models.TransientModel):
     _inherit = 'crm.lead2opportunity.partner'
+
+
+    @api.depends('lead_id', 'partner_id')
+    def _compute_duplicated_lead_ids(self):
+        for convert in self:
+            if not convert.lead_id:
+                convert.duplicated_lead_ids = False
+                continue
+
+            convert.duplicated_lead_ids = self.env['crm.lead']._get_lead_duplicates_custom(
+                convert.partner_id,
+                convert.lead_id.partner_id.email if convert.lead_id.partner_id.email else convert.lead_id.email_from,
+                convert.lead_id.partner_id.phone if convert.lead_id.partner_id else convert.lead_id.phone,
+                convert.lead_id.partner_id.mobile if convert.lead_id.partner_id else convert.lead_id.mobile,
+                include_lost=True).ids
+
 
     @api.depends('duplicated_lead_ids')
     def compute_duplicated_lead(self):

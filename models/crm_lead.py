@@ -1,5 +1,4 @@
-from odoo import fields, models, api, SUPERUSER_ID
-
+from odoo import fields, models, api, SUPERUSER_ID, tools
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
@@ -524,3 +523,58 @@ class CrmLead(models.Model):
     phone_resume = fields.Char(string="Teléfono/Móvil",compute="compute_phone_resume", store=True)
 
 
+    def _get_lead_duplicates_custom(self, partner=None, email=None, phone=None, mobile=None, include_lost=False):
+        """ Search for leads that seem duplicated based on partner / email.
+
+        :param partner : optional customer when searching duplicated
+        :param email: email (possibly formatted) to search
+        :param boolean include_lost: if True, search includes archived opportunities
+          (still only active leads are considered). If False, search for active
+          and not won leads and opportunities;
+        """
+        if not email and not partner and not phone and not mobile:
+            return self.env['crm.lead']
+
+        domain = []
+        for normalized_email in [tools.email_normalize(email) for email in tools.email_split(email)]:
+            domain.append(('email_normalized', '=', normalized_email))
+        if partner:
+            domain.append(('partner_id', '=', partner.id))
+
+        tel_vec = []
+        if mobile:
+            tel_vec.append(mobile)
+        if phone:
+            tel_vec.append(phone)
+        if tel_vec:
+            domain.append(('phone', 'in', tel_vec))
+            domain.append(('mobile', 'in', tel_vec))
+
+        if not domain:
+            return self.env['crm.lead']
+
+        domain = ['|'] * (len(domain) - 1) + domain
+        if include_lost:
+            domain += ['|', ('type', '=', 'opportunity'), ('active', '=', True)]
+        else:
+            domain += ['&', ('active', '=', True), '|', ('stage_id', '=', False), ('stage_id.is_won', '=', False)]
+
+        return self.with_context(active_test=False).search(domain)
+
+
+    @api.depends('email_from', 'partner_id', 'contact_name', 'partner_name', 'phone', 'mobile')
+    def _compute_potential_lead_duplicates(self):
+        res = super(CrmLead, self)._compute_potential_lead_duplicates()
+        for record in self:
+            tel_vec = []
+            if record.mobile:
+                tel_vec.append(record.mobile)
+            if record.phone:
+                tel_vec.append(record.phone)
+            if tel_vec:
+                other_opp = self.env['crm.lead'].search(['|', ('phone','in',tel_vec), ('mobile','=',tel_vec)])
+                for opp in other_opp:
+                    record.duplicate_lead_ids = [(4,opp.id)]
+            record.duplicate_lead_ids = [(3,record.id)]
+            record.duplicate_lead_count = len(record.duplicate_lead_ids)
+        return res
