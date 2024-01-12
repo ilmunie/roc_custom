@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<odoo>
+    <record model="ir.actions.server" id="action_technical_job_assistant">
+        <field name="name">Job Assistant Start Action</field>
+        <field name="model_id" ref="model_technical_job_assistant"/>
+        <field name="state">code</field>
+        <field name="code">action = env.get('technical.job.assistant').start_assistant()</field>
+    </record>
+
+    <menuitem
+        id="menu_crm_job_assistant"
+        name="Planificación Operaciones"
+        sequence="10"
+        parent="roc_custom.menu_crm_job"
+        action="roc_custom.action_technical_job_assistant"/>
+
+
+    <record id="technical_job_assistant_tree_view" model="ir.ui.view">
+            <field name="name">technical.job.assistant.tree.view</field>
+            <field name="model">technical.job.assistant</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <tree string="Trabajos" create="0" delete="0" expand="1">
+                    <field name="res_model" invisible="1"/>
+                    <field name="res_id" invisible="1"/>
+                    <field name="responsible_user_id"/>
+                    <field name="config_id"/>
+                    <field name="html_link_to_src_doc"/>
+                    <button name="see_src_document" type="object" icon="fa-link"/>
+                    <field name="job_status"/>
+                    <field name="technical_job_count"/>
+                    <field name="next_active_job_id" invisible="1"/>
+                    <field name="next_active_job_type_id"/>
+                    <field name="next_active_job_date" widget="remaining_days"/>
+                    <field name="next_job_vehicle_ids" widget="many2many_tags"/>
+                    <field name="next_job_employee_ids" widget="many2many_tags"/>
+                    <button name="see_job_in_calendar" type="object" string="Ver operación" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
+                    <button name="action_schedule_job" type="object" string="Nueva operación"/>
+                </tree>
+            </field>
+        </record>
+
+    <record id="technical_job_assistant_search_view" model="ir.ui.view">
+            <field name="name">technical.job.assistant.search.view</field>
+            <field name="model">technical.job.assistant</field>
+            <field name="arch" type="xml">
+                <search string="Trabajos">
+                    <field name="res_model"/>
+                    <field name="responsible_user_id"/>
+                    <field name="next_active_job_type_id"/>
+                    <field name="next_job_vehicle_ids"/>
+                    <field name="next_job_employee_ids"/>
+                    <field name="config_id"/>
+                    <field name="html_link_to_src_doc"/>
+                    <field name="show_technical_schedule_job_ids"/>
+                    <separator/>
+                    <filter string="Mis planificaciones" name="assigned_to_me" domain="[('responsible_user_id', '=', uid)]"/>
+                    <separator/>
+                    <group expand="1" string="Group By">
+                        <filter string="Configuración" name="configuration" context="{'group_by':'config_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Responsable" name="responsible_user_id" context="{'group_by':'responsible_user_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Fecha Próx planificación" name="next_active_job_date" context="{'group_by':'next_active_job_date'}"/>
+                        <filter string="Tipo Próx. planificación" name="next_active_job_type_id" context="{'group_by':'next_active_job_type_id'}"/>
+                        <filter string="Vehículos Próx. planificación" name="next_job_vehicle_ids" context="{'group_by':'next_job_vehicle_ids'}"/>
+                        <filter string="Empleados Próx. planificación" name="next_job_employee_ids" context="{'group_by':'next_job_employee_ids'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Estado" name="job_status" context="{'group_by':'job_status'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    <record id="technical_job_assistant_config_tree" model="ir.ui.view">
+        <field name="name">technical.job.assistant.config.tree</field>
+        <field name="model">technical.job.assistant.config</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="technical_job_type_id"/>
+                <field name="model_id"/>
+                <field name="model_name" invisible="1"/>
+                <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
+                <field name="responsible_user_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="technical_job_assistant_config_form" model="ir.ui.view">
+        <field name="name">technical.job.assistant.config.form</field>
+        <field name="model">technical.job.assistant.config</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="technical_job_type_id"/>
+                            <field name="responsible_user_id"/>
+                        </group>
+                        <group>
+                            <field name="model_id"/>
+                            <field name="model_name" invisible="1"/>
+                            <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="technical_job_assistant_config_action" model="ir.actions.act_window">
+        <field name="name">Configuración planificación operaciones</field>
+        <field name="res_model">technical.job.assistant.config</field>
+        <field name="view_id" ref="technical_job_assistant_config_tree"/>
+        <field name="help" type="html">
+            <p>Cree una nueva configuración de operaciones</p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_technical_job_assistant_config"
+        name="Conf Planif Operaciones"
+        sequence="10"
+        parent="crm.menu_crm_config_lead"
+        action="roc_custom.technical_job_assistant_config_action"
+        groups="base.group_no_one"/>
+
+</odoo>

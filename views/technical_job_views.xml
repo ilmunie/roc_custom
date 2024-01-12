@@ -1,5 +1,15 @@
 <?xml version="1.0"?>
 <odoo>
+    <record id="action_delete_schedule_tree" model="ir.actions.server">
+        <field name="name">Eliminar</field>
+        <field name="model_id" ref="model_technical_job"/>
+        <field name="binding_model_id" ref="roc_custom.model_technical_job"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+                action = records.delete_schedule_tree()
+        </field>
+    </record>
     <record id="technical_job_search_view" model="ir.ui.view">
             <field name="name">technical.job.search.view</field>
             <field name="model">technical.job</field>
@@ -7,6 +17,8 @@
             <field name="arch" type="xml">
             <search string="Search Jobs">
                 <field name="user_id"/>
+                <field name="res_id" invisible="1"/>
+                <field name="res_model" invisible="1"/>
                 <filter string="Mis trabajos" help="My Meetings" name="mymeetings" domain="[('user_id', 'in', [uid])]"/>
                 <separator/>
                 <filter string="Date" name="filter_start_date" date="date_schedule"/>
@@ -39,7 +51,7 @@
             <field name="model">technical.job</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <tree string="Trabajos">
+                <tree string="Trabajos" delete="0">
                     <field name="display_name"/>
                     <field name="html_link_to_src_doc"/>
                     <field name="job_status" />
@@ -56,7 +68,7 @@
             <field name="model">technical.job</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <calendar string="Calendario de trabajos" quick_add="False" event_open_popup="False"  date_delay="job_duration" create="1" mode="week" date_start="date_schedule" color="job_status" >
+                <calendar delete="0" string="Calendario de trabajos" quick_add="False" event_open_popup="False"  date_delay="job_duration" create="1" mode="week" date_start="date_schedule" color="job_status" >
                     <field name="source_document_display_name" filters="True" invisible="True"/>
                     <field name="html_link_to_src_doc"/>
                     <field name="job_status" filters="True"/>
@@ -76,6 +88,7 @@
                 <form string="Trabajo Técnico" >
                     <header>
                         <field name="job_status" widget="statusbar" options="{'clickable':True}"/>
+                        <button name="delete_schedule" type="object" string="Eliminar" class="btn-danger"/>
                     </header>
                     <sheet>
                     <group>
@@ -108,6 +121,53 @@
             </field>
         </record>
 
+        <record id="technical_job_schedule_form_view" model="ir.ui.view">
+            <field name="name">technical.job.schedule.form.view</field>
+            <field name="model">technical.job.schedule</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <form string="Trabajo Técnico" >
+                    <header>
+                        <field name="job_status" widget="statusbar" options="{'clickable':True}"/>
+                    </header>
+                    <sheet>
+                    <group>
+                        <group>
+                            <field name="html_link_to_src_doc" readonly="True"/>
+                            <field name="source_document_display_name" invisible="True"/>
+                            <field name="res_model" invisible="True"/>
+                            <field name="res_id" invisible="True"/>
+                            <field name="job_type_id"/>
+                            <field name="date_status" widget="remaining_days"/>
+                        </group>
+                        <group>
+                            <label class="o_form_label oe_inline" for="date_schedule"/>
+                            <div class="o_row oe_inline" >
+                                    <field name="date_schedule" class="oe_inline o_datepicker_input"/>
+                                    <field name="job_duration" class="oe_inline" />
+                                    <span class="o_duration_suffix"> hs.</span>
+                            </div>
+                            <field name="job_employee_ids" widget="many2many_tags"/>
+                            <field name="job_vehicle_ids" widget="many2many_tags"/>
+                            <field name="user_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="html_data_src_doc" readonly="True"/>
+                    </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+    <record id="action_technical_job_form" model="ir.actions.act_window">
+        <field name="name">Calendario de Trabajos</field>
+        <field name="res_model">technical.job</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="roc_custom.technical_job_schedule_form_view"/>
+    </record>
 
     <record id="action_technical_job" model="ir.actions.act_window">
         <field name="name">Calendario de Trabajos</field>
@@ -115,6 +175,7 @@
         <field name="view_mode">calendar,tree,form</field>
         <field name="view_id" ref="roc_custom.technical_job_calendar_view"/>
         <field name="search_view_id" ref="roc_custom.technical_job_search_view"/>
+        <field name="domain" eval="[('date_schedule','!=',False)]"/>
         <field name="help" type="html">
           <p class="o_view_nocontent_smiling_face">
            No se encontraron trabajos técnicos.
@@ -126,9 +187,15 @@
 
     <menuitem
         id="menu_crm_job"
+        name="Operaciones"
+        sequence="10"
+        parent="crm.crm_menu_root"/>
+
+    <menuitem
+        id="menu_crm_job_calendar"
         name="Calendario de Trabajos"
         sequence="10"
-        parent="crm.crm_menu_root"
+        parent="roc_custom.menu_crm_job"
         action="roc_custom.action_technical_job"/>
     <menuitem
         id="menu_inventory_job"

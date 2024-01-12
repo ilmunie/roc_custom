@@ -22,6 +22,8 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
 
+
+
     def check_for_generic_account_config(self):
         active_records = self.browse(self.env.context.get('active_ids',[]))
         moves_with_wrong_accounting = []

@@ -19,3 +19,7 @@ access_technical_job_type_public,roc_custom.technical_job_type_public,model_tech
 access_technical_job_type_manager,roc_custom.technical_job_type_manager,model_technical_job_type,sales_team.group_sale_manager,1,1,1,1
 access_technical_job_schedule,roc_custom.technical_job_schedule,model_technical_job_schedule,base.group_user,1,1,1,1
 access_modify_tags_massive,roc_custom.modify_tags_massive,model_modify_tags_massive,base.group_user,1,1,1,1
+access_technical_job_assistant_config,roc_custom.technical_job_assistant_config,model_technical_job_assistant_config,base.group_user,1,1,1,1
+access_technical_job_assistant,roc_custom.technical_job_assistant,model_technical_job_assistant,base.group_user,1,1,1,1
+
+

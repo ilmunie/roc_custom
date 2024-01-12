@@ -12,3 +12,4 @@ from . import account_move
 from . import technical_job
 from . import hr_employee
 from . import ir_sequence
+from . import technical_job_assistant

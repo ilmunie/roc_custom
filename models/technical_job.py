@@ -6,9 +6,25 @@ class TechnicalJobType(models.Model):
     name = fields.Char(string="Name")
     default_duration_hs = fields.Float(string="Duración Hs")
 
+
 class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
+    order = 'date_schedule DESC'
 
+    def open_form_view(self):
+        action = self.env.ref('roc_custom.action_technical_job_form').read()[0]
+        action["res_id"] = self.id
+        return action
+
+    def open_in_calendar_view(self):
+        action = self.env.ref('roc_custom.action_technical_job').read()[0]
+        action['context'] = {
+                'default_mode': 'week',
+                'initial_date': self.date_schedule,
+                'search_default_res_model': self.res_model,
+                'search_default_res_id': self.res_id,
+        }
+        return action
 
     @api.model
     def name_get(self):
@@ -98,18 +114,79 @@ class TechnicalJobSchedule(models.Model):
             jobs_to_delete = self.env['technical.job'].search([('schedule_id', '=', rec.id)])
             for job in jobs_to_delete:
                 job.active = False
-            for employee in rec.job_employee_ids:
-                for vehicle in rec.job_vehicle_ids:
+            if rec.job_employee_ids:
+                for employee in rec.job_employee_ids:
+                    if rec.job_vehicle_ids:
+                        for vehicle in rec.job_vehicle_ids:
+                            self.env['technical.job'].create({
+                                'job_employee_id': employee.id,
+                                'job_vehicle_id': vehicle.id,
+                                'schedule_id': rec.id
+                                                    })
+                    else:
+                        self.env['technical.job'].create({
+                            'job_employee_id': employee.id,
+                            'job_vehicle_id': False,
+                            'schedule_id': rec.id
+                        })
+            else:
+                if rec.job_vehicle_ids:
+                    for vehicle in rec.job_vehicle_ids:
+                        self.env['technical.job'].create({
+                            'job_employee_id': False,
+                            'job_vehicle_id': vehicle.id,
+                            'schedule_id': rec.id
+                        })
+                else:
                     self.env['technical.job'].create({
-                        'job_employee_id': employee.id,
-                        'job_vehicle_id': vehicle.id,
+                        'job_employee_id': False,
+                        'job_vehicle_id': False,
                         'schedule_id': rec.id
-                                            })
+                    })
+
             rec.trigger_refresh_jobs = False if rec.trigger_refresh_jobs else False
 
 
 class TechnicalJob(models.Model):
     _name = 'technical.job'
+
+    def delete_schedule_tree(self):
+        deleted_ids = []
+        for record in self:
+            if record.id not in deleted_ids:
+                if record.schedule_id:
+                    deleted_ids.extend(self.env['technical.job'].search([('schedule_id','=',record.schedule_id.id)]).mapped('id'))
+                    record.schedule_id.unlink()
+                else:
+                    record.unlink()
+
+    def delete_schedule(self):
+        for record in self:
+            from_calendar = self.env.context.get("from_calendar", False)
+            if record.res_model and record.res_id and not from_calendar:
+                action = {
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_model': self.res_model,
+                    'target': 'current',
+                    'res_id': self.res_id,
+                }
+            else:
+                action = {
+                    'name': "Planificación de Operaciones",
+                    'res_model': 'technical.job.assistant',
+                    'type': 'ir.actions.act_window',
+                    'context': {'search_default_assigned_to_me': 1, 'search_default_configuration': 1, 'search_default_job_status': 1,},
+                    'domain': [('create_uid','=',self.env.user.id)],
+                    'views': [(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')],
+                }
+
+            if record.schedule_id:
+                record.schedule_id.unlink()
+            else:
+                record.unlink()
+            return action
 
     def clean_technical_job(self):
         self.env['technical.job'].search([('active','=',False)]).unlink()
@@ -162,12 +239,13 @@ class TechnicalJobMixin(models.AbstractModel):
     def get_job_data(self):
         return False
 
-    technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule')
+    technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', order='date_schedule DESC')
+    @api.depends('technical_schedule_job_ids','technical_schedule_job_ids.date_schedule')
     def show_technical_jobs(self):
         for record in self:
             record.show_technical_schedule_job_ids = [(6,0,record.technical_schedule_job_ids.filtered(lambda x: x.date_schedule).mapped('id'))]
 
-    show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=show_technical_jobs, string="Trabajos técnicos")
+    show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=show_technical_jobs, string="Trabajos técnicos", order='date_schedule DESC')
     def get_qty_technical_jobs(self):
         for record in self:
             qty = 0
@@ -180,7 +258,7 @@ class TechnicalJobMixin(models.AbstractModel):
 
     technical_job_count = fields.Float(compute=get_qty_technical_jobs)
     active_technical_job_count = fields.Float(compute=get_qty_technical_jobs)
-    @api.depends('technical_schedule_job_ids','technical_schedule_job_ids.job_status','technical_schedule_job_ids.date_schedule')
+    @api.depends('technical_schedule_job_ids','technical_schedule_job_ids.job_status','technical_schedule_job_ids.date_schedule','technical_schedule_job_ids.job_employee_ids','technical_schedule_job_ids.job_vehicle_ids')
     def get_next_job(self):
         for record in self:
             res = False
@@ -188,16 +266,35 @@ class TechnicalJobMixin(models.AbstractModel):
             if active_jobs:
                 res = active_jobs[0].id
             record.next_active_job_id = res
+            tjas = self.env['technical.job.assistant'].search([('create_uid','=',self.env.user.id), ('res_id','=',record.id), ('res_model','=',record._name)])
+            for tja in tjas:
+                tja.related_rec_fields()
 
     next_active_job_id = fields.Many2one('technical.job.schedule', compute=get_next_job, store=True)
 
+    def open_next_job_calendar_view(self):
+        self.ensure_one()
+        if self.next_active_job_id:
+            action = self.next_active_job_id.open_in_calendar_view()
+            return action
     def action_schedule_job(self):
         self.ensure_one()
+        configs = self.env['technical.job.assistant.config'].search([('model_name','=',self._name)])
+        job_type_id = False
+        for config in configs:
+            domain = eval(config.domain_condition)
+            domain.insert(0,('id','=',self.id))
+            if self.env[self._name].search(domain):
+                job_type_id = config.technical_job_type_id.id if config.technical_job_type_id else False
+                break
         action = self.env["ir.actions.actions"]._for_xml_id("roc_custom.action_technical_job")
         self.write({'technical_schedule_job_ids': [(0, 0, {'res_model': self._name, 'res_id': self.id})]})
+        action['name'] = 'Nueva operación ' + self.display_name
+
         action['context'] = {
             'default_schedule_id': self.technical_schedule_job_ids.filtered(lambda x: not x.date_schedule)[0].id,
             'default_res_id': self.id,
+            'default_job_type_id': job_type_id,
             'default_res_model': self._name,
             'default_user_id': self.env.user.id,
             'default_mode': "week",
@@ -252,3 +349,57 @@ class StockPicking(models.Model,TechnicalJobMixin):
                 if not address:
                     address = "Sin datos de dirección"
             picking.address_label = address
+
+
+class PurchaseOrder(models.Model,TechnicalJobMixin):
+    _inherit = 'purchase.order'
+
+    def get_job_data(self):
+        return self.address_label
+
+    address_label = fields.Char(
+        string='Address Label',
+        compute='_compute_address_label',
+    )
+
+    @api.depends('partner_id','partner_id.street','partner_id.street2','partner_id.city','partner_id.zip')
+    def _compute_address_label(self):
+        for order in self:
+            address = ''
+            partner = order.partner_id
+            if partner:
+                address_components = [partner.street, partner.street2, partner.city, partner.zip]
+                if partner.state_id:
+                    address_components.append(partner.state_id.name)
+                address = ', '.join(filter(None, address_components))
+                if not address:
+                    address = "Sin datos de dirección"
+            order.address_label = address
+
+class SaleOrder(models.Model,TechnicalJobMixin):
+    _inherit = 'sale.order'
+
+    def get_job_data(self):
+        return self.address_label
+
+    address_label = fields.Char(
+        string='Address Label',
+        compute='_compute_address_label',
+    )
+
+    @api.depends('partner_id','partner_id.street','partner_id.street2','partner_id.city','partner_id.zip')
+    def _compute_address_label(self):
+        for order in self:
+            address = ''
+            partner = order.partner_shipping_id
+            if partner:
+                address_components = [partner.street, partner.street2, partner.city, partner.zip]
+                if partner.state_id:
+                    address_components.append(partner.state_id.name)
+                address = ', '.join(filter(None, address_components))
+                if not address:
+                    address = "Sin datos de dirección"
+            order.address_label = address
+
+class MrpProduction(models.Model,TechnicalJobMixin):
+    _inherit = 'mrp.production'
