@@ -334,6 +334,9 @@
             <xpath expr="//filter[@name='date_closed']" position="before">
                         <filter string="Fecha conversión" name="date_conversion" context="{'group_by':'date_conversion:week'}"/>
             </xpath>
+            <xpath expr="//filter[@name='filter_creation_date']" position="after">
+                <filter string="Fecha conversión" name="filter_date_conversion" date="date_conversion" default_period="this_month"/>
+            </xpath>
             <xpath expr="//filter[@name='assigned_to_me']" position="after">
                     <filter string="Mis Leads" name="my_leads" domain="['|',('activity_user_id','=',uid),('user_id','=',uid)]" help="Próxima tarea mía o soy el comercial"/>
             </xpath>
