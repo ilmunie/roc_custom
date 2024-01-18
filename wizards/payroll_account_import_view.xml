@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+		<record id="view_payroll_import" model="ir.ui.view">
+			<field name="name">Importación de nóminas</field>
+			<field name="model">payroll.account.import</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Import">
+					<header>
+						<field name="state" widget="statusbar"/>
+						<button name="generate_account_move" string="Generar Asientos" type="object" attrs="{'invisible':[('state','=','draft')]}"/>
+					</header>
+						<group attrs="{'invisible': [('state', 'not in', 'draft')]}">
+							<field name="file_attachments" widget="many2many_binary"/>
+						</group>
+						<group attrs="{'invisible': [('state', 'not in', 'done')]}">
+							<field name="distributor_ids" nolabel="1">
+								<tree create="0" delete="0" editable="bottom">
+									<field name="html_payroll_reference"/>
+									<field name="analytic_tag_id"/>
+									<button type='object' string="Trasladar por empleado" name="apply_same_dist"/>
+								</tree>
+							</field>
+						</group>
+					<footer>
+                        <button class="btn-default" special="cancel" string="Cancel" 
+                         attrs="{'invisible': [('state', 'not in', 'draft')]}"/>
+                        <button name="process_files" string="Read file" type="object" class="btn-primary"
+                         attrs="{'invisible': [('state', 'not in', 'draft')]}"/>
+                        <button class="btn-default" special="cancel" string="Close" 
+                         attrs="{'invisible': [('state', 'not in', 'done')]}"/>
+					</footer>
+				</form>
+			</field>
+		</record>
+
+        <record id="action_payroll_account_import" model="ir.actions.act_window">
+            <field name="name">Importación de Nóminas</field>
+            <field name="res_model">payroll.account.import</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_payroll_account_import"
+            name="Importar Nóminas"
+            parent = "account.menu_finance_entries_actions"
+            action="action_payroll_account_import"/>
+        
+
+
+<!--
+        <act_window name="Import BOM"
+            res_model="bom.import"
+            src_model="mrp.bom"
+            key2="client_action_multi"
+            multi="True"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            id="action_bom_import"/>
+-->
+            
+  </data>
+</odoo>

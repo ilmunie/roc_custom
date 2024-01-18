@@ -6,3 +6,4 @@ from . import sale_purchase_order_wizard
 from . import sale_make_invoice_advance
 from . import account_payment_register
 from . import modify_tags_masive_wizard
+from . import payroll_account_import
