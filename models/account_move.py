@@ -73,6 +73,17 @@ class AccountMove(models.Model):
             if record.state == 'posted':
                 post = True
                 record.button_draft()
+            if move_type == 'in_invoice':
+                #partner_generic_account = True
+                partner_generic_account = record.line_ids.filtered(lambda x: x.account_id and x.account_id.code == '410000000')
+                if partner_generic_account:
+                    record._onchange_partner_id()
+                    record._recompute_dynamic_lines()
+                    for payment in payments:
+                        payment_rec = self.env['account.payment'].browse(payment)
+                        payment_rec.partner_id = False
+                        payment_rec.partner_id = record.partner_id.idc
+
             for line in record.invoice_line_ids.filtered(lambda x: x.product_id):
                 line.account_id = line._get_computed_account()
             if post:
