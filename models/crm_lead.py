@@ -6,6 +6,7 @@ class CrmLead(models.Model):
 
     medium_written = fields.Boolean()
 
+
     def write(self, vals):
         res = super(CrmLead, self).write(vals)
         for record in self:
@@ -399,9 +400,14 @@ class CrmLead(models.Model):
 
     referred_professional = fields.Many2one('res.partner', domain=[('professional','=',True)], string="Profesional vinculado")
 
+    @api.depends('type')
+    def compute_team_custom(self):
+        res = super(CrmLead, self)._compute_team_id()
+        return res
+
     team_id = fields.Many2one(
         'crm.team', 'Sales Team',
-        ondelete="set null", tracking=True)
+        ondelete="set null", tracking=True, compute=compute_team_custom)
     @api.onchange('partner_id')
     def onchange_partner_id(self):
         return False
