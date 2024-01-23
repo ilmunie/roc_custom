@@ -64,8 +64,9 @@ class AccountMove(models.Model):
             payments = []
             if record.invoice_payments_widget:
                 dict = json.loads(record.invoice_payments_widget)
-                for payment in dict['content']:
-                    payments.append(payment['account_payment_id'])
+                if dict and 'content' in dict and dict['content']:
+                    for payment in dict['content']:
+                        payments.append(payment['account_payment_id'])
             for payment in payments:
                 payment_rec = self.env['account.payment'].browse(payment)
                 payment_rec.action_draft()
