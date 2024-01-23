@@ -82,7 +82,7 @@ class AccountMove(models.Model):
                     for payment in payments:
                         payment_rec = self.env['account.payment'].browse(payment)
                         payment_rec.partner_id = False
-                        payment_rec.partner_id = record.partner_id.idc
+                        payment_rec.partner_id = record.partner_id.id
 
             for line in record.invoice_line_ids.filtered(lambda x: x.product_id):
                 line.account_id = line._get_computed_account()
