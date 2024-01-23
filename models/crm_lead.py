@@ -4,11 +4,15 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'create_date desc'
 
+    medium_written = fields.Boolean()
+
     def write(self, vals):
         res = super(CrmLead, self).write(vals)
         for record in self:
             if record.type == 'opportunity' and not record.date_conversion:
                 record.date_conversion = fields.Datetime.now()
+            if record.medium_id and not record.medium_written:
+                record.medium_written = True
         return res
 
     def _merge_get_fields(self):
@@ -219,6 +223,8 @@ class CrmLead(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if 'medium_id' in vals and vals['medium_id']:
+                vals['medium_written'] = True
             if 'type' in vals and vals['type'] == 'odoo':
                 vals['type'] = 'lead'
             if 'sale_team_text' in vals and vals['sale_team_text']:
