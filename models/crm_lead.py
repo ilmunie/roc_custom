@@ -2,7 +2,7 @@ from odoo import fields, models, api, SUPERUSER_ID, tools
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
-    _order = 'create_date desc'
+    _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
     medium_written = fields.Boolean()
 
