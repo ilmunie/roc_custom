@@ -1,10 +1,30 @@
 from odoo import fields, models, api, SUPERUSER_ID, tools
+from odoo.exceptions import UserError, ValidationError
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
     medium_written = fields.Boolean()
+
+
+    def compute_won_written(self):
+        for record in self:
+            if not record.won_written:
+                if record.won_status == 'won':
+                    record.won_written = True
+                else:
+                    record.won_written = False
+    won_written = fields.Boolean(compute=compute_won_written, store=True)
+#
+    @api.constrains('won_status')
+    def _check_won_accecss(self):
+        for order in self:
+            if order.won_written and not self.env.user.has_group('roc_custom.group_allow_modify_won_stage'):
+                raise ValidationError("No esta autorizado a modificar un oportunidad ganada")
+#
+#
+
 
 
     def write(self, vals):
@@ -224,6 +244,9 @@ class CrmLead(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+
+            if 'won_status' in vals and vals['won_status'] == 'won':
+                vals['won_written'] = True
             if 'medium_id' in vals and vals['medium_id']:
                 vals['medium_written'] = True
             if 'type' in vals and vals['type'] == 'odoo':
