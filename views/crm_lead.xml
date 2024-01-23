@@ -1,18 +1,10 @@
 <?xml version="1.0"?>
 <odoo>
-
-
-
-
 <record id="crm_lead_oppor_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom_opp</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
         <field name="arch" type="xml">
-
-
-
-
             <xpath expr="//tree[last()]" position="attributes">
                     <attribute name="default_order">datetime_in_stage desc</attribute>
             </xpath>
@@ -327,6 +319,12 @@
         <field name="inherit_id" ref="crm.view_crm_case_leads_filter"/>
         <field name="arch" type="xml">
 
+            <xpath expr="//filter[@name='lost']" position="after">
+                <separator/>
+                <filter string="Reales" name="real" domain="['|',('lost_reason','=',False),('lost_reason.is_not_a_lost','!=',True)]"/>
+                <filter string="No corresponden" name="real" domain="['&amp;', ('probability', '=', 0), ('active', '=', False),('lost_reason.is_not_a_lost','=',True)]"/>
+                <separator/>
+            </xpath>
 
             <xpath expr="//filter[@name='lost']" position="before">
                 <filter string="Ganados" name="won" domain="[('won_status','=','won')]"/>
@@ -425,6 +423,10 @@
         <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='assigned_to_me']" position="before">
+                <separator/>
+                <filter string="Reales" name="real" domain="['|',('lost_reason','=',False),('lost_reason.is_not_a_lost','!=',True)]"/>
+                <filter string="No corresponden" name="real" domain="['&amp;', ('probability', '=', 0), ('active', '=', False),('lost_reason.is_not_a_lost','=',True)]"/>
+                <separator/>
                  <separator orientation="vertical"/>
                 <filter string="En procesamiento" name="in_process" domain="[('stage_id.is_won', '!=', True),('active', '!=', False)]"/>
                 <filter string="Terminadas" name="done" domain="['|',('active', '=', False),('stage_id.is_won', '=', True)]"/>
