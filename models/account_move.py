@@ -55,6 +55,33 @@ class AccountMove(models.Model):
         }
 
 
+    def regenerate_account_moves(self):
+        for record in self:
+            if record.move_type not in ('out_invoice','in_invoice'):
+                continue
+            move_type = record.move_type
+            post = False
+            payments = []
+            if record.invoice_payments_widget:
+                dict = json.loads(record.invoice_payments_widget)
+                for payment in dict['content']:
+                    payments.append(payment['account_payment_id'])
+            for payment in payments:
+                payment_rec = self.env['account.payment'].browse(payment)
+                payment_rec.action_draft()
+            if record.state == 'posted':
+                post = True
+                record.button_draft()
+            for line in record.invoice_line_ids.filtered(lambda x: x.product_id):
+                line.account_id = line._get_computed_account()
+            if post:
+                record.action_post()
+            for payment in payments:
+                payment_rec = self.env['account.payment'].browse(payment)
+                payment_rec.action_post()
+                conciliable_line = payment_rec.line_ids.filtered('credit') if move_type == 'out_invoice' else payment_rec.line_ids.filtered('debit')
+                record.js_assign_outstanding_line(conciliable_line.id)
+
     @api.constrains("ref", "partner_id")
     def _check_supplier_invoice_duplicity(self):
         for rec in self:
