@@ -30,6 +30,7 @@
         'web_tree_many2one_clickable',
     ],
     'data': [
+        'data/email_template_requeriment.xml',
         'security/groups.xml',
         'data/res_partner.xml',
         'data/lead_stage_data.xml',

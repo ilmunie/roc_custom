@@ -593,7 +593,9 @@ class CrmLead(models.Model):
             domain += ['|', ('type', '=', 'opportunity'), ('active', '=', True)]
         else:
             domain += ['&', ('active', '=', True), '|', ('stage_id', '=', False), ('stage_id.is_won', '=', False)]
-
+        if domain:
+            domain.insert(0, ('id', 'not in', self.mapped('id')))
+            domain.insert(0, '&')
         return self.with_context(active_test=False).search(domain)
 
 
