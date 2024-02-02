@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="view_change_aml_tax_wizard" model="ir.ui.view">
+            <field name="name">view_change_aml_tax_wizard</field>
+            <field name="model">change.aml.tax.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+
+                    <group class="oe_title">
+                        <field name="tax_ids" widget="many2many_tags"/>
+                    </group>
+                    <footer>
+                        <button name="action_done" string="Submit" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="action_conciliar_manual" model="ir.actions.server">
+            <field name="name">Cambio de impuestos</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="binding_model_id" ref="account.model_account_move_line"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+                    action = records.open_action_change_aml_tax_wizard()
+            </field>
+        </record>
+</odoo>

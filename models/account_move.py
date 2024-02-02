@@ -8,6 +8,21 @@ class PaymentWay(models.Model):
     name = fields.Char(string='Nombre', required=True)
     invoice_payment_instructions = fields.Text(string='Instrucciones factura', required=True)
 
+class AccountMoveLine(models.Model):
+    _inherit = 'account.move.line'
+
+    def open_action_change_aml_tax_wizard(self):
+        context = {'move_line_ids': self._context.get('active_ids', [])}
+        open_wizard = {
+            'type': 'ir.actions.act_window',
+            'res_model': 'change.aml.tax.wizard',
+            'view_mode': 'form',
+            'context': context,
+            'views': [(False, 'form')],
+            'target': 'new',
+        }
+        return open_wizard
+
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
 

@@ -8,3 +8,4 @@ from . import account_payment_register
 from . import modify_tags_masive_wizard
 from . import payroll_account_import
 from . import mail_compose_message
+from . import change_aml_tax_wiz
