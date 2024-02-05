@@ -59,7 +59,7 @@ class PurchaseOrder(models.Model):
     sale_order_ids = fields.Many2many(comodel_name='sale.order',store=True,compute=compute_sale_origin, string='Órden Venta')
     sale_partner_id = fields.Many2one('res.partner',related='sale_order_ids.partner_id',store=True, string='Cliente')
 
-    @api.depends('state', 'order_line', 'order_line.qty_received', 'order_line.product_qty')
+    @api.depends('state', 'order_line', 'order_line.qty_received', 'order_line.product_qty', 'picking_ids', 'picking_ids.state')
     def compute_reception_status(self):
         for record in self:
             if record.state in ('purchase', 'done'):
