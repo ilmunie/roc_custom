@@ -6,6 +6,16 @@ from collections import defaultdict
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+
+
+    @api.depends('invoice_lines.move_id.state', 'invoice_lines.quantity', 'qty_received', 'product_uom_qty', 'order_id.state', 'trigger_compute_qty_inv')
+    def _compute_qty_invoiced(self):
+        for line in self:
+            # compute qty_invoiced
+            line.qty_to_invoice = line.product_qty - line.qty_invoiced
+
+    trigger_compute_qty_inv = fields.Boolean()
+
     move_ids = fields.One2many('stock.move', 'purchase_line_id', string='Stock Moves')
     product_type = fields.Selection(related='product_id.detailed_type')
     virtual_available_at_date = fields.Float(compute='_compute_qty_at_date', digits='Product Unit of Measure')
