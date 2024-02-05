@@ -247,6 +247,8 @@ class PayrollAccountImport(models.TransientModel):
         for key, lines in tax_payment_dict.items():
             trim_existing_move = self.env['account.move'].search([('ref','=', key)])
             if trim_existing_move:
+                if trim_existing_move[0].state != 'draft':
+                    trim_existing_move[0].button_draft()
                 trim_existing_move[0].write({'line_ids': lines})
             else:
                 self.env['account.move'].create({
