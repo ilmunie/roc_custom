@@ -323,7 +323,7 @@ class PayrollAccountImport(models.TransientModel):
                                         'key': row_name,
                                         'side': config[0],
                                         'account_code': config[1],
-                                        'analytic_tag': False,
+                                        'analytic_tag':False,
                                         'file': file.name,
                                     }
                                     result[employee_text + "||" + file.name].append(vals)
@@ -350,9 +350,12 @@ class PayrollAccountImport(models.TransientModel):
                 haber_sum = round(sum(val['amount'] for val in values if val['side'] == 'haber'),2)
                 employee_name = employee_text.split("||")[0]
                 ref = "Nomina " + values[0]['date'].strftime('%m/%Y') + ' ' + employee_name
+                analytic_tag = self.env['account.analytic.tag'].search([('name', 'ilike', employee_name)])
+
                 distributor_val = {'payroll_key': employee_text,
                                    'wiz_id': self.id,
-                                   'html_payroll_reference': ref
+                                   'html_payroll_reference': ref,
+                                   'analytic_tag_id':  analytic_tag[0].id if analytic_tag else False
                                    }
                 if debe_sum != haber_sum:
                     distributor_val['html_payroll_reference'] += f"<br/><span style='color:red;'>ERROR | El asiento no balancea. 'Debe' ({debe_sum}) 'Haber' ({haber_sum})</span>"
