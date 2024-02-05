@@ -124,12 +124,14 @@ class PayrollAccountImport(models.TransientModel):
             date = datetime.strptime(values[0]['date'], '%Y-%m-%d %H:%M:%S')
             ref = "Nominas " + date.strftime('%m/%Y') + ' ' + employee_name
             date_key = "Nominas " + date.strftime('%m/%Y')
+            tax_payemnt_date, trim = self.get_tax_payment_date_info(date)
+            trim = "PAGO RETENCIONES " + trim
             if date_key not in first_payment_dict.keys():
                 first_payment_dict[date_key] = []
             if date_key not in ss_payment_dict.keys():
                 ss_payment_dict[date_key] = []
-            if date_key not in tax_payment_dict.keys():
-                tax_payment_dict[date_key] = []
+            if trim not in tax_payment_dict.keys():
+                tax_payment_dict[trim] = []
             lines = []
             for line in values:
                 if line['amount'] < 0:
@@ -165,8 +167,10 @@ class PayrollAccountImport(models.TransientModel):
                         'credit': 0 if line['amount'] > 0 else abs(line['amount']),
                     }))
                 if line['key'] in tax_dict['debe_concepts']:
-                    tax_payment_dict[date_key].append((0, 0, {
-                        'date': date,
+                    #import pdb;
+                    #pdb.set_trace()
+                    tax_payment_dict[trim].append((0, 0, {
+                        'date': tax_payemnt_date,
                         'account_id': self.env['account.account'].search([('code', '=', line['account_code'])])[
                             0].id,
                         # 'partner_id':,
@@ -225,9 +229,13 @@ class PayrollAccountImport(models.TransientModel):
                 'line_ids': ss_payment_dict[key],
             })
 
+        #import pdb;pdb.set_trace()
         for key, values in tax_payment_dict.items():
+            date_arch = values[0][2]['date']
+            closest_or_next_payment_date, trim = self.get_tax_payment_date_info(date_arch)
             amount = sum(line[2].get('debit', 0) - line[2].get('credit', 0) for line in values)
             tax_payment_dict[key].append((0, 0, {
+                    'date': closest_or_next_payment_date,
                     'account_id': self.env['account.account'].search([('code', '=', tax_dict['haber_account'])])[
                         0].id,
                     # 'partner_id':,
@@ -236,22 +244,40 @@ class PayrollAccountImport(models.TransientModel):
                     'debit': 0 if amount > 0 else abs(amount),
                     'credit': abs(amount) if amount > 0 else 0,
                 }))
-            date = values[0][2]['date']
-            payment_dates = [datetime.strptime(date, '%d/%m/%Y') for date in tax_dict['payment_dates']]
-            # Find the closest or next payment date
-            closest_or_next_payment_date = min(
-                payment_dates,
-                key=lambda date: (date - last_day_of_next_month).days if date >= last_day_of_next_month else float(
-                    'inf')
-            )
-            self.env['account.move'].create({
-                'ref': key + " | PAGO RETENCIONES",
-                'date': closest_or_next_payment_date,
-                'journal_id': journal_id[0].id,
-                'line_ids': tax_payment_dict[key],
-            })
+        for key, lines in tax_payment_dict.items():
+            trim_existing_move = self.env['account.move'].search([('ref','=', key)])
+            if trim_existing_move:
+                trim_existing_move[0].write({'line_ids': lines})
+            else:
+                self.env['account.move'].create({
+                    'ref': key,
+                    'date': lines[0][2]['date'],
+                    'journal_id': journal_id[0].id,
+                    'line_ids': tax_payment_dict[key],
+                })
         return False
 
+    def get_tax_payment_date_info(self, given_date):
+        if isinstance(given_date, str):
+            given_date = datetime.strptime(given_date, '%d/%m/%Y')
+        for payment_date in tax_dict['payment_dates']:
+            payment_date_obj = datetime.strptime(payment_date, '%d/%m/%Y')
+            #import pdb;pdb.set_trace()
+            # Check if the payment date is after or equal to the given date
+            if payment_date_obj >= given_date:
+                # Determine the trimester
+                trimester = self.get_trimester(payment_date_obj.month)
+                return payment_date_obj, trimester
+
+    def get_trimester(self, month):
+        if month == 4:
+            return 'PRIMER TRIMESTRE'
+        elif month == 7:
+            return 'SEGUNDO TRIMESTRE'
+        elif month == 10:
+            return 'TERCER TRIMESTRE'
+        elif month == 1:
+            return 'CUARTO TRIMESTRE'
     def process_files(self):
         message_dict = {}
         result = {}
