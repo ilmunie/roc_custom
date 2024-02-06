@@ -117,8 +117,11 @@ class PayrollAccountImport(models.TransientModel):
         tax_payment_dict = {}
         result = json.loads(self.result)
         journal_id = self.env['account.journal'].search([('name','=','Nominas')])
+        payment_journal_id = self.env['account.journal'].search(['|',('name','=','Banco CAIXA  6128 (Impuestos)'),('name','=','Banco CAIXA 6128 (Impuestos)')])
         if not journal_id:
             raise ValidationError('No se encontró el diario Nominas')
+        if not payment_journal_id:
+            raise ValidationError('No se encontró el diario de pagos Banco CAIXA 6128 (Impuestos)')
         for key, values in result.items():
             employee_name = key.split("||")[0]
             date = datetime.strptime(values[0]['date'], '%Y-%m-%d %H:%M:%S')
@@ -202,7 +205,7 @@ class PayrollAccountImport(models.TransientModel):
             self.env['account.move'].create({
                 'ref': key + " | PAGO EMPLEADO",
                 'date': values[0][2]['date'],
-                'journal_id': journal_id[0].id,
+                'journal_id': payment_journal_id[0].id,
                 'line_ids': first_payment_dict[key],
             })
 
@@ -225,25 +228,37 @@ class PayrollAccountImport(models.TransientModel):
             self.env['account.move'].create({
                 'ref': key + " | PAGO CARGAS SOCIALES",
                 'date': last_day_of_next_month,
-                'journal_id': journal_id[0].id,
+                'journal_id': payment_journal_id[0].id,
                 'line_ids': ss_payment_dict[key],
             })
-
+        line = False
         #import pdb;pdb.set_trace()
         for key, values in tax_payment_dict.items():
             date_arch = values[0][2]['date']
             closest_or_next_payment_date, trim = self.get_tax_payment_date_info(date_arch)
             amount = sum(line[2].get('debit', 0) - line[2].get('credit', 0) for line in values)
-            tax_payment_dict[key].append((0, 0, {
-                    'date': closest_or_next_payment_date,
-                    'account_id': self.env['account.account'].search([('code', '=', tax_dict['haber_account'])])[
-                        0].id,
-                    # 'partner_id':,
-                    'name': key + " | PAGO " + ','.join(tax_dict['debe_concepts']),
-                    # 'analytic_tag_ids':
-                    'debit': 0 if amount > 0 else abs(amount),
-                    'credit': abs(amount) if amount > 0 else 0,
-                }))
+            trim_existing_move = self.env['account.move'].search([('ref', '=', key)])
+            if trim_existing_move and trim_existing_move[0].line_ids.filtered(lambda x: x.account_id.name == 'CAIXA 6128'):
+                if trim_existing_move[0].state != 'draft':
+                    trim_existing_move[0].button_draft()
+                line = trim_existing_move[0].line_ids.filtered(lambda x: x.account_id.code == tax_dict['haber_account'])[0]
+                line_amount = -line.debit if line.debit else line.credit
+                line_amount += amount
+                tax_payment_dict[key].append((1, line.id, {
+                    'credit': abs(line_amount) if line_amount > 0 else 0,
+                    'debit': 0 if line_amount > 0 else abs(line_amount)}))
+            else:
+                tax_payment_dict[key].append((0, 0, {
+                        'date': closest_or_next_payment_date,
+                        'account_id': self.env['account.account'].search([('code', '=', tax_dict['haber_account'])])[
+                            0].id,
+                        # 'partner_id':,
+                        'name': key + " | PAGO " + ','.join(tax_dict['debe_concepts']),
+                        # 'analytic_tag_ids':
+                        'debit': 0 if amount > 0 else abs(amount),
+                        'credit': abs(amount) if amount > 0 else 0,
+                    }))
+        #import pdb;pdb.set_trace()
         for key, lines in tax_payment_dict.items():
             trim_existing_move = self.env['account.move'].search([('ref','=', key)])
             if trim_existing_move:
@@ -254,7 +269,7 @@ class PayrollAccountImport(models.TransientModel):
                 self.env['account.move'].create({
                     'ref': key,
                     'date': lines[0][2]['date'],
-                    'journal_id': journal_id[0].id,
+                    'journal_id': payment_journal_id[0].id,
                     'line_ids': tax_payment_dict[key],
                 })
         return False
