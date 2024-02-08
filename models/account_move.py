@@ -32,11 +32,38 @@ class AccountJournal(models.Model):
     default_payable_account_id = fields.Many2one('account.account', string="Cuenta a cobrar", domain=[('internal_type','=','receivable'),('deprecated','=',False)])
     invoice_payment_label = fields.Char(string="Etiqueta pago (factura)")
 
+class TaxInvoiceReportLine(models.Model):
+    _name = 'tax.invoice.report.line'
+
+    tax_group_name = fields.Char(string="Referencia impuesto")
+    amount_base = fields.Float(string="Base Imponible")
+    tax_amount = fields.Float(string="Monto impuesto")
+
+
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    @api.depends('state')
+    def compute_tax_invoice_report_line(self):
+        for record in self:
+            res = []
+            if record.state == 'posted':
+                json_data = record.tax_totals_json
+                import json
+                json_data = json.loads(json_data)
+                if json_data:
+                    tax_data = json_data.get('groups_by_subtotal', False)
+                    if tax_data:
+                        tax_lines_data = tax_data.get('Importe libre de impuestos', False)
+                        for line in tax_lines_data:
+                            res.append((0, 0, {
+                                        'tax_group_name': line['tax_group_name'],
+                                        'amount_base': line['tax_group_base_amount'],
+                                        'tax_amount': line['tax_group_amount']}))
+            record.tax_invoice_report_line_ids = [(5,)] if not res else res
 
+    tax_invoice_report_line_ids = fields.Many2many('tax.invoice.report.line', compute=compute_tax_invoice_report_line, store=True, string="Resumen de impuestos")
 
 
     def check_for_generic_account_config(self):
@@ -302,6 +329,17 @@ class AccountMove(models.Model):
         new_terms_lines = _compute_diff_payment_terms_lines(self, existing_terms_lines, account, to_compute)
         if new_terms_lines.filtered(lambda x: x.amount_residual > 0):
             self.invoice_date_due = new_terms_lines.filtered(lambda x: x.amount_residual > 0)[0].date_maturity
+
+    def _prepare_tax_lines_data_for_totals_from_invoice(self, tax_line_id_filter=None, tax_ids_filter=None):
+        res = super(AccountMove,self)._prepare_tax_lines_data_for_totals_from_invoice(tax_line_id_filter=tax_line_id_filter,tax_ids_filter=tax_ids_filter)
+        #import pdb;pdb.set_trace()
+        return res
+
+    def _get_tax_totals(self, partner, tax_lines_data, amount_total, amount_untaxed, currency):
+        res = super(AccountMove,self)._get_tax_totals(partner, tax_lines_data, amount_total, amount_untaxed, currency)
+        #import pdb;pdb.set_trace()
+        return res
+
 
 
 
