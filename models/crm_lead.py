@@ -185,25 +185,25 @@ class CrmLead(models.Model):
     def get_last_message(self):
         for record in self:
             last_email_from_partner = False
-            #import pdb;pdb.set_trace()
-            if record.message_ids:
-                last_message_id = sorted(record.message_ids.filtered(lambda x: x.body), key=lambda r: r.create_date, reverse=True)
-                emails = []
-                if record.partner_id:
-                    emails.append(record.partner_id.email)
-                if record.email_from:
-                    emails.append(record.email_from)
-                if last_message_id and last_message_id[0].email_from in emails:
-                    last_email_from_partner = True
-            if last_email_from_partner:
-                if record.type == 'lead_id':
-                    stage = self.env['crm.lead.stage'].search([('name','=','Procesamiento Roconsa')])
-                    if stage:
-                        record.lead_stage_id = stage[0].id
-                else:
-                    stage = self.env['crm.stage'].search([('name','=','Procesamiento Roconsa')])
-                    if stage:
-                        record.stage_id = stage[0].id
+            ##import pdb;pdb.set_trace()
+            #if record.message_ids:
+            #    last_message_id = sorted(record.message_ids.filtered(lambda x: x.body), key=lambda r: r.create_date, reverse=True)
+            #    emails = []
+            #    if record.partner_id:
+            #        emails.append(record.partner_id.email)
+            #    if record.email_from:
+            #        emails.append(record.email_from)
+            #    if last_message_id and last_message_id[0].email_from in emails:
+            #        last_email_from_partner = True
+            #if last_email_from_partner:
+            #    if record.type == 'lead_id':
+            #        stage = self.env['crm.lead.stage'].search([('name','=','Procesamiento Roconsa')])
+            #        if stage:
+            #            record.lead_stage_id = stage[0].id
+            #    else:
+            #        stage = self.env['crm.stage'].search([('name','=','Procesamiento Roconsa')])
+            #        if stage:
+            #            record.stage_id = stage[0].id
 
             record.last_email_from_partner = last_email_from_partner
 
