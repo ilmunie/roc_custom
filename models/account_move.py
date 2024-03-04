@@ -11,6 +11,258 @@ class PaymentWay(models.Model):
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
+    peyga_es_report_status = fields.Char(string='PEYGA ES Report Status', compute='_compute_peyga_es_report_status', store=True)
+    peyga_es_report_account_prefix = fields.Char(string='PEYGA ES Report Account Prefix', compute='_compute_peyga_es_report_status', store=True)
+    account_type = fields.Many2one(string="Tipo de cuenta", related="account_id.user_type_id", store=True)
+    @api.depends('account_id','account_id.code')
+    def _compute_peyga_es_report_status(self):
+        for record in self:
+            inicio_cuenta_3 = record.account_id.code[:3] if record.account_id and record.account_id.code else "fail"
+            inicio_cuenta_4 = record.account_id.code[:4] if record.account_id and record.account_id.code else "fail"
+            seccion_padre = ''
+            seccion_especifica = ''
+            table = {
+                "700": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "701": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "702": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "703": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "704": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "705": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "706": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "708": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "709": ("A) RESULTADO DE EXPLOTACIÓN", "1. Importe neto de la cifra de negocios"),
+                "6930": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "2. Variación de existencias de productos terminados y en curso de fabricación",
+                ),
+                "71": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "2. Variación de existencias de productos terminados y en curso de fabricación",
+                ),
+                "7930": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "2. Variación de existencias de productos terminados y en curso de fabricación",
+                ),
+                "73": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "3. Trabajos realizados por la empresa para su activo.",
+                ),
+                "600": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "601": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "602": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "606": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "607": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "608": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "609": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "61": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "6931": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "6932": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "6933": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "7931": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "7932": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "7933": ("A) RESULTADO DE EXPLOTACIÓN", "4. Aprovisionamientos"),
+                "740": ("A) RESULTADO DE EXPLOTACIÓN", "5. Otros ingresos de explotación"),
+                "747": ("A) RESULTADO DE EXPLOTACIÓN", "5. Otros ingresos de explotación"),
+                "75": ("A) RESULTADO DE EXPLOTACIÓN", "5. Otros ingresos de explotación"),
+                "64": ("A) RESULTADO DE EXPLOTACIÓN", "6. Gastos de personal"),
+                "62": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "631": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "634": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "636": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "639": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "65": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "694": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "695": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "794": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "7954": ("A) RESULTADO DE EXPLOTACIÓN", "7. Otros gastos de explotación"),
+                "68": ("A) RESULTADO DE EXPLOTACIÓN", "8. Amortización del inmovilizado"),
+                "746 y no 7461": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "9. Imputación de subvenciones de inmovilizado no financiero y otras",
+                ),
+                "7951": ("A) RESULTADO DE EXPLOTACIÓN", "10. Excesos de provisiones"),
+                "7952": ("A) RESULTADO DE EXPLOTACIÓN", "10. Excesos de provisiones"),
+                "7955": ("A) RESULTADO DE EXPLOTACIÓN", "10. Excesos de provisiones"),
+                "670": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "671": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "672": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "690": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "691": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "770": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "771": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "772": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "790": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "791": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "792": (
+                    "A) RESULTADO DE EXPLOTACIÓN",
+                    "11. Deterioro y resultado por enajenaciones del inmovilizado",
+                ),
+                "678": ("A) RESULTADO DE EXPLOTACIÓN", "12. Otros resultados"),
+                "778": ("A) RESULTADO DE EXPLOTACIÓN", "12. Otros resultados"),
+                "7461": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "13. Ingresos financieros a) Imputación de subvenciones, donaciones y legados de carácter financiero",
+                ),
+                "760": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "13.Ingresos financieros b) Otros ingresos financieros",
+                ),
+                "761": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "13.Ingresos financieros b) Otros ingresos financieros",
+                ),
+                "762": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "13.Ingresos financieros b) Otros ingresos financieros",
+                ),
+                "769": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "13.Ingresos financieros b) Otros ingresos financieros",
+                ),
+                "660": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "14. Gastos financieros",
+                ),
+                "661": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "14. Gastos financieros",
+                ),
+                "662": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "14. Gastos financieros",
+                ),
+                "665": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "14. Gastos financieros",
+                ),
+                "669": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "14. Gastos financieros",
+                ),
+                "663": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "15. Variación de valor razonable en instrumentos financieros",
+                ),
+                "763": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "15. Variación de valor razonable en instrumentos financieros",
+                ),
+                "668": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "16. Diferencias de cambio",
+                ),
+                "768": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "16. Diferencias de cambio",
+                ),
+                "666": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "667": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "673": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "675": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "696": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "697": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "698": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "699": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "766": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "773": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "775": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "796": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "797": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "798": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "799": (
+                    "B) RESULTADO FINANCIERO (13 + 14 + 15 + 16 + 17)",
+                    "17. Deterioro y resultado por enajenaciones de instrumentos financieros.",
+                ),
+                "6300": ("D) RESULTADO DEL EJERCICIO (C + 18)", "18. Impuestos sobre beneficios."),
+                "6301": ("D) RESULTADO DEL EJERCICIO (C + 18)", "18. Impuestos sobre beneficios."),
+                "633": ("D) RESULTADO DEL EJERCICIO (C + 18)", "18. Impuestos sobre beneficios."),
+                "638": ("D) RESULTADO DEL EJERCICIO (C + 18)", "18. Impuestos sobre beneficios."),
+            }
+            prefix = ''
+            if inicio_cuenta_3 in table:
+                seccion_padre, seccion_especifica = table[inicio_cuenta_3]
+                prefix = inicio_cuenta_3
+            elif inicio_cuenta_4 in table:
+                seccion_padre, seccion_especifica = table[inicio_cuenta_4]
+                prefix = inicio_cuenta_4
+            else:
+                record.peyga_es_report_status = 'No considerado'
+                prefix = inicio_cuenta_4
+                continue
+            record.peyga_es_report_status = f"{seccion_padre} - {seccion_especifica}"
+            record.peyga_es_report_account_prefix = prefix
     def open_action_change_aml_tax_wizard(self):
         context = {'move_line_ids': self._context.get('active_ids', [])}
         open_wizard = {
