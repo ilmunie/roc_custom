@@ -3,7 +3,7 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (c) 2017 Eynes (http://www.eynes.com.ar)
-#    All Rights Reserved. See AUTHORS for details.
+#    All Rights Reserved. See AUTuitHORS for details.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as published by
@@ -34,12 +34,14 @@ from datetime import datetime, timedelta
 conversion_dict = {
     'TOTAL DEVENGOS': ['debe','640000000'], #gasto con aaa
     '(00008) 050 DCTO ESP': ['haber','640000000'],
+    '(00008) 400 DTO.ESPEC': ['haber','640000000'],
     '(00008) 838 DTO.C.COM': ['haber','476000000'],
     '(00008) 060 DIF. NETO': ['haber','465000000'],
     '(00008) 610 EMB.SALAR.': ['haber','465000000'],
     '(00008) 840 DTO.ACC.': ['haber', '476000000'],
     '(00008) 862 RETEN.IRPF': ['haber', '475100001'],
     '(00008) 762 RETEN.IRPF': ['haber', '475100001'],
+    '(00008) 023 DC.MULTAS': ['haber', '659000001'],
     '(00008) 863 RET.V.ESP.': ['haber', '475100001'],
     '(00008) 021 ANTICIPO': ['haber', '460000000'],
     'TOTAL LIQUIDO': ['haber', '465000000'],
