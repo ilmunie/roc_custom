@@ -52,8 +52,7 @@
                         </field>
 					<footer>
                         <button class="btn-default" special="cancel" string="Cancel"/>
-                        <button name="add_and_continue" string="Agregar y continuar" type="object" class="btn-primary"
-                        />
+                        <button name="add_and_continue" string="Agregar y continuar" type="object" class="btn-primary"/>
 					</footer>
 				</form>
 			</field>

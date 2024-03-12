@@ -1,5 +1,64 @@
 from odoo import fields, models, api
 import json
+from odoo.exceptions import UserError
+
+class PurchaseOrder(models.Model):
+    _inherit = "purchase.order"
+    _order = 'create_date desc'
+
+    @api.constrains('state')
+    def constraint_additional_product(self):
+        for record in self:
+            if record.state != 'draft' and record.order_line.filtered(lambda x: x.additional_product_required):
+                raise UserError("Faltan agregar productos adicionales")
+    def open_additional_product_conf(self):
+        wiz = self.env['purchase.additional.product.wiz'].create({'purchase_id': self.id})
+        res = wiz.add_and_continue()
+        return res
+
+    @api.depends('order_line', 'order_line.additional_product_done')
+    def compute_additional_product_pending(self):
+        for record in self:
+            if record.order_line.filtered(lambda x: x.additional_product_done != True):
+                res = True
+            else:
+                res = False
+            record.additional_product_pending = res
+    additional_product_pending = fields.Boolean(compute=compute_additional_product_pending, store=True)
+    #visibility_button additional products
+class PurchaseOrderLine(models.Model):
+    _inherit = 'purchase.order.line'
+
+    config_id = fields.Many2one('purchase.additional.product')
+    additional_purchase_line_parent_id = fields.Many2one('purchase.order.line')
+    additional_purchase_line_child_ids = fields.One2many('purchase.order.line', 'additional_purchase_line_parent_id')
+
+    @api.depends('product_template_id')
+    def compute_additional_product_status(self):
+        for record in self:
+            vals_to_create = []
+            if record.product_template_id.additional_product_ids:
+                for line in record.product_template_id.additional_product_ids:
+                    vals_to_create.append({'purchase_line_id': record.id, 'config_id': line.id})
+            self.env['additional.product.status'].create(vals_to_create)
+            record.trigger_compute_additional_product_status = False if record.trigger_compute_additional_product_status else True
+
+    trigger_compute_additional_product_status = fields.Boolean(compute=compute_additional_product_status, store=True)
+    additional_product_status = fields.One2many('additional.product.status', 'purchase_line_id')
+
+    def compute_additional_product_done(self):
+        for record in self:
+            res = True
+            if record.additional_product_status.filtered(lambda x: not x.matching_lines):
+                res = False
+            if record.additional_product_status.filtered(lambda x: not x.matching_lines and x.config_id.required):
+                record.additional_product_required = True
+            else:
+                record.additional_product_required = False
+            record.additional_product_done = res
+
+    additional_product_done = fields.Boolean(compute=compute_additional_product_done)
+    additional_product_required = fields.Boolean(compute=compute_additional_product_done)
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
@@ -23,7 +82,7 @@ class AdditionalProductStatus(models.Model):
         for record in self:
             matching_ids = []
             if record.purchase_line_id and record.config_id:
-                lines_to_check = record.purchase_line_id.order_id.order_line.filtered(lambda x: x.id != record.purchase_line_id.id and x.product_id)
+                lines_to_check = record.purchase_line_id.additional_purchase_line_child_ids.filtered(lambda x: x.config_id.id == record.config_id.id)
                 for line in lines_to_check:
                     domain = json.loads(record.config_id.domain)
                     domain.insert(0, ('id', '=', line.product_id.id))
@@ -42,41 +101,61 @@ class PurchaseAdditionalProductWizard(models.TransientModel):
     _name = "purchase.additional.product.wiz"
 
     already_done_lines = fields.Many2many('purchase.order.line')
-    already_done_additional_lines = fields.Many2many('purchase.additional.product')
+    already_done_additional_lines = fields.Many2many('additional.product.status')
 
     additional_product_name = fields.Char(string="Nombre")
-
     line_ids = fields.One2many('purchase.additional.product.wiz.line', 'wiz_id')
-    purchase_id = fields.Many2one(
-        'purchase.order')
+    purchase_id = fields.Many2one('purchase.order')
+    po_line = fields.Many2one('purchase.order.line')
+    status_id = fields.Many2one('additional.product.status')
 
     def add_and_continue(self):
         vals_po_write = []
-        for line in self.line_ids.filtered(lambda x: x.add_product):
-            vals_po_write.append((0,0,{'product_id': line.product_id.id, 'product_qty':line.qty}))
-        if vals_po_write:
-            self.purchase_id.order_line = vals_po_write
+        #adds order_line and section if there are any lines
+        if self.line_ids.filtered(lambda x: x.add_product):
+            vals_po_write.append((0, 0,
+                                  {'display_type': 'line_section',
+                                   'sequence': self.po_line.sequence if self.po_line else 10,
+                                   'product_qty': 0,
+                                   'name': self.status_id.config_id.name if self.status_id else False,
+                                   'additional_purchase_line_parent_id': self.po_line.id}))
+            for line in self.line_ids.filtered(lambda x: x.add_product):
+                vals_po_write.append((0, 0,
+                                      {'product_id': line.product_id.id,
+                                       'sequence': self.po_line.sequence if self.po_line else 10,
+                                       'product_qty': line.qty,
+                                       'additional_purchase_line_parent_id': self.po_line.id,
+                                       'config_id': self.status_id.config_id.id,}))
+            if vals_po_write:
+                self.purchase_id.order_line = vals_po_write
+
+        #checks_if_other_config_for_the_current_line
+        if self.status_id and self.po_line:
+            self.already_done_additional_lines = [(4, self.status_id.id)]
+            config_to_process = self.po_line.additional_product_status.filtered(lambda x: not x.has_matching_lines and x.id not in self.already_done_additional_lines.mapped('id'))
+            if not config_to_process:
+                self.already_done_lines = [(4, self.po_line.id)]
+
+        #loads lines and wiz if something else to proccess
         vals_to_write = {}
+        lines_to_process = self.purchase_id.order_line.filtered(lambda x: x.id not in self.already_done_lines.mapped('id') and x.product_template_id.additional_product_ids and x.additional_product_done != True)
+        if not lines_to_process:
+            return False
+        po_line = lines_to_process[0]
+        config_to_process = po_line.additional_product_status.filtered(lambda x: not x.has_matching_lines and x.id not in self.already_done_additional_lines.mapped('id'))
+        if not config_to_process:
+            return False
+        config_id = config_to_process[0]
+
         self.line_ids = [(5,)]
         lines = []
-        pending_po_lines = self.purchase_id.order_line.filtered(lambda x: not x.additional_product_done and x.id not in self.already_done_lines.mapped('id'))
-        pending_line_additional_product = False
-        #import pdb;pdb.set_trace()
-        for po_line in pending_po_lines:
-            pending_line_additional_product = po_line.additional_product_status.filtered(lambda x: not x.has_matching_lines and x.config_id.id not in self.already_done_additional_lines.mapped('id')).mapped('config_id')
-            if not pending_line_additional_product:
-                vals_to_write['already_done_lines'] = [(4, po_line.id)]
-            else:
-                break
-        if pending_line_additional_product:
-            for additional_line in pending_line_additional_product:
-                products_available = self.env['product.product'].search(json.loads(additional_line.domain))
-                vals_to_write['additional_product_name'] = po_line.name + " | " + additional_line.name
-                lines = []
-                for prod in products_available:
-                    lines.append((0,0,{'add_product':False, 'product_id': prod.id, 'qty':po_line.product_qty}))
-                vals_to_write['line_ids'] = lines
-                vals_to_write['already_done_additional_lines'] = [(4, additional_line.id)]
+        vals_to_write['po_line'] = po_line.id
+        vals_to_write['status_id'] = config_id.id
+        products_available = self.env['product.product'].search(json.loads(config_id.config_id.domain))
+        vals_to_write['additional_product_name'] = po_line.name + " | " + config_id.config_id.name
+        for prod in products_available:
+            lines.append((0,0,{'add_product':False, 'product_id': prod.id, 'qty':po_line.product_qty}))
+        vals_to_write['line_ids'] = lines
         self.write(vals_to_write)
         if lines:
             return {

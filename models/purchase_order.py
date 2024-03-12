@@ -8,26 +8,6 @@ class PurchaseOrder(models.Model):
 
     date_approve = fields.Datetime('Confirmation Date', readonly=False, index=True, copy=False, tracking=True)
 
-    @api.constrains('state')
-    def constraint_additional_product(self):
-        for record in self:
-            if record.state != 'draft' and record.order_line.filtered(lambda x: x.additional_product_required):
-                raise UserError("Faltan agregar productos adicionales")
-    def open_additional_product_conf(self):
-        wiz = self.env['purchase.additional.product.wiz'].create({'purchase_id': self.id})
-        res = wiz.add_and_continue()
-        return res
-
-    @api.depends('order_line', 'order_line.additional_product_done')
-    def compute_additional_product_pending(self):
-        for record in self:
-            if record.order_line.filtered(lambda x: x.additional_product_done == False):
-                res = True
-            else:
-                res = False
-            record.additional_product_pending = res
-    additional_product_pending = fields.Boolean(compute=compute_additional_product_pending, store=True)
-
     def recreate_picking(self):
         for record in self:
             if record.state in ('done','purchase'):
