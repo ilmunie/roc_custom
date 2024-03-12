@@ -7,7 +7,31 @@ class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
 
+    @api.depends('product_template_id')
+    def compute_additional_product_status(self):
+        for record in self:
+            vals_to_create = []
+            if record.product_template_id.additional_product_ids:
+                for line in record.product_template_id.additional_product_ids:
+                    vals_to_create.append({'purchase_line_id': record.id, 'config_id': line.id})
+            self.env['additional.product.status'].create(vals_to_create)
+            record.trigger_compute_additional_product_status = False if record.trigger_compute_additional_product_status else True
+    trigger_compute_additional_product_status = fields.Boolean(compute=compute_additional_product_status, store=True)
+    additional_product_status = fields.One2many('additional.product.status', 'purchase_line_id')
 
+    def compute_additional_product_done(self):
+        for record in self:
+            res = True
+            if record.additional_product_status.filtered(lambda x: not x.matching_lines):
+                res = False
+            if record.additional_product_status.filtered(lambda x: not x.matching_lines and x.config_id.required):
+                record.additional_product_required = True
+            else:
+                record.additional_product_required = False
+            record.additional_product_done = res
+
+    additional_product_done = fields.Boolean(compute=compute_additional_product_done)
+    additional_product_required = fields.Boolean(compute=compute_additional_product_done)
     @api.depends('invoice_lines.move_id.state', 'invoice_lines.quantity', 'qty_received', 'product_uom_qty', 'order_id.state', 'trigger_compute_qty_inv', 'product_id.invoice_policy')
     def _compute_qty_invoiced(self):
         for line in self:

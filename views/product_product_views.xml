@@ -10,4 +10,54 @@
             </xpath>
         </field>
     </record>
+    <record id="product_template_roc_custom_form" model="ir.ui.view">
+        <field name="name">product.template.product.form.roc.custom</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='variant_seller_ids']" position="after">
+                <group string="Productos Adicionales">
+                    <field name="additional_product_ids" widget="one2many" nolabel="1" mode="tree">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="required"/>
+                            <field name="domain" widget="domain" options="{'in_dialog': True, 'model': 'product.product'}"/>
+                        </tree>
+                    </field>
+                </group>
+            </xpath>
+        </field>
+    </record>
+		<record id="view_purchase_additional_product_wiz" model="ir.ui.view">
+			<field name="name">Productos adicionales</field>
+			<field name="model">purchase.additional.product.wiz</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Productos adicionales">
+					<group>
+                        <div class="oe_title">
+                            <h3>
+							    <field name="additional_product_name" widget="text" readonly="1" force_save="1"/>
+                            </h3>
+                        </div>
+					</group>
+
+                        <field name="line_ids" nolabel="1">
+                            <tree editable="bottom" widget="one2many" create="false" delete="false">
+                                <field name="add_product"/>
+                                <field name="product_id"/>
+                                <field name="product_uom"/>
+                                <field name="qty"/>
+                            </tree>
+                        </field>
+					<footer>
+                        <button class="btn-default" special="cancel" string="Cancel"/>
+                        <button name="add_and_continue" string="Agregar y continuar" type="object" class="btn-primary"
+                        />
+					</footer>
+				</form>
+			</field>
+		</record>
+
+
 </odoo>
