@@ -99,13 +99,14 @@ class CrmLead(models.Model):
     def followers_customization(self):
         for record in self:
             if record.type == 'lead':
-                if self.env.ref('roc_custom.partner_lead_follower').id not in record.message_follower_ids.mapped('partner_id.id'):
+                if self.env.ref('roc_custom.partner_lead_follower', raise_if_not_found=False).id not in record.message_follower_ids.mapped('partner_id.id'):
                     wiz = self.env['mail.wizard.invite'].create({'res_model':record._name, 'res_id':record.id})
-                    wiz.write({'partner_ids': [(6,0, [self.env.ref('roc_custom.partner_lead_follower').id,])],'send_mail': False})
+                    wiz.write({'partner_ids': [(6,0, [self.env.ref('roc_custom.partner_lead_follower', raise_if_not_found=False).id,])],'send_mail': False})
+                    wiz.write({'partner_ids': [(6,0, [self.env.ref('roc_custom.partner_lead_follower', raise_if_not_found=False).id,])],'send_mail': False})
                     wiz.add_followers()
             else:
-                if self.env.ref('roc_custom.partner_lead_follower').id in record.message_follower_ids.mapped('partner_id.id'):
-                    record.message_follower_ids.filtered(lambda x: x.partner_id.id == self.env.ref('roc_custom.partner_lead_follower').id)[0].unlink()
+                if self.env.ref('roc_custom.partner_lead_follower', raise_if_not_found=False).id in record.message_follower_ids.mapped('partner_id.id'):
+                    record.message_follower_ids.filtered(lambda x: x.partner_id.id == self.env.ref('roc_custom.partner_lead_follower', raise_if_not_found=False).id)[0].unlink()
             record.trigger_followers_customization = False if record.trigger_followers_customization else True
     trigger_followers_customization = fields.Boolean(compute='followers_customization', store=True)
     def sync_expected_revenue(self):
