@@ -41,7 +41,7 @@ class PurchaseOrderLine(models.Model):
     additional_purchase_line_parent_id = fields.Many2one('purchase.order.line')
     additional_purchase_line_child_ids = fields.One2many('purchase.order.line', 'additional_purchase_line_parent_id')
 
-    @api.depends('product_template_id')
+    @api.depends('product_template_id', 'product_template_id.additional_product_ids')
     def compute_additional_product_status(self):
         for record in self:
             vals_to_create = []
