@@ -13,6 +13,11 @@ class PurchaseOrder(models.Model):
                 raise UserError("Faltan agregar productos adicionales")
     def open_additional_product_conf(self):
         wiz = self.env['purchase.additional.product.wiz'].create({'purchase_id': self.id})
+        sec = 1
+        for line in self.order_line:
+            line.sequence = sec
+            sec += 1
+
         res = wiz.add_and_continue()
         return res
 
@@ -28,6 +33,9 @@ class PurchaseOrder(models.Model):
     #visibility_button additional products
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
+
+
+
 
     config_id = fields.Many2one('purchase.additional.product')
     additional_purchase_line_parent_id = fields.Many2one('purchase.order.line')
