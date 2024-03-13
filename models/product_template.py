@@ -54,6 +54,7 @@ class PurchaseOrderLine(models.Model):
     trigger_compute_additional_product_status = fields.Boolean(compute=compute_additional_product_status, store=True)
     additional_product_status = fields.One2many('additional.product.status', 'purchase_line_id')
 
+    @api.depends('additional_product_status', 'additional_product_status.matching_lines')
     def compute_additional_product_done(self):
         for record in self:
             res = True
@@ -65,8 +66,8 @@ class PurchaseOrderLine(models.Model):
                 record.additional_product_required = False
             record.additional_product_done = res
 
-    additional_product_done = fields.Boolean(compute=compute_additional_product_done)
-    additional_product_required = fields.Boolean(compute=compute_additional_product_done)
+    additional_product_done = fields.Boolean(compute=compute_additional_product_done, store=True)
+    additional_product_required = fields.Boolean(compute=compute_additional_product_done, store=True)
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
