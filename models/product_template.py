@@ -10,7 +10,7 @@ class PurchaseOrder(models.Model):
     @api.constrains('state')
     def constraint_additional_product(self):
         for record in self:
-            if record.state != 'draft' and record.order_line.filtered(lambda x: x.additional_product_required):
+            if record.state not in ('draft', 'cancel') and record.order_line.filtered(lambda x: x.additional_product_required):
                 raise UserError("Faltan agregar productos adicionales")
     def open_additional_product_conf(self):
         wiz = self.env['purchase.additional.product.wiz'].create({'purchase_id': self.id})
