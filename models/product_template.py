@@ -2,6 +2,7 @@ from odoo import fields, models, api
 import json
 from odoo.exceptions import UserError
 
+
 class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
@@ -34,8 +35,30 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super(PurchaseOrderLine, self).create(vals_list)
+        new_vals = []
+        for line in lines:
+            if line.orderpoint_id and line.product_id and line.product_id.product_tmpl_id.additional_product_ids:
+                for additional_prod in line.product_id.product_tmpl_id.additional_product_ids:
+                    if additional_prod.default_product_id:
+                        new_vals.append((0, 0, {
+                            'display_type': 'line_section',
+                            'sequence': line.sequence,
+                            'product_qty': 0,
+                            'name': additional_prod.name,
+                            'additional_purchase_line_parent_id': line.id}))
+                        new_vals.append((0, 0, {
+                            'product_id': additional_prod.default_product_id.id,
+                            'name': additional_prod.default_product_id.name,
+                            'sequence': line.sequence,
+                            'product_qty': line.product_qty,
+                            'additional_purchase_line_parent_id': line.id,
+                            'config_id': additional_prod.id}))
 
-
+            line.order_id.order_line = new_vals
+        return lines
 
     config_id = fields.Many2one('purchase.additional.product')
     additional_purchase_line_parent_id = fields.Many2one('purchase.order.line')
@@ -80,6 +103,7 @@ class PurchaseAdditionalProduct(models.Model):
     name = fields.Char(required=True, string="Nombre")
     required = fields.Boolean(string="Requerido")
     domain = fields.Char(required=True, string="Productos")
+    default_product_id = fields.Many2one('product.product')
 
 class AdditionalProductStatus(models.Model):
     _name = "additional.product.status"
