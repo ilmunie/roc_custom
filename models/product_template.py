@@ -38,6 +38,16 @@ class PurchaseOrderLine(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         lines = super(PurchaseOrderLine, self).create(vals_list)
+        order_ids = []
+        sec = 0
+        for order in lines.mapped('order_id'):
+            if order.id in order_ids:
+                continue
+            else:
+                for line in order.order_line:
+                    line.sequence = sec
+                    sec += 1
+                order_ids.append(order.id)
         new_vals = []
         for line in lines:
             if line.orderpoint_id and line.product_id and line.product_id.product_tmpl_id.additional_product_ids:
