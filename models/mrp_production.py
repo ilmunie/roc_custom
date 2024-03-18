@@ -4,6 +4,29 @@ class MrpProduction(models.Model):
     _inherit = 'mrp.production'
 
 
+    state = fields.Selection(selection_add=[('waiting_approval','Esperando Autorizacion')])
+
+    @api.depends('move_raw_ids', 'state', 'move_raw_ids.product_uom_qty')
+    def _compute_unreserve_visible(self):
+        for order in self:
+            already_reserved = order.state not in ('done', 'cancel') and order.mapped('move_raw_ids.move_line_ids')
+            any_quantity_done = any(m.quantity_done > 0 for m in order.move_raw_ids)
+
+            order.unreserve_visible = not any_quantity_done and already_reserved
+            order.reserve_visible = order.state in ('waiting_approval','confirmed', 'progress', 'to_close') and any(move.product_uom_qty and move.state in ['confirmed', 'partially_available'] for move in order.move_raw_ids)
+
+    def button_confirm_with_approval(self):
+        for record in self:
+            confirm_group = self.env.ref('roc_custom.group_confirm_mrp', raise_if_not_found=False)
+            if confirm_group:
+                if self.env.user.id in confirm_group.users.mapped('id'):
+                    return record.action_confirm()
+            record.write({'state': 'waiting_approval'})
+
+    def edit(self):
+        for record in self:
+            record.state = 'draft'
+
     def name_get(self):
         res = []
         for rec in self:

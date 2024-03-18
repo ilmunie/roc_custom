@@ -4,6 +4,8 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
     _order = 'create_date desc'
 
+
+
     journal_id = fields.Many2one('account.journal', domain=[('type', '=', 'sale')], string="Diario")
     @api.depends('state', 'order_line', 'order_line.qty_delivered', 'order_line.product_uom_qty')
     def compute_delivery_status(self):
@@ -75,7 +77,6 @@ class SaleOrder(models.Model):
                            set(procurement_groups.mrp_production_ids.ids)
             sale.mrp_production_ids = [(6, 0, mrp_ids)]
     mrp_production_ids = fields.Many2many('mrp.production', compute='_compute_mrp_production_rel', store=True)
-
 
     @api.depends('order_line.purchase_line_ids.order_id')
     def _compute_purchase_order_rel(self):
