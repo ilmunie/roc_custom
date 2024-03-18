@@ -85,5 +85,32 @@ class SaleOrder(models.Model):
     purchase_order_ids = fields.Many2many(comodel_name='purchase.order', compute=_compute_purchase_order_rel,store=True)
 
 
+    purchase_order_count = fields.Integer(
+        "Number of Purchase Order Generated",
+        compute='_compute_purchase_order_count',
+        groups='purchase.group_purchase_user')
 
+    @api.depends('purchase_order_ids')
+    def _compute_purchase_order_count(self):
+        for order in self:
+            order.purchase_order_count = len(order.purchase_order_ids.mapped('id'))
 
+    def action_view_purchase_orders(self):
+        self.ensure_one()
+        purchase_order_ids = self.purchase_order_ids.mapped('id')
+        action = {
+            'res_model': 'purchase.order',
+            'type': 'ir.actions.act_window',
+        }
+        if len(purchase_order_ids) == 1:
+            action.update({
+                'view_mode': 'form',
+                'res_id': purchase_order_ids[0],
+            })
+        else:
+            action.update({
+                'name': _("Purchase Order generated from %s", self.name),
+                'domain': [('id', 'in', purchase_order_ids)],
+                'view_mode': 'tree,form',
+            })
+        return action
