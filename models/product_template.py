@@ -40,7 +40,7 @@ class PurchaseOrderLine(models.Model):
         lines = super(PurchaseOrderLine, self).create(vals_list)
         order_ids = []
         sec = 0
-        for order in lines.mapped('order_id'):
+        for order in lines.filtered(lambda x: not x.additional_purchase_line_parent_id).mapped('order_id'):
             if order.id in order_ids:
                 continue
             else:
@@ -48,26 +48,28 @@ class PurchaseOrderLine(models.Model):
                     line.sequence = sec
                     sec += 1
                 order_ids.append(order.id)
-        new_vals = []
+        vals_to_write = {}
         for line in lines:
             if line.orderpoint_id and line.product_id and line.product_id.product_tmpl_id.additional_product_ids:
                 for additional_prod in line.product_id.product_tmpl_id.additional_product_ids:
                     if additional_prod.default_product_id:
-                        new_vals.append((0, 0, {
+                        if line.order_id not in vals_to_write.keys():
+                            vals_to_write[line.order_id] = []
+                        vals_to_write[line.order_id].append((0, 0, {
                             'display_type': 'line_section',
                             'sequence': line.sequence,
                             'product_qty': 0,
                             'name': additional_prod.name,
                             'additional_purchase_line_parent_id': line.id}))
-                        new_vals.append((0, 0, {
+                        vals_to_write[line.order_id].append((0, 0, {
                             'product_id': additional_prod.default_product_id.id,
                             'name': additional_prod.default_product_id.name,
                             'sequence': line.sequence,
                             'product_qty': line.product_qty,
                             'additional_purchase_line_parent_id': line.id,
                             'config_id': additional_prod.id}))
-
-            line.order_id.order_line = new_vals
+        for order, lines in vals_to_write.items():
+            order.order_line = lines
         return lines
 
     config_id = fields.Many2one('purchase.additional.product')
