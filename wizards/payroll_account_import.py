@@ -65,7 +65,7 @@ ss_payement = {
 # 'TOTAL COSTE S.S.' va de la 476000000 (debe) al haber del banco con la que se pago
 
 tax_dict = {
-    'payment_dates': ['20/04/2023','20/07/2023','20/10/2023','20/01/2024'],
+    'payment_dates': ['20/04/2024','20/07/2024','20/10/2024','20/01/2025'],
     'debe_concepts': ['(00008) 862 RETEN.IRPF','(00008) 863 RET.V.ESP.'],
     'haber_account': '572000005',
 }
@@ -130,6 +130,7 @@ class PayrollAccountImport(models.TransientModel):
             ref = "Nominas " + date.strftime('%m/%Y') + ' ' + employee_name
             date_key = "Nominas " + date.strftime('%m/%Y')
             tax_payemnt_date, trim = self.get_tax_payment_date_info(date)
+            #import pdb;pdb.set_trace()
             trim = "PAGO RETENCIONES " + trim
             if date_key not in first_payment_dict.keys():
                 first_payment_dict[date_key] = []
@@ -277,6 +278,8 @@ class PayrollAccountImport(models.TransientModel):
         return False
 
     def get_tax_payment_date_info(self, given_date):
+        payment_date_obj = False
+        trimester = False
         if isinstance(given_date, str):
             given_date = datetime.strptime(given_date, '%d/%m/%Y')
         for payment_date in tax_dict['payment_dates']:
@@ -286,7 +289,8 @@ class PayrollAccountImport(models.TransientModel):
             if payment_date_obj >= given_date:
                 # Determine the trimester
                 trimester = self.get_trimester(payment_date_obj.month)
-                return payment_date_obj, trimester
+                break
+        return payment_date_obj, trimester
 
     def get_trimester(self, month):
         if month == 4:
