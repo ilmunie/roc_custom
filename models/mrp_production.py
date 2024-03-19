@@ -5,7 +5,7 @@ class MrpProduction(models.Model):
 
 
     state = fields.Selection(selection_add=[('waiting_approval','Esperando Autorizacion')])
-
+    already_confirmed = fields.Boolean()
     @api.depends('move_raw_ids', 'state', 'move_raw_ids.product_uom_qty')
     def _compute_unreserve_visible(self):
         for order in self:
@@ -26,6 +26,7 @@ class MrpProduction(models.Model):
     def edit(self):
         for record in self:
             record.state = 'draft'
+            record.already_confirmed = True
 
     def name_get(self):
         res = []
