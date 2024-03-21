@@ -38,6 +38,7 @@
         'data/ir_cron_data.xml',
         'wizards/change_date_due_wiz.xml',
         'wizards/change_aml_tax_view.xml',
+        'wizards/mrp_alternative_product_assistant_views.xml',
         'wizards/crm_convert_opp_wizard.xml',
         'wizards/modify_tags_masive.xml',
         'wizards/payroll_account_import_view.xml',

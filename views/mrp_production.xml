@@ -23,12 +23,27 @@
                 <button name="button_confirm_with_approval" attrs="{'invisible': [('state', '!=', 'draft')]}" string="Confirmar" type="object" class="oe_highlight" data-hotkey="v"/>
                 <button name="edit" attrs="{'invisible': [('state', '!=', 'waiting_approval')]}" string="Editar" type="object"/>
             </button>
+
+            <xpath expr="//field[@name='move_raw_ids']//field[@name='product_id']" position="after">
+                <field name="alternative_product_domain" invisible="1"/>
+                <button name="open_alternative_products" icon="fa-edit" type="object" attrs="{'invisible':['|',('state','!=','draft'),('alternative_product_domain','=',False)]}"/>
+            </xpath>
+
             <field name="quantity_done" position="replace">
                 <field name="quantity_done" string="Consumed" decoration-success="not is_done and (quantity_done - should_consume_qty == 0)" decoration-warning="not is_done and (quantity_done - should_consume_qty &gt; 0.0001)" attrs="{'column_invisible': [('parent.state', 'in', ('draft','waiting_approval'))], 'readonly': [('has_tracking', '!=','none')]}"/>
             </field>
-
-
-
 		</field>
     </record>
+    <record id="mrp_bom_form_view_inherit" model="ir.ui.view">
+		<field name="name">mrp.bom.form.view.inherit</field>
+		<field name="model">mrp.bom</field>
+		<field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+		<field name="arch" type="xml">
+            <xpath expr="//field[@name='bom_line_ids']//field[@name='product_id']" position="after">
+                <field name="match_attributes"/>
+                <field name="alternative_product_domain" widget="domain" options="{'in_dialog': True, 'model': 'product.product'}"/>
+            </xpath>
+		</field>
+    </record>
+
 </odoo>
