@@ -42,6 +42,7 @@ class PurchaseOrder(models.Model):
     def _compute_mrp_production_link(self):
         for purchase in self:
             purchase.mrp_production_ids = [(6,0,purchase._get_mrp_productions().mapped('id'))]
+            purchase.trigger_activity_schedule = True
     mrp_production_ids = fields.Many2many(comodel_name='mrp.production',store=True,compute=_compute_mrp_production_link, string='Órdenes de producción')
 
 

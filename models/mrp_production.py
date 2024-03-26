@@ -1,9 +1,42 @@
 from odoo import fields, models, api
 import json
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
+class StockRule(models.Model):
+    _inherit = 'stock.rule'
+    def _should_auto_confirm_procurement_mo(self, p):
+        return False
+
+    def _make_po_get_domain(self, company_id, values, partner):
+
+
+        gpo = self.group_propagation_option
+        group = (gpo == 'fixed' and self.group_id) or \
+                (gpo == 'propagate' and 'group_id' in values and values['group_id']) or False
+
+        domain = (
+            ('partner_id', '=', partner.id),
+            ('state', '=', 'draft'),
+            ('picking_type_id', '=', self.picking_type_id.id),
+            ('company_id', '=', company_id.id),
+            ('user_id', '=', False),
+        )
+        delta_days = self.env['ir.config_parameter'].sudo().get_param('purchase_stock.delta_days_merge')
+        if values.get('orderpoint_id') and delta_days is not False:
+            procurement_date = fields.Date.to_date(values['date_planned']) - relativedelta(days=int(values['supplier'].delay))
+            delta_days = int(delta_days)
+            domain += (
+                ('date_order', '<=', datetime.combine(procurement_date + relativedelta(days=delta_days), datetime.max.time())),
+                ('date_order', '>=', datetime.combine(procurement_date - relativedelta(days=delta_days), datetime.min.time()))
+            )
+        if group:
+            domain += (('group_id', '=', group.id),)
+        return domain
 class StockMove(models.Model):
     _inherit = 'stock.move'
+
 
     @api.depends('bom_line_id')
     def get_alternative_prod_domain(self):
@@ -40,6 +73,18 @@ class StockMove(models.Model):
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        res = super().create(vals_list)
+        for rec in res:
+            if rec.sale_order_ids:
+                search_groups = self.env['procurement.group'].search([('name', '=', rec.sale_order_ids[0].name)])
+                if search_groups:
+                    group_id = search_groups[0].id
+                else:
+                    group_id = self.env['procurement.group'].create({'move_type': 'direct', 'name': rec.sale_order_ids[0].name}).id
+                res.procurement_group_id = group_id
+        return res
     def _get_moves_raw_values(self):
         moves = []
         for production in self:
@@ -47,7 +92,6 @@ class MrpProduction(models.Model):
                 continue
             factor = production.product_uom_id._compute_quantity(production.product_qty, production.bom_id.product_uom_id) / production.bom_id.product_qty
             boms, lines = production.bom_id.explode(production.product_id, factor, picking_type=production.bom_id.picking_type_id)
-            #import pdb;pdb.set_trace()
             for bom_line, line_data in lines:
                 if bom_line.child_bom_id and bom_line.child_bom_id.type == 'phantom' or\
                         bom_line.product_id.type not in ['product', 'consu']:
@@ -93,18 +137,18 @@ class MrpProduction(models.Model):
             order.unreserve_visible = not any_quantity_done and already_reserved
             order.reserve_visible = order.state in ('waiting_approval','confirmed', 'progress', 'to_close') and any(move.product_uom_qty and move.state in ['confirmed', 'partially_available'] for move in order.move_raw_ids)
 
-    def button_confirm_with_approval(self):
-        for record in self:
-            confirm_group = self.env.ref('roc_custom.group_confirm_mrp', raise_if_not_found=False)
-            if confirm_group:
-                if self.env.user.id in confirm_group.users.mapped('id'):
-                    return record.action_confirm()
-            record.write({'state': 'waiting_approval'})
-
-    def edit(self):
-        for record in self:
-            record.state = 'draft'
-            record.already_confirmed = True
+#    def button_confirm_with_approval(self):
+#        for record in self:
+#            confirm_group = self.env.ref('roc_custom.group_confirm_mrp', raise_if_not_found=False)
+#            if confirm_group:
+#                if self.env.user.id in confirm_group.users.mapped('id'):
+#                    return record.action_confirm()
+#            record.write({'state': 'waiting_approval'})
+#
+#    def edit(self):
+#        for record in self:
+#            record.state = 'draft'
+#            record.already_confirmed = True
 
     def name_get(self):
         res = []
@@ -129,7 +173,7 @@ class MrpProduction(models.Model):
                     for move_org in move.move_orig_ids:
                         if move_org.purchase_line_id:
                             po_ids.append(move_org.purchase_line_id.order_id.id)
-            production.purchase_order_ids = [(6,0,po_ids)]
+            production.purchase_order_ids = [(6, 0, po_ids)]
 
     sale_order_ids = fields.Many2many(comodel_name='sale.order',compute='_compute_sale_order_link', store=True)
 
@@ -142,7 +186,7 @@ class MrpProduction(models.Model):
                     for move in mrp_prod.move_dest_ids:
                         if move.group_id and move.group_id.sale_id:
                             so_ids.append(move.group_id.sale_id.id)
-            production.sale_order_ids = [(6,0,so_ids)]
+            production.sale_order_ids = [(6, 0, so_ids)]
 
 class MrpBomLine(models.Model):
     _inherit = 'mrp.bom.line'

@@ -18,15 +18,20 @@
 		<field name="model">mrp.production</field>
 		<field name="inherit_id" ref="mrp.mrp_production_form_view"/>
 		<field name="arch" type="xml">
-            <button name="action_confirm" position="replace">
-                <button groups="roc_custom.group_confirm_mrp" name="action_confirm" attrs="{'invisible': [('state', '!=', 'waiting_approval')]}" string="Confirmar" type="object" class="oe_highlight" data-hotkey="v"/>
-                <button name="button_confirm_with_approval" attrs="{'invisible': [('state', '!=', 'draft')]}" string="Confirmar" type="object" class="oe_highlight" data-hotkey="v"/>
-                <button name="edit" attrs="{'invisible': [('state', '!=', 'waiting_approval')]}" string="Editar" type="object"/>
-            </button>
+            <field name="components_availability" position="after">
+                <field name="reservation_state" attrs="{'invisible': [('state','in',('draft','cancel'))]}"/>
+            </field>
+            <field name="analytic_account_id" position="after">
+                <field name="procurement_group_id"/>
+            </field>
 
             <xpath expr="//field[@name='move_raw_ids']//field[@name='product_id']" position="after">
                 <field name="alternative_product_domain" invisible="1"/>
-                <button name="open_alternative_products" icon="fa-edit" type="object" attrs="{'invisible':['|',('state','!=','draft'),('alternative_product_domain','=',False)]}"/>
+                <button name="open_alternative_products" icon="fa-edit" type="object" attrs="{'invisible':['|','|',('state','!=','draft'),('bom_line_id','=',False),('alternative_product_domain','=',False)]}"/>
+            </xpath>
+            <xpath expr="//field[@name='move_raw_ids']//field[@name='product_uom']" position="after">
+                <field name="product_qty_available" string="A mano"/>
+                <field name="product_virtual_available" string="Pronosticado"/>
             </xpath>
 
             <field name="quantity_done" position="replace">
