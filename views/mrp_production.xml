@@ -46,6 +46,8 @@
 		<field name="arch" type="xml">
             <xpath expr="//field[@name='bom_line_ids']//field[@name='product_id']" position="after">
                 <field name="match_attributes"/>
+                <field name="attribute_values_domain" invisible="1"/>
+                <field name="force_attributes_value_ids" widget="many2many_tags" domain="attribute_values_domain"/>
                 <field name="alternative_product_domain" widget="domain" options="{'in_dialog': True, 'model': 'product.product'}"/>
             </xpath>
 		</field>

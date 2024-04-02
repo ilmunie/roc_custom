@@ -10,8 +10,6 @@ class StockRule(models.Model):
         return False
 
     def _make_po_get_domain(self, company_id, values, partner):
-
-
         gpo = self.group_propagation_option
         group = (gpo == 'fixed' and self.group_id) or \
                 (gpo == 'propagate' and 'group_id' in values and values['group_id']) or False
@@ -47,6 +45,11 @@ class StockMove(models.Model):
                     res.insert(0, ('product_tmpl_id', '=', record.bom_line_id.product_id.product_tmpl_id.id))
                     if record.bom_line_id.alternative_product_domain:
                         res.insert(0, '|')
+                if record.bom_line_id.force_attributes_value_ids:
+                    production_product = record.raw_material_production_id.product_id
+                    matching_attr_values = production_product.product_template_variant_value_ids.filtered(lambda x: x.attribute_id.id in record.bom_line_id.force_attributes_value_ids.mapped('id'))
+                    for matching_attrs_value in matching_attr_values:
+                        res.insert(0, ('product_template_variant_value_ids.name', 'ilike', matching_attrs_value.name ))
                 if record.bom_line_id.alternative_product_domain:
                     res.extend(json.loads(record.bom_line_id.alternative_product_domain))
             record.alternative_product_domain = json.dumps(res)
@@ -194,5 +197,15 @@ class MrpBomLine(models.Model):
     alternative_product_domain = fields.Char(string="Productos Alternativos")
     match_attributes = fields.Boolean(string="Matchear Atributos")
 
+    @api.depends('bom_id.product_tmpl_id')
+    def get_attribute_domain(self):
+        for record in self:
+            res = [('id', '=', 0)]
+            if record.bom_id.product_tmpl_id and record.bom_id.product_tmpl_id.attribute_line_ids:
+                res = [('id', 'in', record.bom_id.product_tmpl_id.attribute_line_ids.mapped('attribute_id.id'))]
+            record.attribute_values_domain = json.dumps(res)
+
+    attribute_values_domain = fields.Char(compute=get_attribute_domain, store=True)
+    force_attributes_value_ids = fields.Many2many('product.attribute', 'aux_attr_mrp_bom_table', 'attribute_value_id', 'bom_line_id')
     def _get_default_product_uom_id(self):
         return self.env['uom.uom'].search([], limit=1, order='id').id
