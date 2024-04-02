@@ -11,6 +11,9 @@ class MrpAlternativeProductAssistant(models.TransientModel):
     product_template_ids = fields.Many2many('product.template', string="Plantillas")
     prod_template_domain = fields.Char()
 
+    attribute_alt_value_domain = fields.Char()
+    attribute_alt_value_ids = fields.Many2many('product.template.attribute.value', 'aux_table_mrp_wiz_3', 'wiz_id', 'att_value_id', string="Atributos alternativos")
+
     attribute_value_domain = fields.Char()
     attribute_value_ids = fields.Many2many('product.template.attribute.value', 'aux_table_mrp_wiz_2', 'wiz_id', 'att_value_id', string="Atributos")
     only_available_products = fields.Boolean(string="Solo productos disponibles")
@@ -21,7 +24,7 @@ class MrpAlternativeProductAssistant(models.TransientModel):
     line_ids = fields.One2many('mrp.alternative.product.assistant.line', 'wiz_id')
     show_line_ids = fields.Many2many('mrp.alternative.product.assistant.line', 'aux_table_mrp_wiz', 'wiz_id', 'line_id')
 
-    @api.onchange('only_available_products', 'attribute_value_ids', 'product_template_ids')
+    @api.onchange('only_available_products', 'attribute_value_ids', 'product_template_ids', 'attribute_alt_value_ids')
     def _change_lines(self):
         self.ensure_one()
         lines = self.line_ids
@@ -32,6 +35,16 @@ class MrpAlternativeProductAssistant(models.TransientModel):
         if self.match_attributes:
             failed_line_ids = []
             for attribute_value in self.attribute_value_ids:
+                for line in lines:
+                    if line.product_id.id not in failed_line_ids:
+                        if attribute_value.attribute_id.name in line.product_id.product_template_attribute_value_ids.mapped('attribute_id.name') and attribute_value.name not in line.product_id.product_template_variant_value_ids.mapped('name'):
+                            failed_line_ids.append(line.product_id.id)
+                            continue
+                    else:
+                        continue
+            lines = lines.filtered(lambda x: x.product_id.id not in failed_line_ids)
+            failed_line_ids = []
+            for attribute_value in self.attribute_alt_value_ids:
                 for line in lines:
                     if line.product_id.id not in failed_line_ids:
                         if attribute_value.attribute_id.name in line.product_id.product_template_attribute_value_ids.mapped('attribute_id.name') and attribute_value.name not in line.product_id.product_template_variant_value_ids.mapped('name'):
@@ -57,6 +70,8 @@ class MrpAlternativeProductAssistant(models.TransientModel):
         result['attribute_value_domain'] = json.dumps([('id', 'in', self._context.get('attr_values', []))])
         qty = self._context.get('qty', 1)
         available_products = self.env['product.product'].search(domain)
+        result['attribute_alt_value_domain'] = json.dumps([('id', 'in', available_products.mapped('product_template_variant_value_ids.id'))])
+
         #result['product_template_ids'] = [(6, 0, available_products.mapped('product_tmpl_id.id'))]
         result['prod_template_domain'] = json.dumps([('id', 'in', available_products.mapped('product_tmpl_id.id'))])
         lines = []

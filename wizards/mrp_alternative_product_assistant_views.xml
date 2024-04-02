@@ -29,6 +29,9 @@
                             <field name="attribute_value_domain" invisible="1"/>
                             <field name="attribute_value_ids" widget="many2many_tags" domain="attribute_value_domain"
                                    attrs="{'invisible':[('match_attributes','!=',True)]}"  options="{'no_create': True}"/>
+                            <field name="attribute_alt_value_domain" invisible="1"/>
+                            <field name="attribute_alt_value_ids" widget="many2many_tags" domain="attribute_alt_value_domain"
+                                   attrs="{'invisible':[('match_attributes','!=',True)]}"  options="{'no_create': True}"/>
 
                             <field name="filter_by_template"/>
                             <field name="prod_template_domain" invisible="1"/>
