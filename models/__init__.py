@@ -14,3 +14,4 @@ from . import hr_employee
 from . import ir_sequence
 from . import technical_job_assistant
 from . import product_template
+from . import product_product

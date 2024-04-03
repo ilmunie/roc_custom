@@ -1,17 +1,35 @@
 <?xml version="1.0"?>
 <odoo>
-    <record id="mrp_production_tree_view_inherit" model="ir.ui.view">
-		<field name="name">mrp.production.tree.view.inherit</field>
+
+
+    <record id="view_mrp_production_filter_inherit" model="ir.ui.view">
+		<field name="name">view.mrp.production.filter.inherit</field>
 		<field name="model">mrp.production</field>
-		<field name="inherit_id" ref="mrp.mrp_production_tree_view"/>
+		<field name="inherit_id" ref="mrp.view_mrp_production_filter"/>
 		<field name="arch" type="xml">
 
 
+            <field name="name" position="after">
+                <field name="opportunity_id" string="Oportunidad"/>
+            </field>
+            <xpath expr="//group[last()]" position="inside">
+                <filter string="Oportunidad" name="opportunity" domain="[]" context="{'group_by': 'opportunity_id'}"/>
+            </xpath>
+		</field>
+    </record>
+    <record id="mrp_production_tree_view_inherit" model="ir.ui.view">
+        <field name="name">mrp.production.tree.view.inherit</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_tree_view"/>
+        <field name="arch" type="xml">
+
+
             <field name="state" position="after">
+                <field name="activity_ids" widget="list_activity"/>
                 <field name="purchase_order_ids" widget="many2many_tags"/>
                 <field name="sale_order_ids" widget="many2many_tags"/>
             </field>
-		</field>
+        </field>
     </record>
     <record id="mrp_production_form_view_inherit" model="ir.ui.view">
 		<field name="name">mrp.production.form.view.inherit</field>
@@ -21,6 +39,10 @@
             <field name="components_availability" position="after">
                 <field name="reservation_state" attrs="{'invisible': [('state','in',('draft','cancel'))]}"/>
             </field>
+            <field name="user_id" position="after">
+                <field name="opportunity_id" string="Oportunidad"/>
+            </field>
+
             <field name="analytic_account_id" position="after">
                 <field name="procurement_group_id"/>
             </field>

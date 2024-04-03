@@ -76,6 +76,16 @@ class StockMove(models.Model):
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
 
+    @api.depends('sale_order_ids')
+    def get_opportunity(self):
+        for record in self:
+            res = False
+            if record.sale_order_ids and record.sale_order_ids.mapped('opportunity_id'):
+                res = record.sale_order_ids.mapped('opportunity_id.id')[0]
+            record.opportunity_id = res
+
+    opportunity_id = fields.Many2one('crm.lead', compute=get_opportunity, store=True, string="Oportunidad")
+
     @api.model_create_multi
     def create(self, vals_list):
         res = super().create(vals_list)
@@ -129,8 +139,6 @@ class MrpProduction(models.Model):
                 ))
         return moves
 
-    state = fields.Selection(selection_add=[('waiting_approval','Esperando Autorizacion')])
-    already_confirmed = fields.Boolean()
     @api.depends('move_raw_ids', 'state', 'move_raw_ids.product_uom_qty')
     def _compute_unreserve_visible(self):
         for order in self:
@@ -139,20 +147,6 @@ class MrpProduction(models.Model):
 
             order.unreserve_visible = not any_quantity_done and already_reserved
             order.reserve_visible = order.state in ('waiting_approval','confirmed', 'progress', 'to_close') and any(move.product_uom_qty and move.state in ['confirmed', 'partially_available'] for move in order.move_raw_ids)
-
-#    def button_confirm_with_approval(self):
-#        for record in self:
-#            confirm_group = self.env.ref('roc_custom.group_confirm_mrp', raise_if_not_found=False)
-#            if confirm_group:
-#                if self.env.user.id in confirm_group.users.mapped('id'):
-#                    return record.action_confirm()
-#            record.write({'state': 'waiting_approval'})
-#
-#    def edit(self):
-#        for record in self:
-#            record.state = 'draft'
-#            record.already_confirmed = True
-
     def name_get(self):
         res = []
         for rec in self:
@@ -162,7 +156,7 @@ class MrpProduction(models.Model):
                 name += " | " + rec.components_availability
             res.append((rec.id, name))
         return res
-    purchase_order_ids = fields.Many2many(comodel_name='purchase.order', compute='_compute_purchase_order_link', store=True)
+    purchase_order_ids = fields.Many2many(comodel_name='purchase.order', compute='_compute_purchase_order_link', store=True, string="Compras generadas")
 
     @api.depends('procurement_group_id.stock_move_ids.created_purchase_line_id.order_id', 'procurement_group_id.stock_move_ids.move_orig_ids.purchase_line_id.order_id')
     def _compute_purchase_order_link(self):
@@ -178,7 +172,7 @@ class MrpProduction(models.Model):
                             po_ids.append(move_org.purchase_line_id.order_id.id)
             production.purchase_order_ids = [(6, 0, po_ids)]
 
-    sale_order_ids = fields.Many2many(comodel_name='sale.order',compute='_compute_sale_order_link', store=True)
+    sale_order_ids = fields.Many2many(comodel_name='sale.order',compute='_compute_sale_order_link', store=True, string="Venta")
 
     @api.depends('procurement_group_id.mrp_production_ids.move_dest_ids.group_id.sale_id')
     def _compute_sale_order_link(self):

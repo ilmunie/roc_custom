@@ -17,6 +17,7 @@
             <xpath expr="//field[@name='partner_ref']" position="after">
                 <field name="sale_order_ids" widget="many2many_tags" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
                 <field name="sale_partner_id" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
+                <field name="opportunity_id" string="Oportunidad" attrs="{'invisible':[('opportunity_id','=',False)]}"/>
                 <field name="mrp_production_ids" widget="many2many_tags" attrs="{'invisible':[('mrp_production_ids','=',False)]}"/>
             </xpath>
             <xpath expr="//field[@name='notes']//..//.." position="before">
@@ -124,6 +125,9 @@
         <field name="domain"></field>
         <field name="context">{'search_default_po':1}</field>
     </record>
+    <record id="purchase.purchase_order_kpis_tree" model="ir.ui.view">
+    		<field name="priority">1</field>
+    </record>
 
     <record id="purchase_order_view_tree_inherit_custom" model="ir.ui.view">
         <field name="name">purchase.order.tree.custom</field>
@@ -140,7 +144,9 @@
                 <field name="sale_order_ids" widget="many2many_tags"/>
 
                 <field name="mrp_production_ids" widget="many2many_tags"/>
+                <field name="opportunity_id" string="Oportunidad"/>
                 <field name="sale_partner_id" />
+                <field name="activity_ids" widget="list_activity"/>
             </xpath>
             <xpath expr="//field[@name='invoice_status']" position="after">
                 <field name="invoice_status" widget="badge" decoration-success="invoice_status == 'invoiced'" decoration-info="invoice_status == 'to invoice'" optional="show"/>
@@ -160,7 +166,9 @@
                 <field name="picking_type_id"/>
                 <field name="sale_order_ids" widget="many2many_tags"/>
                 <field name="mrp_production_ids" widget="many2many_tags"/>
+                <field name="opportunity_id" string="Oportunidad"/>
                 <field name="sale_partner_id" />
+                <field name="activity_ids" widget="list_activity"/>
                 <field name="state" optional="show" widget="badge" decoration-success="state == 'purchase' or state == 'done'" decoration-warning="state == 'to approve'" decoration-info="state == 'draft' or state == 'sent'"/>
                 <field name="reception_status" widget="badge" decoration-success="reception_status == 'full_reception'" decoration-warning="reception_status == 'partial_reception'" decoration-info="reception_status == 'waiting_reception'" decoration-muted="reception_status == 'no_confirmed'"/>
             </xpath>
@@ -174,6 +182,7 @@
         <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="opportunity_id" string="Oportunidad"/>
                 <field name="origin"/>
                 <field name="invoice_number"/>
                 <field name="shipment_number"/>
@@ -201,6 +210,8 @@
                 <separator/>
                 <filter string="Estado recepción" name="reception_status" domain="[]" context="{'group_by': 'reception_status'}"/>
                 <filter string="Estado facturación" name="invoice_status" domain="[]" context="{'group_by': 'invoice_status'}"/>
+                <separator/>
+                <filter string="Oportunidad" name="opportunity" domain="[]" context="{'group_by': 'opportunity_id'}"/>
             </xpath>
         </field>
     </record>
@@ -210,6 +221,7 @@
         <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="opportunity_id" string="Oportunidad"/>
                 <field name="origin"/>
                 <field name="invoice_number"/>
                 <field name="shipment_number"/>
@@ -244,6 +256,9 @@
                 <separator/>
                 <filter string="Estado recepción" name="reception_status" domain="[]" context="{'group_by': 'reception_status'}"/>
                 <filter string="Estado facturación" name="invoice_status" domain="[]" context="{'group_by': 'invoice_status'}"/>
+                <separator/>
+                <filter string="Oportunidad" name="opportunity" domain="[]" context="{'group_by': 'opportunity_id'}"/>
+
             </xpath>
         </field>
     </record>

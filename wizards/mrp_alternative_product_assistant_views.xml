@@ -42,7 +42,7 @@
                     <group>
                         <field name="product_to_replace" readonly="1" force_save="1"/>
                     </group>
-                    <group string="Productos Disponibles">
+                    <group string="Componentes Alternativos">
                         <field name="show_line_ids" widget="one2many" nolabel="1" mode="tree">
                             <tree editable="bottom" create="0">
                                 <field name="add_product"/>

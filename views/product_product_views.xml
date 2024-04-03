@@ -59,5 +59,14 @@
 			</field>
 		</record>
 
+        <record id="action_update_product_cost_from_pricelist" model="ir.actions.server">
+            <field name="name">Actualizar costos a partir de tarifas proveedores</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id"
+                ref="model_product_product"/>
+            <field name="binding_model_id"  ref="model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">action = records.set_cost_from_pricelist()</field>
+        </record>
 
 </odoo>

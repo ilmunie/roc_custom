@@ -6,6 +6,17 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+
+    @api.depends('sale_order_ids')
+    def get_opportunity(self):
+        for record in self:
+            res = False
+            if record.sale_order_ids and record.sale_order_ids.mapped('opportunity_id'):
+                res = record.sale_order_ids.mapped('opportunity_id.id')[0]
+            record.opportunity_id = res
+
+    opportunity_id = fields.Many2one('crm.lead', compute=get_opportunity, store=True, string="Oportunidad")
+
     date_approve = fields.Datetime('Confirmation Date', readonly=False, index=True, copy=False, tracking=True)
 
     def recreate_picking(self):

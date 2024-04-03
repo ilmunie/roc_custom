@@ -76,14 +76,14 @@ class SaleOrder(models.Model):
                     procurement_groups.stock_move_ids.created_production_id.procurement_group_id.mrp_production_ids.ids) | \
                            set(procurement_groups.mrp_production_ids.ids)
             sale.mrp_production_ids = [(6, 0, mrp_ids)]
-    mrp_production_ids = fields.Many2many('mrp.production', compute='_compute_mrp_production_rel', store=True)
+    mrp_production_ids = fields.Many2many('mrp.production', compute='_compute_mrp_production_rel', store=True, string="Órdenes de producción")
 
     @api.depends('order_line.purchase_line_ids.order_id')
     def _compute_purchase_order_rel(self):
         for order in self:
             order.purchase_order_ids = [(6,0,order._get_purchase_orders().mapped('id'))]
 
-    purchase_order_ids = fields.Many2many(comodel_name='purchase.order', compute=_compute_purchase_order_rel,store=True)
+    purchase_order_ids = fields.Many2many(comodel_name='purchase.order', compute=_compute_purchase_order_rel,store=True, string="Compras generadas")
 
 
     purchase_order_count = fields.Integer(
@@ -110,7 +110,7 @@ class SaleOrder(models.Model):
             })
         else:
             action.update({
-                'name': _("Purchase Order generated from %s", self.name),
+                'name': ("Purchase Order generated from %s", self.name),
                 'domain': [('id', 'in', purchase_order_ids)],
                 'view_mode': 'tree,form',
             })
