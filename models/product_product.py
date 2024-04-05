@@ -10,10 +10,14 @@ class ProductProduct(models.Model):
             cost = 0
             discount_amount = 0
             seller = prod._select_seller()
-            if seller and seller.variant_extra_ids:
-                final_price = seller.get_final_price(prod)
-                cost = final_price
-                discount_amount = seller.discount*final_price/100
+            if seller:
+                if seller.variant_extra_ids:
+                    final_price = seller.get_final_price(prod)
+                    cost = final_price
+                    discount_amount = seller.discount*final_price/100
+                else:
+                    cost = seller.price
+                    discount_amount = seller.discount * cost / 100
             if not seller and prod.product_tmpl_id.is_combo:
                 price_unit = 0
                 discount_amount = 0
