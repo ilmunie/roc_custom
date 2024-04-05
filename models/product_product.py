@@ -4,6 +4,13 @@ from odoo import fields, models, api
 class ProductProduct(models.Model):
     _inherit = "product.product"
 
+    def _select_seller(self, partner_id=False, quantity=0.0, date=None, uom_id=False, params=False):
+        sellers = self._get_filtered_sellers(partner_id=partner_id, quantity=quantity, date=date, uom_id=uom_id, params=params)
+        res = self.env['product.supplierinfo']
+        for seller in sellers:
+            if not res or res.name == seller.name:
+                res |= seller
+        return res and res.sorted('price')[:-1]
     def set_cost_from_pricelist(self):
         product_to_compute = self.env['product.product'].browse(self._context.get('active_ids', []))
         for prod in product_to_compute:
