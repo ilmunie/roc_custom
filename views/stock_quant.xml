@@ -13,7 +13,7 @@
             <xpath expr="//filter[last()]" position="after">
                 <separator/>
                 <filter string="Productos Activos" name="active_product" domain="[('product_id.active','=', True)]"/>
-                <filter string="Productos Archivados" name="active_product" domain="[('product_id.active','=', False)]"/>
+                <filter string="Productos Archivados" name="no_active_product" domain="[('product_id.active','=', False)]"/>
             </xpath>
             <xpath expr="//group[last()]" position="inside">
                 <filter string="Categoría Producto" name="productcateggroup" context="{'group_by': 'product_categ_id'}"/>
