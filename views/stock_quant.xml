@@ -10,6 +10,11 @@
                 <field string="Valores de atributo 2" name="product_template_attribute_value_ids" groups="product.group_product_variant"/>
                 <field string="Valores de atributo 3" name="product_template_attribute_value_ids" groups="product.group_product_variant"/>
             </xpath>
+            <xpath expr="//filter[last()]" position="after">
+                <separator/>
+                <filter string="Productos Activos" name="active_product" domain="[('product_id.active','=', True)]"/>
+                <filter string="Productos Archivados" name="active_product" domain="[('product_id.active','=', False)]"/>
+            </xpath>
             <xpath expr="//group[last()]" position="inside">
                 <filter string="Categoría Producto" name="productcateggroup" context="{'group_by': 'product_categ_id'}"/>
             </xpath>
@@ -31,6 +36,7 @@
                 search_default_internal_loc=1,
                 search_default_productgroup=1,
                 search_default_locationgroup=0,
+                search_default_active_product=1,
             ).action_view_quants()
         </field>
     </record>
@@ -40,5 +46,8 @@
               action="stock.action_view_quants"/>
     <menuitem id="menu_crm_stock" name="Stock a mano"
               parent="crm.crm_menu_report" sequence="100"
+              action="stock.action_view_quants"/>
+    <menuitem id="menu__purchase_stock" name="Stock a mano"
+              parent="purchase.menu_purchase_products" sequence="100"
               action="stock.action_view_quants"/>
 </odoo>
