@@ -6,7 +6,7 @@ class ProductProduct(models.Model):
 
     def _prepare_sellers(self, params=False):
         sellers = super(ProductProduct, self)._prepare_sellers(params=params)
-        if len(sellers) > 1:
+        if len(sellers) > 1 and sellers.filtered(lambda s: s.price > 0):
             sellers = sellers.filtered(lambda s: s.price > 0)
         return sellers
     def set_cost_from_pricelist(self):
