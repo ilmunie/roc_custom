@@ -58,6 +58,8 @@ class StockMove(models.Model):
 
     def open_alternative_products(self):
         context = {
+                'required_attr_name': self.raw_material_production_id.product_id.product_template_variant_value_ids.filtered(lambda x: x.attribute_id.id in self.bom_line_id.force_attributes_value_ids.mapped('id')).mapped('name') or [],
+                'required_attr_ids': self.raw_material_production_id.product_id.product_template_variant_value_ids.filtered(lambda x: x.attribute_id.id in self.bom_line_id.force_attributes_value_ids.mapped('id')).mapped('id') or [],
                 'product_production_id': self.raw_material_production_id.product_id.id,
                 'domain': self.alternative_product_domain,
                 'move_id': self.id,
@@ -104,31 +106,29 @@ class MrpProduction(models.Model):
             if not production.bom_id:
                 continue
             factor = production.product_uom_id._compute_quantity(production.product_qty, production.bom_id.product_uom_id) / production.bom_id.product_qty
+            final_product = production.product_id
+            final_prod_values = final_product.product_template_variant_value_ids
             boms, lines = production.bom_id.explode(production.product_id, factor, picking_type=production.bom_id.picking_type_id)
             for bom_line, line_data in lines:
+                product_id = bom_line.product_id
+                available_products = bom_line.product_id.product_tmpl_id.product_variant_ids
                 if bom_line.child_bom_id and bom_line.child_bom_id.type == 'phantom' or\
                         bom_line.product_id.type not in ['product', 'consu']:
                     continue
-                product_id = bom_line.product_id
+                if bom_line.force_attributes_value_ids:
+                    for forced_att in bom_line.force_attributes_value_ids:
+                        final_product_value = final_prod_values.filtered(lambda x: forced_att.name == x.attribute_id.name)[0]
+                        available_products = available_products.filtered(lambda x: final_product_value.name in x.product_template_variant_value_ids.mapped('name'))
                 if bom_line.match_attributes:
-                    final_product_attribute_dict = {}
-                    for attribute_line in production.product_id.product_tmpl_id.attribute_line_ids:
-                        final_product_attribute_dict[
-                            attribute_line.attribute_id.name] = production.product_id.product_template_attribute_value_ids.filtered(
-                            lambda x: x.attribute_id.id == attribute_line.attribute_id.id)
-                    product_template_id = product_id.product_tmpl_id
                     failed = False
-                    for product_variant in product_template_id.product_variant_ids:
-                        for attribute, value in final_product_attribute_dict.items():
-                            if attribute in product_variant.product_template_attribute_value_ids.mapped('attribute_id.name'):
-                                if value.name not in product_variant.product_template_variant_value_ids.mapped('name'):
-                                    failed = True
-                                    break
+
+                    for prod in available_products:
+                        for prod_att_value in final_prod_values.filtered(lambda x: x.attribute_id.name in prod.product_template_variant_value_ids.mapped('attribute_id.name')):
+                            if prod_att_value.name not in prod.product_template_variant_value_ids.mapped('name'):
+                                failed = True
                         if not failed:
-                            product_id = product_variant
+                            product_id = prod
                             break
-                        else:
-                            continue
                 operation = bom_line.operation_id.id or line_data['parent_line'] and line_data['parent_line'].operation_id.id
                 moves.append(production._get_move_raw_values(
                     product_id,
@@ -190,6 +190,8 @@ class MrpBomLine(models.Model):
 
     alternative_product_domain = fields.Char(string="Productos Alternativos")
     match_attributes = fields.Boolean(string="Matchear Atributos")
+
+
 
     @api.depends('bom_id.product_tmpl_id')
     def get_attribute_domain(self):

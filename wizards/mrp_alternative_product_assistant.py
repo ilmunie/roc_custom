@@ -66,12 +66,18 @@ class MrpAlternativeProductAssistant(models.TransientModel):
         result['stock_move_id'] = self._context.get('move_id', False)
         result['product_production_id'] = self._context.get('product_production_id', False)
         location = self._context.get('location', False)
-        #result['attribute_value_ids'] = [(6, 0, self._context.get('attr_values', []))]
         result['attribute_value_domain'] = json.dumps([('id', 'in', self._context.get('attr_values', []))])
         qty = self._context.get('qty', 1)
+        result['attribute_value_ids'] = [(6, 0, self._context.get('required_attr_ids', []))]
         available_products = self.env['product.product'].search(domain)
-        result['attribute_alt_value_domain'] = json.dumps([('id', 'in', available_products.mapped('product_template_variant_value_ids.id'))])
-
+        attr_value_name = self._context.get('required_attr_name', [])
+        attr_value_add = []
+        for prod in available_products:
+            for attr_value in prod.mapped('product_template_variant_value_ids'):
+                if attr_value.name not in attr_value_name:
+                    attr_value_name.append(attr_value.name)
+                    attr_value_add.append(attr_value.id)
+        result['attribute_alt_value_domain'] = json.dumps([('id', 'in', attr_value_add)])
         #result['product_template_ids'] = [(6, 0, available_products.mapped('product_tmpl_id.id'))]
         result['prod_template_domain'] = json.dumps([('id', 'in', available_products.mapped('product_tmpl_id.id'))])
         lines = []
