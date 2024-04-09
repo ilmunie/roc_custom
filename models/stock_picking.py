@@ -5,6 +5,8 @@ class StockPicking(models.Model):
     _inherit = "stock.picking"
     _order = 'create_date desc'
 
+
+
     product_template_id = fields.Many2one(related='move_ids_without_package.product_template_id', string="Plantilla de producto")
 
     picking_type_code = fields.Selection(related="picking_type_id.code")
@@ -15,6 +17,14 @@ class StockPicking(models.Model):
 
 class StockMove(models.Model):
     _inherit = "stock.move"
+
+    @api.depends('purchase_line_id.order_id.date_planned')
+    def recompute_schedule_date(self):
+        for record in self:
+            if record.purchase_line_id.order_id and record.purchase_line_id.order_id.date_planned:
+                record.date = record.purchase_line_id.order_id.date_planned
+            record.trigger_recompute_schedule_date = True if not record.trigger_recompute_schedule_date else False
+    trigger_recompute_schedule_date = fields.Boolean(store=True, compute=recompute_schedule_date)
 
     product_template_id = fields.Many2one(
         'product.template', string='Product Template',
@@ -39,6 +49,8 @@ class StockMoveLine(models.Model):
         'product.template', string='Product Template',
         related="product_id.product_tmpl_id")
     product_updatable = fields.Boolean(compute='_compute_product_updatable', string='Can Edit Product', default=True)
+
+    picking_type_id = fields.Many2one(related='move_id.picking_type_id', store=True)
     @api.depends('product_id', 'picking_id.state')
     def _compute_product_updatable(self):
         for line in self:

@@ -35,6 +35,21 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+    def open_change_additional_product(self):
+        context = {
+            'domain': self.config_id.domain,
+            'qty': self.product_qty,
+            'config_id': self.config_id.id,
+            'line_to_replace_id': self.id,
+        }
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'po.alternative.additional.product.assistant',
+            'context': context,
+            'view_mode': 'form',
+            'views': [(self.env.ref('roc_custom.po_alternative_additional_product_assistant_wizard_view').id, 'form')],
+            'target': 'new',
+        }
     @api.model_create_multi
     def create(self, vals_list):
         lines = super(PurchaseOrderLine, self).create(vals_list)
@@ -103,6 +118,8 @@ class PurchaseOrderLine(models.Model):
 
     additional_product_done = fields.Boolean(compute=compute_additional_product_done, store=True)
     additional_product_required = fields.Boolean(compute=compute_additional_product_done, store=True)
+
+
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 

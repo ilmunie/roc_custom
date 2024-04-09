@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="po_alternative_additional_product_assistant_wizard_view" model="ir.ui.view">
+            <field name="name">po.alternative.additional.product.assistant.wizard.view</field>
+            <field name="model">po.alternative.additional.product.assistant</field>
+            <field name="arch" type="xml">
+                <form string="Reemplazo de productos adicionales">
+                <script>
+                    $(document).ready(function(){
+                        $(".modal-dialog").css({"min-width": "97%", "height": "97%"});
+                        $(".modal-content").css({"height": "100%"});
+                        $(".modal-body").css({"height": "100%"});
+                    });
+                </script>
+                    <div>
+                        <h3>Compra <field name="parent_poline_id" readonly="1" force_save="1"/></h3>
+                    </div>
+                    <div>
+                        <h2>Adicional <field name="config_id" readonly="1" force_save="1"/>: <field name="line_to_replace_id" readonly="1" force_save="1"/></h2>
+                    </div>
+                    <group string="Productos Alternativos">
+                        <field name="line_ids" widget="one2many" nolabel="1" mode="tree">
+                            <tree editable="bottom" create="0">
+                                <field name="add_product"/>
+                                <field name="product_id"/>
+                                <field name="qty" />
+                                <field name="location_id"  />
+                                <field name="location_available" />
+                                <field name="qty_available_not_res" />
+                                <field name="location_virtual_available" />
+                            </tree>
+                        </field>
+                    </group>
+                    <footer>
+                        <button name="replace_product" string="Reemplazar" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+</odoo>

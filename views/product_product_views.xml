@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="product_product_search_inherit_roc_custom" model="ir.ui.view">
+        <field name="name">product.product.search.inherit.roc.custom</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_search_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_template_attribute_value_ids']" position="after">
+                <field string="Valores de atributo 2" name="product_template_attribute_value_ids" groups="product.group_product_variant"/>
+                <field string="Valores de atributo 3" name="product_template_attribute_value_ids" groups="product.group_product_variant"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="product_template_roc_custom_tree" model="ir.ui.view">
         <field name="name">product.template.product.tree.roc.custom</field>
         <field name="model">product.template</field>

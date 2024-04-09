@@ -116,6 +116,7 @@ class MrpAlternativeProductAssistantLine(models.TransientModel):
         for record in self:
             qty_av = 0
             qty_virt = 0
+            qty_not_res = 0
             if record.product_id:
                 qty_av = record.product_id.with_context(
                     location=record.location_id.id, compute_child=True
@@ -123,11 +124,16 @@ class MrpAlternativeProductAssistantLine(models.TransientModel):
                 qty_virt = record.product_id.with_context(
                     location=record.location_id.id, compute_child=True
                 ).virtual_available
+                qty_not_res = record.product_id.with_context(
+                    location=record.location_id.id, compute_child=True
+                ).qty_available_not_res
             record.location_available = qty_av
             record.location_virtual_available = qty_virt
+            record.qty_available_not_res = qty_not_res
 
     location_id = fields.Many2one('stock.location', string="De")
     location_available = fields.Float(compute=get_location_av, store=True, string="Disponible")
+    qty_available_not_res = fields.Float(compute=get_location_av, store=True, string="No Reservado")
     location_virtual_available = fields.Float(compute=get_location_av, store=True, string="Pronosticado")
     product_id = fields.Many2one('product.product', string="Producto")
     product_tmpl_id = fields.Many2one(related='product_id.product_tmpl_id', string="Plantilla Producto")
