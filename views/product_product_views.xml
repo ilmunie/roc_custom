@@ -84,7 +84,7 @@
             <field name="name">Renumerar Lineas</field>
             <field name="type">ir.actions.server</field>
             <field name="model_id"
-                ref="model_purchase_order"/>
+                ref="model_purchase_order_line"/>
             <field name="binding_model_id"  ref="model_purchase_order"/>
             <field name="state">code</field>
             <field name="code">action = records.renumerate_order_line_sequence()</field>
