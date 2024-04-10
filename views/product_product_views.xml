@@ -80,5 +80,14 @@
             <field name="state">code</field>
             <field name="code">action = records.set_cost_from_pricelist()</field>
         </record>
+        <record id="action_renumerate_order_line_sequence" model="ir.actions.server">
+            <field name="name">Renumerar Lineas</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id"
+                ref="model_purchase_order"/>
+            <field name="binding_model_id"  ref="model_purchase_order"/>
+            <field name="state">code</field>
+            <field name="code">action = records.renumerate_order_line_sequence()</field>
+        </record>
 
 </odoo>

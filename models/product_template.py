@@ -32,6 +32,17 @@ class PurchaseOrder(models.Model):
             record.additional_product_pending = res
     additional_product_pending = fields.Boolean(compute=compute_additional_product_pending, store=True)
     #visibility_button additional products
+
+    def renumerate_order_line_sequence(self):
+        for record in self:
+            sequence = 0
+            for line in record.order_line.filtered(lambda x: not x.additional_purchase_line_parent_id):
+                line.sequence = sequence
+                for order_line in record.order_line.filtered(lambda x: line.id == x.additional_purchase_line_parent_id.id):
+                    sequence += 1
+                    order_line.sequence = sequence
+                sequence += 10
+
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
@@ -55,6 +66,7 @@ class PurchaseOrderLine(models.Model):
         lines = super(PurchaseOrderLine, self).create(vals_list)
         order_ids = []
         sec = 0
+        import pdb;pdb.set_trace()
         for order in lines.filtered(lambda x: not x.additional_purchase_line_parent_id).mapped('order_id'):
             if order.id in order_ids:
                 continue
