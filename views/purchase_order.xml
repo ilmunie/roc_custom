@@ -116,9 +116,7 @@
                                       domain="[('purchase_ok', '=', True), '|', ('company_id', '=', False), ('company_id', '=', parent.company_id)]"
                                       widget="product_configurator"/>
                                 <button name="open_change_additional_product" icon="fa-edit" type="object" attrs="{'invisible':['|',('state','!=','draft'),('config_id','=',False)]}"/>
-
-                    <field name ="additional_purchase_line_parent_id" invisible="0"/>
-                    <field name ="config_id" invisible="1"/>
+                 <field name ="config_id" invisible="1"/>
 
                         </xpath>
         </field>
