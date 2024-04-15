@@ -42,8 +42,8 @@
                 <xpath expr="//field[@name='qty_delivered']" position="attributes">
                     <attribute name="optional">show</attribute>
                 </xpath>
-                <xpath expr="//header[last()]" position="inside">
 
+                <xpath expr="//header[last()]" position="inside">
                     <button name="%(action_sale_purchase_order_wizard)d" type="action" string="Nueva compra" class="btn-primary" attrs="{'invisible':[('state','in',['done','cancel'])]}"/>
                 </xpath>
 

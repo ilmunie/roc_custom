@@ -7,6 +7,53 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    def compute_requires_additional_products(self):
+        for record in self:
+            res = False
+            if record.order_line.filtered(lambda x: x.product_id.product_tmpl_id.additional_product_ids):
+                res = True
+            record.requires_additional_products = res
+
+    requires_additional_products = fields.Boolean(compute=compute_requires_additional_products)
+    @api.returns('self', lambda value: value.id)
+    def copy(self, default=None):
+        copied = super(PurchaseOrder, self).copy(default)
+        for copy in copied:
+            vals = []
+            for line_to_del in copy.order_line.filtered(lambda x: x.additional_purchase_line_parent_id):
+                vals.append((2, line_to_del.id))
+            copy.order_line = vals
+        return copied
+    def load_default_additional_products(self):
+        for record in self:
+            #removes old additional lines
+            vals = []
+            for line_to_del in record.order_line.filtered(lambda x: x.additional_purchase_line_parent_id):
+                vals.append((2, line_to_del.id))
+            record.order_line = vals
+            #add_default_products
+            vals = []
+            for line in record.order_line.filtered(lambda x: x.product_id.product_tmpl_id.additional_product_ids):
+                for additional_prod in line.product_id.product_tmpl_id.additional_product_ids:
+                    if additional_prod.default_product_ids:
+                        product_to_add = additional_prod.get_product_to_add(location=record.picking_type_id.default_location_dest_id.id)
+                        if product_to_add:
+                            vals.append((0, 0, {
+                                'display_type': 'line_section',
+                                'sequence': line.sequence,
+                                'product_qty': 0,
+                                'name': additional_prod.name,
+                                'additional_purchase_line_parent_id': line.id}))
+                            vals.append((0, 0, {
+                                'product_id': product_to_add.id,
+                                'name': product_to_add.name,
+                                'sequence': line.sequence,
+                                'product_qty': line.product_qty,
+                                'additional_purchase_line_parent_id': line.id,
+                                'config_id': additional_prod.id}))
+            record.order_line = vals
+
+
     @api.constrains('state')
     def constraint_additional_product(self):
         for record in self:
@@ -33,15 +80,6 @@ class PurchaseOrder(models.Model):
     additional_product_pending = fields.Boolean(compute=compute_additional_product_pending, store=True)
     #visibility_button additional products
 
-    def renumerate_order_line_sequence(self):
-        for record in self:
-            sequence = 0
-            for line in record.order_line.filtered(lambda x: not x.additional_purchase_line_parent_id):
-                line.sequence = sequence
-                for order_line in record.order_line.filtered(lambda x: line.id == x.additional_purchase_line_parent_id.id):
-                    sequence += 1
-                    order_line.sequence = sequence
-                sequence += 10
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
@@ -74,28 +112,6 @@ class PurchaseOrderLine(models.Model):
                     line.sequence = sec
                     sec += 1
                 order_ids.append(order.id)
-        vals_to_write = {}
-        for line in lines:
-            if line.orderpoint_id and line.product_id and line.product_id.product_tmpl_id.additional_product_ids:
-                for additional_prod in line.product_id.product_tmpl_id.additional_product_ids:
-                    if additional_prod.default_product_id:
-                        if line.order_id not in vals_to_write.keys():
-                            vals_to_write[line.order_id] = []
-                        vals_to_write[line.order_id].append((0, 0, {
-                            'display_type': 'line_section',
-                            'sequence': line.sequence,
-                            'product_qty': 0,
-                            'name': additional_prod.name,
-                            'additional_purchase_line_parent_id': line.id}))
-                        vals_to_write[line.order_id].append((0, 0, {
-                            'product_id': additional_prod.default_product_id.id,
-                            'name': additional_prod.default_product_id.name,
-                            'sequence': line.sequence,
-                            'product_qty': line.product_qty,
-                            'additional_purchase_line_parent_id': line.id,
-                            'config_id': additional_prod.id}))
-        for order, lines in vals_to_write.items():
-            order.order_line = lines
         return lines
 
     config_id = fields.Many2one('purchase.additional.product')
@@ -143,7 +159,17 @@ class PurchaseAdditionalProduct(models.Model):
     name = fields.Char(required=True, string="Nombre")
     required = fields.Boolean(string="Requerido")
     domain = fields.Char(required=True, string="Productos")
-    default_product_id = fields.Many2one('product.product')
+    default_product_ids = fields.Many2many('product.product')
+
+    def get_product_to_add(self, location=False):
+        min_stock_prod = False
+        min_stock = 999999999999999999
+        for product in self.default_product_ids:
+            product_qty_in_loc = product.with_context(location=location, compute_child=True).virtual_available
+            if product_qty_in_loc < min_stock:
+                min_stock = product_qty_in_loc
+                min_stock_prod = product
+        return min_stock_prod
 
 class AdditionalProductStatus(models.Model):
     _name = "additional.product.status"

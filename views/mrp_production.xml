@@ -39,6 +39,10 @@
             <field name="components_availability" position="after">
                 <field name="reservation_state" attrs="{'invisible': [('state','in',('draft','cancel'))]}"/>
             </field>
+            <button name="action_confirm" position="after">
+                <button name="action_stand_by" type="object" string="Stand-By" attrs="{'invisible': [('state','not in',('draft'))]}"/>
+                <button name="action_draft" type="object" class="oe_highlight" string="Borrador" attrs="{'invisible': [('state','not in',('stand_by'))]}"/>
+            </button>
             <field name="user_id" position="after">
                 <field name="opportunity_id" string="Oportunidad"/>
             </field>
@@ -47,13 +51,22 @@
                 <field name="procurement_group_id"/>
             </field>
 
+            <xpath expr="//button[@name='action_view_mrp_production_childs']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_view_mrp_production_backorders']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_view_mrp_production_sources']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
             <xpath expr="//field[@name='move_raw_ids']//field[@name='product_id']" position="after">
                 <field name="alternative_product_domain" invisible="1"/>
                 <button name="open_alternative_products" icon="fa-edit" type="object" attrs="{'invisible':['|','|',('state','!=','draft'),('bom_line_id','=',False),('alternative_product_domain','=',False)]}"/>
             </xpath>
             <xpath expr="//field[@name='move_raw_ids']//field[@name='product_uom']" position="after">
-                <field name="product_qty_available" string="A mano"/>
-                <field name="product_virtual_available" string="Pronosticado"/>
+                <field name="location_product_qty_available_not_res" string="No reservado"/>
+                <field name="location_product_virtual_available" string="Pronosticado"/>
             </xpath>
 
             <field name="quantity_done" position="replace">

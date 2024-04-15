@@ -9,32 +9,24 @@ class StockRule(models.Model):
     def _should_auto_confirm_procurement_mo(self, p):
         return False
 
-    def _make_po_get_domain(self, company_id, values, partner):
-        gpo = self.group_propagation_option
-        group = (gpo == 'fixed' and self.group_id) or \
-                (gpo == 'propagate' and 'group_id' in values and values['group_id']) or False
-
-        domain = (
-            ('partner_id', '=', partner.id),
-            ('state', '=', 'draft'),
-            ('picking_type_id', '=', self.picking_type_id.id),
-            ('company_id', '=', company_id.id),
-            ('user_id', '=', False),
-        )
-        delta_days = self.env['ir.config_parameter'].sudo().get_param('purchase_stock.delta_days_merge')
-        if values.get('orderpoint_id') and delta_days is not False:
-            procurement_date = fields.Date.to_date(values['date_planned']) - relativedelta(days=int(values['supplier'].delay))
-            delta_days = int(delta_days)
-            domain += (
-                ('date_order', '<=', datetime.combine(procurement_date + relativedelta(days=delta_days), datetime.max.time())),
-                ('date_order', '>=', datetime.combine(procurement_date - relativedelta(days=delta_days), datetime.min.time()))
-            )
-        if group:
-            domain += (('group_id', '=', group.id),)
-        return domain
 class StockMove(models.Model):
     _inherit = 'stock.move'
 
+    @api.onchange('product_id', 'location_id')
+    def call_get_location_qtys(self):
+        self.get_location_qtys()
+    def get_location_qtys(self):
+        for record in self:
+            virtual_qty = record.with_context(
+                location=record.location_id.id, compute_child=True
+            ).product_id.virtual_available or 0
+            qty = record.with_context(
+                location=record.location_id.id, compute_child=True
+            ).product_id.qty_available_not_res or 0
+            record.location_product_virtual_available = virtual_qty
+            record.location_product_qty_available_not_res = qty
+    location_product_virtual_available = fields.Float(compute=get_location_qtys)
+    location_product_qty_available_not_res = fields.Float(compute=get_location_qtys)
 
     @api.depends('bom_line_id')
     def get_alternative_prod_domain(self):
@@ -75,9 +67,29 @@ class StockMove(models.Model):
             'views': [(self.env.ref('roc_custom.mrp_alternative_product_assistant_wizard_view').id, 'form')],
             'target': 'new',
         }
+
+
+
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
 
+    def action_stand_by(self):
+        for record in self:
+            record.state = 'stand_by'
+
+    def action_draft(self):
+        for record in self:
+            record.state = 'draft'
+
+
+    state = fields.Selection(selection_add=[('stand_by', 'Stand-By')])
+    @api.returns('self', lambda value: value.id)
+    def copy(self, default=None):
+        copied = super(MrpProduction, self).copy(default)
+        #for copy in copied:
+        #    if self.sale_order_ids:
+        #        copy.procurement_group_id = self.procurement_group_id.id
+        return copied
     @api.depends('sale_order_ids')
     def get_opportunity(self):
         for record in self:
@@ -91,14 +103,10 @@ class MrpProduction(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         res = super().create(vals_list)
-        for rec in res:
-            if rec.sale_order_ids:
-                search_groups = self.env['procurement.group'].search([('name', '=', rec.sale_order_ids[0].name)])
-                if search_groups:
-                    group_id = search_groups[0].id
-                else:
-                    group_id = self.env['procurement.group'].create({'move_type': 'direct', 'name': rec.sale_order_ids[0].name}).id
-                res.procurement_group_id = group_id
+        #for rec in res:
+        #    if rec.sale_order_ids:
+        #        group_id = self.env['procurement.group'].create({'move_type': 'direct', 'name': rec.sale_order_ids[0].name - rec.name}).id
+        #        res.procurement_group_id = group_id
         return res
     def _get_moves_raw_values(self):
         moves = []
@@ -121,7 +129,6 @@ class MrpProduction(models.Model):
                         available_products = available_products.filtered(lambda x: final_product_value.name in x.product_template_variant_value_ids.mapped('name'))
                 if bom_line.match_attributes:
                     failed = False
-
                     for prod in available_products:
                         for prod_att_value in final_prod_values.filtered(lambda x: x.attribute_id.name in prod.product_template_variant_value_ids.mapped('attribute_id.name')):
                             if prod_att_value.name not in prod.product_template_variant_value_ids.mapped('name'):
@@ -141,12 +148,12 @@ class MrpProduction(models.Model):
 
     @api.depends('move_raw_ids', 'state', 'move_raw_ids.product_uom_qty')
     def _compute_unreserve_visible(self):
+        #adds stand by state
         for order in self:
             already_reserved = order.state not in ('done', 'cancel') and order.mapped('move_raw_ids.move_line_ids')
             any_quantity_done = any(m.quantity_done > 0 for m in order.move_raw_ids)
-
             order.unreserve_visible = not any_quantity_done and already_reserved
-            order.reserve_visible = order.state in ('waiting_approval','confirmed', 'progress', 'to_close') and any(move.product_uom_qty and move.state in ['confirmed', 'partially_available'] for move in order.move_raw_ids)
+            order.reserve_visible = order.state in ('stand_by','confirmed', 'progress', 'to_close') and any(move.product_uom_qty and move.state in ['confirmed', 'partially_available'] for move in order.move_raw_ids)
     def name_get(self):
         res = []
         for rec in self:

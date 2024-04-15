@@ -4,8 +4,6 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
     _order = 'create_date desc'
 
-
-
     journal_id = fields.Many2one('account.journal', domain=[('type', '=', 'sale')], string="Diario")
     @api.depends('state', 'order_line', 'order_line.qty_delivered', 'order_line.product_uom_qty')
     def compute_delivery_status(self):

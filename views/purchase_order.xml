@@ -56,13 +56,16 @@
                 <attribute name="optional">hide</attribute>
             </xpath>
             <xpath expr="//button[@name='action_rfq_send']" position="after">
-                <button name="open_additional_product_conf" type="object" string="Productos adicionales" attrs="{'invisible':[('additional_product_pending','!=', True)]}"/>
+                <field name="requires_additional_products" invisible="1"/>
+                <button name="load_default_additional_products" type="object" string="Agregar Adicionales"
+                attrs="{'invisible':['|',('state','!=','draft'),('requires_additional_products','=',False)]}"/>
             </xpath>
 
             <xpath expr="//button[@name='action_product_forecast_report']" position="replace">
             </xpath>
             <xpath expr="//button[@name='action_product_forecast_report'][last()]" position="replace">
             </xpath>
+
 
 
             <xpath expr="//tree/field[@name='product_id']" position="attributes">
@@ -199,8 +202,9 @@
 
             <xpath expr="//filter[@name='starred']" position="after">
                     <separator/>
-                    <filter name="form_sale" string="Asociados a Venta" domain="[('sale_order_ids', '!=', False)]"/>
-                    <filter name="form_mrp" string="Asociados a Producción" domain="[('mrp_production_ids', '!=', False)]"/>
+                    <filter name="manual" string="Manuales" domain="[('origin', 'not ilike', 'OP/0'),('sale_order_ids', '=', False),('mrp_production_ids', '=', False)]"/>
+                    <filter name="form_sale" string="Asociados a Venta" domain="['|',('sale_order_ids', '!=', False),('mrp_production_ids', '!=', False)]"/>
+                    <filter name="from_orderpoint" string="Asociados a Punto de pedido" domain="[('origin', 'ilike', 'OP/0')]"/>
                     <separator/>
                     <filter name="not_invoiced" string="Para facturar" domain="[('invoice_status', '=', 'to invoice')]" help="Purchase orders that include lines not invoiced."/>
                     <filter name="invoiced" string="Facturas recibidas" domain="[('invoice_status', '=', 'invoiced')]" help="Purchase orders that have been invoiced."/>
