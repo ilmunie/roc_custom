@@ -120,6 +120,8 @@ class MrpProduction(models.Model):
             for bom_line, line_data in lines:
                 product_id = bom_line.product_id
                 available_products = bom_line.product_id.product_tmpl_id.product_variant_ids
+                if bom_line.default_product_tmpl_ids:
+                    available_products += bom_line.default_product_tmpl_ids.mapped('product_variant_ids')
                 if bom_line.child_bom_id and bom_line.child_bom_id.type == 'phantom' or\
                         bom_line.product_id.type not in ['product', 'consu']:
                     continue
@@ -197,7 +199,7 @@ class MrpBomLine(models.Model):
 
     alternative_product_domain = fields.Char(string="Productos Alternativos")
     match_attributes = fields.Boolean(string="Matchear Atributos")
-
+    default_product_tmpl_ids = fields.Many2many('product.template', string="Prod Default")
 
 
     @api.depends('bom_id.product_tmpl_id')
@@ -209,6 +211,6 @@ class MrpBomLine(models.Model):
             record.attribute_values_domain = json.dumps(res)
 
     attribute_values_domain = fields.Char(compute=get_attribute_domain, store=True)
-    force_attributes_value_ids = fields.Many2many('product.attribute', 'aux_attr_mrp_bom_table', 'attribute_value_id', 'bom_line_id')
+    force_attributes_value_ids = fields.Many2many('product.attribute', 'aux_attr_mrp_bom_table', 'attribute_value_id', 'bom_line_id', string="Atr. Obligatorios")
     def _get_default_product_uom_id(self):
         return self.env['uom.uom'].search([], limit=1, order='id').id

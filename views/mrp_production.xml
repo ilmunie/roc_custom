@@ -80,6 +80,7 @@
 		<field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
 		<field name="arch" type="xml">
             <xpath expr="//field[@name='bom_line_ids']//field[@name='product_id']" position="after">
+                <field name="default_product_tmpl_ids" widget="many2many_tags"/>
                 <field name="match_attributes"/>
                 <field name="attribute_values_domain" invisible="1"/>
                 <field name="force_attributes_value_ids" widget="many2many_tags" domain="attribute_values_domain"/>

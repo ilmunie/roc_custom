@@ -51,6 +51,8 @@
                             <field name="domain" widget="domain" options="{'in_dialog': True, 'model': 'product.product'}"/>
                             <field name="default_product_ids" domain="domain" widget="many2many_tags"/>
                             <field name="qty"/>
+                            <button name="see_affected_prod" type="object" icon="fa-bars" attrs="{'invisible':['|',('count_rel_prod','=',1),('count_rel_prod','=',0)]}"/>
+                            <field name="count_rel_prod" string="Productos asociados" invisible="1"/>
                         </tree>
                     </field>
                 </group>

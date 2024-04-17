@@ -162,6 +162,25 @@ class PurchaseAdditionalProduct(models.Model):
     default_product_ids = fields.Many2many('product.product')
     qty = fields.Float(default=1, string="Cantidad")
 
+    def get_related_prod(self):
+        for record in self:
+            products = self.env['product.template'].search([('additional_product_ids','!=', False), ('additional_product_ids.id','=', record.id)])
+            record.related_products = [(6, 0, products.mapped('id'))]
+            record.count_rel_prod = len(products)
+    related_products = fields.Many2many('product.template', compute=get_related_prod)
+    count_rel_prod = fields.Integer(compute=get_related_prod)
+
+    def see_affected_prod(self):
+        return {
+            'name': "Productos con adicionales - " + self.name + str(self.id),
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.template',
+            'domain': [('additional_product_ids', '!=', False), ('additional_product_ids.id', '=', self.id)],
+            'view_mode': 'tree,form',
+            'target': 'new',
+            'search_view_id': self.env.ref('product.product_template_search_view').id,
+        }
+
     def get_product_to_add(self, location=False):
         min_stock_prod = False
         min_stock = 999999999999999999
