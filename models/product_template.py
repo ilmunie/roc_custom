@@ -48,7 +48,7 @@ class PurchaseOrder(models.Model):
                                 'product_id': product_to_add.id,
                                 'name': product_to_add.name,
                                 'sequence': line.sequence,
-                                'product_qty': line.product_qty,
+                                'product_qty': line.product_qty*additional_prod.qty,
                                 'additional_purchase_line_parent_id': line.id,
                                 'config_id': additional_prod.id}))
             record.order_line = vals
@@ -160,6 +160,7 @@ class PurchaseAdditionalProduct(models.Model):
     required = fields.Boolean(string="Requerido")
     domain = fields.Char(required=True, string="Productos")
     default_product_ids = fields.Many2many('product.product')
+    qty = fields.Float(default=1, string="Cantidad")
 
     def get_product_to_add(self, location=False):
         min_stock_prod = False

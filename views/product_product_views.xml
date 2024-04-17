@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <record id="product_tmpl_search_inherit_roc_custom" model="ir.ui.view">
+        <field name="name">product.tmpl.search.inherit.roc.custom</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[last()]" position="after">
+                <separator/>
+                <filter string="Con adicionales" name="with_additionals" domain="[('additional_product_ids','!=',False)]"/>
+                <separator/>
+                <filter string="Abastecimiento por pedido" name="with_mto" domain="[('route_ids.name','ilike','MTO')]"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="product_product_search_inherit_roc_custom" model="ir.ui.view">
         <field name="name">product.product.search.inherit.roc.custom</field>
         <field name="model">product.product</field>
@@ -35,6 +50,7 @@
                             <field name="required"/>
                             <field name="domain" widget="domain" options="{'in_dialog': True, 'model': 'product.product'}"/>
                             <field name="default_product_ids" domain="domain" widget="many2many_tags"/>
+                            <field name="qty"/>
                         </tree>
                     </field>
                 </group>
