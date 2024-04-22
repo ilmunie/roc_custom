@@ -6,7 +6,7 @@ class PoAlternativeAdditionalProductAssistant(models.TransientModel):
     config_id = fields.Many2one('purchase.additional.product')
     line_to_replace_id = fields.Many2one('purchase.order.line')
     line_ids = fields.One2many('po.alternative.additional.product.assistant.line', 'wiz_id')
-
+    seller_id = fields.Many2one('product.supplierinfo')
     parent_poline_id = fields.Many2one(related='line_to_replace_id.additional_purchase_line_parent_id')
     @api.model
     def default_get(self, fields):
@@ -16,6 +16,7 @@ class PoAlternativeAdditionalProductAssistant(models.TransientModel):
         domain = json.loads(self._context.get('domain', False))
         qty = self._context.get('qty', False)
         result['config_id'] = self._context.get('config_id', False)
+        result['seller_id'] = self._context.get('seller_id', False)
         result['line_to_replace_id'] = self._context.get('line_to_replace_id', False)
         available_products = self.env['product.product'].search(domain)
         lines = []
@@ -32,14 +33,18 @@ class PoAlternativeAdditionalProductAssistant(models.TransientModel):
         vals_to_write.append((2, self.line_to_replace_id.id))
         #add product lines
         for line_to_add in self.line_ids.filtered(lambda x: x.add_product):
-            vals_to_write.append((0, 0, {
+            vals = {
                 'sequence': self.line_to_replace_id.sequence,
                 'name': line_to_add.product_id.name,
                 'product_id': line_to_add.product_id.id,
                 'product_qty': line_to_add.qty,
                 'config_id': self.line_to_replace_id.config_id.id,
                 'additional_purchase_line_parent_id': self.line_to_replace_id.additional_purchase_line_parent_id.id
-            }))
+            }
+            if line_to_add.price > 0:
+                vals['price_unit'] = line_to_add.price
+            vals_to_write.append((0, 0, vals))
+
         self.line_to_replace_id.order_id.write({
             'order_line': vals_to_write
         })
@@ -48,6 +53,19 @@ class PoAlternativeAdditionalProductAssistant(models.TransientModel):
 class PorAlternativeAdditionalProductAssistantLine(models.TransientModel):
     _name = "po.alternative.additional.product.assistant.line"
 
+    @api.depends('product_id')
+    def get_price(self):
+        for record in self:
+            price = 0
+            if record.wiz_id.seller_id and record.wiz_id.seller_id.additional_pricelist:
+                match_line = record.wiz_id.seller_id.additional_pricelist_ids.filtered(lambda x: x.product_id.id == record.product_id.id)
+                price = match_line[0].price if match_line else 0
+            if price == 0:
+                seller = record.product_id._select_seller(partner_id=record.wiz_id.seller_id.name)
+                if seller:
+                    price = seller.price
+            record.price = price
+    price = fields.Float(compute=get_price, store=True, string="Precio")
     wiz_id = fields.Many2one('po.alternative.additional.product.assistant')
     add_product = fields.Boolean(string="Agregar")
     product_id = fields.Many2one('product.product', string="Producto")

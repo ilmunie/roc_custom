@@ -69,20 +69,22 @@ class PurchaseOrder(models.Model):
                 additional_prices = False
                 if seller and seller.additional_pricelist and seller.additional_pricelist_ids:
                     additional_prices = seller.additional_pricelist_ids
+                sequence = line.sequence
                 for additional_prod in line.product_id.product_tmpl_id.additional_product_ids:
                     if additional_prod.default_product_ids:
+                        sequence += 1
                         product_to_add = additional_prod.get_product_to_add(location=record.picking_type_id.default_location_dest_id.id)
                         if product_to_add:
                             vals.append((0, 0, {
                                 'display_type': 'line_section',
-                                'sequence': line.sequence,
+                                'sequence': sequence,
                                 'product_qty': 0,
                                 'name': additional_prod.name,
                                 'additional_purchase_line_parent_id': line.id}))
                             aux_vals = {
                                 'product_id': product_to_add.id,
                                 'name': product_to_add.name,
-                                'sequence': line.sequence,
+                                'sequence': sequence,
                                 'product_qty': line.product_qty*additional_prod.qty,
                                 'additional_purchase_line_parent_id': line.id,
                                 'config_id': additional_prod.id}
@@ -123,11 +125,13 @@ class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
     def open_change_additional_product(self):
+        seller = self.additional_purchase_line_parent_id.product_id._select_seller(self.order_id.partner_id)
         context = {
             'domain': self.config_id.domain,
             'qty': self.product_qty,
             'config_id': self.config_id.id,
             'line_to_replace_id': self.id,
+            'seller_id': seller.id,
         }
         return {
             'type': 'ir.actions.act_window',
