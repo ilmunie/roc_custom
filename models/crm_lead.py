@@ -150,7 +150,7 @@ class CrmLead(models.Model):
                 record.datetime_in_stage = record.create_date
 
 
-    datetime_in_lead_stage = fields.Datetime(compute=compute_datetime_last_lead_stage, store=True, string="Cambio de etapa")
+    datetime_in_lead_stage = fields.Datetime(compute=compute_datetime_last_lead_stage, store=True, string="Cambio de etapa lead")
     datetime_in_stage = fields.Datetime(compute=compute_datetime_last_stage, store=True, string="Cambio de etapa")
     lead_stage_change_ids = fields.One2many('crm.lead.stage.change','lead_id')
     stage_change_ids = fields.One2many('crm.stage.change','opportunity_id')
