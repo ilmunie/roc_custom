@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+    <record id="view_supp_info_additional_prod" model="ir.ui.view">
+        <field name="name">view_supp_info_additional_prod</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="inherit_id" ref="product.product_supplierinfo_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='vendor']" position="inside">
+                <field name="has_extras" attrs="{'invisible':[('product_id','!=',False)]}"/>
+                <field name="see_additional_pricelist" invisible="1"/>
+                <field name="product_domain" invisible="1"/>
+                <field name="additional_pricelist" attrs="{'invisible':[('see_additional_pricelist','=',False)]}"/>
+            </xpath>
+            <xpath expr="//notebook[last()]" position="inside">
+                    <page string="Tarifas Adicionales" attrs="{'invisible':[('additional_pricelist','=',False)]}">
+                        <field name="additional_pricelist_ids" widget="section_and_note_one2many" mode="tree" >
+                            <tree   create = '1' delete = '1' editable="bottom">
+                                <control>
+                                    <create name="add_line" string="Añadir una linea"/>
+                                </control>
+                                <field name="product_id" domain="product_domain"/>
+                                <field name="price"/>
+                                <field name="product_domain" invisible="1"/>
+                            </tree>
+                        </field>
+                    </page>
+            </xpath>
+        </field>
+    </record>
     <record id="product_tmpl_search_inherit_roc_custom" model="ir.ui.view">
         <field name="name">product.tmpl.search.inherit.roc.custom</field>
         <field name="model">product.template</field>

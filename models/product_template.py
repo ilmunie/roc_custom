@@ -2,7 +2,38 @@ from odoo import fields, models, api
 import json
 from odoo.exceptions import UserError
 
+class ProductSupplierinfo(models.Model):
+    _inherit = "product.supplierinfo"
 
+    additional_pricelist = fields.Boolean(string="Tarifas adicionales")
+    additional_pricelist_ids = fields.One2many('additional.supplierinfo', 'supplierinfo_id', copy=True)
+    @api.depends('product_tmpl_id', 'product_tmpl_id.additional_product_ids', 'product_tmpl_id.additional_product_ids.domain')
+    def get_additional_product_domain(self):
+        product_model = self.env['product.product']
+        for record in self:
+            products_av = []
+            if record.product_tmpl_id and record.product_tmpl_id.additional_product_ids:
+                for add in record.product_tmpl_id.additional_product_ids:
+                    products_av.extend(product_model.search(json.loads(add.domain)).mapped('id'))
+            record.product_domain = json.dumps([('id', 'in', products_av)])
+
+    product_domain = fields.Char(compute=get_additional_product_domain, store=True)
+    @api.depends('product_id','product_tmpl_id')
+    def compute_see_aditional_pricelist(self):
+        for record in self:
+            if record.product_tmpl_id and record.product_tmpl_id and record.product_tmpl_id.additional_product_ids:
+                res = True
+            else:
+                res = False
+            record.see_additional_pricelist = res
+    see_additional_pricelist = fields.Boolean(compute=compute_see_aditional_pricelist, store=True)
+class AdditionalSupplierinfo(models.Model):
+    _name = "additional.supplierinfo"
+
+    supplierinfo_id = fields.Many2one('product.supplierinfo')
+    product_id = fields.Many2one('product.product', string='Producto')
+    price = fields.Float(string="Precio")
+    product_domain = fields.Char(related='supplierinfo_id.product_domain')
 class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
@@ -34,6 +65,10 @@ class PurchaseOrder(models.Model):
             #add_default_products
             vals = []
             for line in record.order_line.filtered(lambda x: x.product_id.product_tmpl_id.additional_product_ids):
+                seller = line.product_id._select_seller()
+                additional_prices = False
+                if seller and seller.additional_pricelist and seller.additional_pricelist_ids:
+                    additional_prices = seller.additional_pricelist_ids
                 for additional_prod in line.product_id.product_tmpl_id.additional_product_ids:
                     if additional_prod.default_product_ids:
                         product_to_add = additional_prod.get_product_to_add(location=record.picking_type_id.default_location_dest_id.id)
@@ -44,13 +79,16 @@ class PurchaseOrder(models.Model):
                                 'product_qty': 0,
                                 'name': additional_prod.name,
                                 'additional_purchase_line_parent_id': line.id}))
-                            vals.append((0, 0, {
+                            aux_vals = {
                                 'product_id': product_to_add.id,
                                 'name': product_to_add.name,
                                 'sequence': line.sequence,
                                 'product_qty': line.product_qty*additional_prod.qty,
                                 'additional_purchase_line_parent_id': line.id,
-                                'config_id': additional_prod.id}))
+                                'config_id': additional_prod.id}
+                            if additional_prices and product_to_add.id in additional_prices.mapped('product_id.id'):
+                                aux_vals['price_unit'] = additional_prices.filtered(lambda x: x.product_id.id == product_to_add.id)[0].price
+                            vals.append((0, 0, aux_vals))
             record.order_line = vals
 
 
