@@ -60,16 +60,20 @@ class PorAlternativeAdditionalProductAssistantLine(models.TransientModel):
     def get_price(self):
         for record in self:
             price = 0
+            discount = 0
             if record.wiz_id.seller_id and record.wiz_id.seller_id.additional_pricelist:
                 match_line = record.wiz_id.seller_id.additional_pricelist_ids.filtered(lambda x: x.product_id.id == record.product_id.id)
                 price = match_line[0].price if match_line else 0
+                discount = record.wiz_id.seller_id.discount if match_line else 0
             if price == 0:
                 seller = record.product_id._select_seller(partner_id=record.wiz_id.seller_id.name)
                 if seller:
                     price = seller.price
+                    discount = seller.discount
             record.price = price
+            record.discount = discount
     price = fields.Float(compute=get_price, store=True, string="Precio")
-    discount = fields.Float(related="wiz_id.seller_id.discount")
+    discount = fields.Float(compute=get_price, store=True, string="Descuento")
     wiz_id = fields.Many2one('po.alternative.additional.product.assistant')
     add_product = fields.Boolean(string="Agregar")
     product_id = fields.Many2one('product.product', string="Producto")
