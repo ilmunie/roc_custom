@@ -43,6 +43,9 @@ class PoAlternativeAdditionalProductAssistant(models.TransientModel):
             }
             if line_to_add.price > 0:
                 vals['price_unit'] = line_to_add.price
+            if line_to_add.discount > 0:
+                vals['discount'] = line_to_add.discount
+
             vals_to_write.append((0, 0, vals))
 
         self.line_to_replace_id.order_id.write({
@@ -66,6 +69,7 @@ class PorAlternativeAdditionalProductAssistantLine(models.TransientModel):
                     price = seller.price
             record.price = price
     price = fields.Float(compute=get_price, store=True, string="Precio")
+    discount = fields.Float(related="wiz_id.seller_id.discount")
     wiz_id = fields.Many2one('po.alternative.additional.product.assistant')
     add_product = fields.Boolean(string="Agregar")
     product_id = fields.Many2one('product.product', string="Producto")

@@ -65,7 +65,7 @@ class PurchaseOrder(models.Model):
             #add_default_products
             vals = []
             for line in record.order_line.filtered(lambda x: x.product_id.product_tmpl_id.additional_product_ids):
-                seller = line.product_id._select_seller()
+                seller = line.product_id._select_seller(partner_id=record.partner_id)
                 additional_prices = False
                 if seller and seller.additional_pricelist and seller.additional_pricelist_ids:
                     additional_prices = seller.additional_pricelist_ids
@@ -90,6 +90,12 @@ class PurchaseOrder(models.Model):
                                 'config_id': additional_prod.id}
                             if additional_prices and product_to_add.id in additional_prices.mapped('product_id.id'):
                                 aux_vals['price_unit'] = additional_prices.filtered(lambda x: x.product_id.id == product_to_add.id)[0].price
+                                aux_vals['discount'] = seller.discount
+                            else:
+                                seller = product_to_add._select_seller(partner_id=record.partner_id)
+                                if seller:
+                                    aux_vals['price_unit'] = seller.price
+                                    aux_vals['discount'] = seller.discount
                             vals.append((0, 0, aux_vals))
             record.order_line = vals
 

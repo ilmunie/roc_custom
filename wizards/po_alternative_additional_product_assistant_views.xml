@@ -30,6 +30,7 @@
                                 <field name="qty_available_not_res" />
                                 <field name="location_virtual_available" />
                                 <field name="price" />
+                                <field name="discount" />
                             </tree>
                         </field>
                     </group>
