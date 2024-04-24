@@ -67,6 +67,7 @@
                 </xpath>
             <field name="payment_term_id" position="after">
                 <field name="opportunity_id"/>
+                <field name="warehouse_id" options="{'no_create': True, 'no_create_and_edit': True}"/>
                 <field name="door_location"/>
 
             </field>
