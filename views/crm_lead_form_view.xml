@@ -333,6 +333,7 @@
                                         <field name="date_open"/>
                                         <field name="date_conversion"/>
                                         <field name="date_closed"/>
+                                        <field name="force_close_date"/>
                                         <field name="type" invisible="1"/>
                                         <field name="last_email_from_partner"/>
                                     </group>

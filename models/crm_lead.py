@@ -7,6 +7,10 @@ class CrmLead(models.Model):
 
     medium_written = fields.Boolean()
 
+    force_close_date = fields.Datetime(string="Forzar cierre")
+
+    date_closed = fields.Datetime(tracking=True)
+
 
     def compute_won_written(self):
         for record in self:
@@ -34,6 +38,8 @@ class CrmLead(models.Model):
                 record.date_conversion = fields.Datetime.now()
             if record.medium_id and not record.medium_written:
                 record.medium_written = True
+            if record.force_close_date and record.date_closed != record.force_close_date:
+                record.date_closed = record.force_close_date
         return res
 
     def _merge_get_fields(self):
