@@ -11,7 +11,7 @@
             <field name="config_id" eval="ref('roc_custom.model_validation_lead_won_withouth_sale')"/>
             <field name="domain_condition">match</field>
             <field name="domain_to_check" eval="[('stage_id.is_won','=',True),('sale_amount_total','=',0)]"/>
-            <field name="validation_type">exception</field>
+            <field name="validation_type">warning</field>
             <field name="validation_message">No puede marcar una oportunidad como ganado sin un presupuesto de venta confirmado.
             </field>
             <field name="register_in_chatter" eval="False"/>
