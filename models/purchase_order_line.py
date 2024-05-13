@@ -1,5 +1,6 @@
-from odoo import fields, models, api
+from odoo import fields, models, api,_
 from collections import defaultdict
+from odoo.exceptions import UserError, ValidationError
 
 
 
@@ -7,6 +8,25 @@ class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
 
+    def fix_wrong_warehouse_pos(self):
+        self.ensure_one()
+        if self.order_id.sale_order_ids:
+            sale_order = self.order_id.sale_order_ids[0]
+            if sale_order.warehouse_id.id != self.order_id.picking_type_id.warehouse_id.id:
+                querys = []
+                #sale_order.warehouse_id = self.order_id.picking_type_id.warehouse_id.id
+                querys.append(f"UPDATE sale_order SET warehouse_id = {str(self.order_id.picking_type_id.warehouse_id.id)} WHERE id = {str(sale_order.id)};")
+                for dest_move in self.move_dest_ids:
+                    querys.append(
+                        f"UPDATE stock_move SET location_id = {str(self.order_id.picking_type_id.warehouse_id.lot_stock_id.id)} WHERE id = {str(dest_move.id)};")
+                    #dest_move.location_id = self.order_id.picking_type_id.warehouse_id.lot_stock_id.id
+                    querys.append(
+                        f"UPDATE stock_picking SET picking_type_id = {str(self.order_id.picking_type_id.warehouse_id.out_type_id.id)} WHERE id = {str(dest_move.picking_id.id)};")
+                    querys.append(
+                        f"UPDATE stock_picking SET location_id = {str(self.order_id.picking_type_id.warehouse_id.out_type_id.default_location_src_id.id)} WHERE id = {str(dest_move.picking_id.id)};")
+                    #dest_move.picking_id.picking_type_id = self.order_id.picking_type_id.warehouse_id.out_type_id.id
+                for query in querys:
+                    self._cr.execute(query)
     @api.depends('invoice_lines.move_id.state', 'invoice_lines.quantity', 'qty_received', 'product_uom_qty', 'order_id.state', 'trigger_compute_qty_inv', 'product_id.invoice_policy')
     def _compute_qty_invoiced(self):
         for line in self:

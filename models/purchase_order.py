@@ -6,7 +6,11 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
-
+    #def button_confirm(self):
+    #    for record in self:
+    #        for order_line in record.order_line:
+    #            order_line.fix_wrong_warehouse_pos()
+    #    return super(PurchaseOrder, self)
     @api.depends('sale_order_ids')
     def get_opportunity(self):
         for record in self:

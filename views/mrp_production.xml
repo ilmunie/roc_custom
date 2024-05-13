@@ -1,6 +1,17 @@
 <?xml version="1.0"?>
 <odoo>
-
+    <record id="action_mrp_attribute_conversion_table" model="ir.actions.act_window">
+        <field name="name">Conversion Atributos</field>
+        <field name="res_model">mrp.attribute.conversion.table</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem
+        id="menu_mrp_attribute_conversion_table"
+        name="Conversion Atributos"
+        parent="mrp.menu_mrp_configuration"
+        sequence="105"
+        action="action_mrp_attribute_conversion_table"
+        groups="base.group_no_one"/>
 
     <record id="view_mrp_production_filter_inherit" model="ir.ui.view">
 		<field name="name">view.mrp.production.filter.inherit</field>

@@ -35,9 +35,16 @@ class MrpAlternativeProductAssistant(models.TransientModel):
         if self.match_attributes:
             failed_line_ids = []
             for attribute_value in self.attribute_value_ids:
+                alternative_names = []
+                alternative_names.append(attribute_value.name)
+                alternative_names.extend(self.env['mrp.attribute.conversion.table'].search(
+                    [('mrp_product_attribute_name', '=', attribute_value.name)]).mapped(
+                    'bom_attribute_equivalen_name'))
+                #import pdb;pdb.set_trace()
                 for line in lines:
                     if line.product_id.id not in failed_line_ids:
-                        if attribute_value.attribute_id.name in line.product_id.product_template_attribute_value_ids.mapped('attribute_id.name') and attribute_value.name not in line.product_id.product_template_variant_value_ids.mapped('name'):
+                        if (attribute_value.attribute_id.name in line.product_id.product_template_attribute_value_ids.mapped('attribute_id.name') and
+                                all(alt_name not in line.product_id.product_template_variant_value_ids.mapped('name') for alt_name in alternative_names)):
                             failed_line_ids.append(line.product_id.id)
                             continue
                     else:
@@ -47,7 +54,8 @@ class MrpAlternativeProductAssistant(models.TransientModel):
             for attribute_value in self.attribute_alt_value_ids:
                 for line in lines:
                     if line.product_id.id not in failed_line_ids:
-                        if attribute_value.attribute_id.name in line.product_id.product_template_attribute_value_ids.mapped('attribute_id.name') and attribute_value.name not in line.product_id.product_template_variant_value_ids.mapped('name'):
+                        if (attribute_value.attribute_id.name in line.product_id.product_template_attribute_value_ids.mapped('attribute_id.name') and
+                                attribute_value.name not in line.product_id.product_template_variant_value_ids.mapped('name')):
                             failed_line_ids.append(line.product_id.id)
                             continue
                     else:

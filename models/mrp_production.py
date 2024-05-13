@@ -3,6 +3,11 @@ import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+class MrpAttributeConversionTable(models.Model):
+    _name = 'mrp.attribute.conversion.table'
+
+    mrp_product_attribute_name = fields.Char()
+    bom_attribute_equivalen_name = fields.Char()
 
 class StockRule(models.Model):
     _inherit = 'stock.rule'
@@ -127,13 +132,19 @@ class MrpProduction(models.Model):
                     continue
                 if bom_line.force_attributes_value_ids:
                     for forced_att in bom_line.force_attributes_value_ids:
-                        final_product_value = final_prod_values.filtered(lambda x: forced_att.name == x.attribute_id.name)[0]
-                        available_products = available_products.filtered(lambda x: final_product_value.name in x.product_template_variant_value_ids.mapped('name'))
+                        alias_final_product_values = final_prod_values.filtered(lambda x: forced_att.name == x.attribute_id.name).mapped('name')
+                        alias_final_product_values.extend(self.env['mrp.attribute.conversion.table'].search([('mrp_product_attribute_name', 'in', alias_final_product_values)]).mapped(
+                            'bom_attribute_equivalen_name'))
+                        available_products = available_products.filtered(lambda x: any(ptvalue in alias_final_product_values for ptvalue in x.product_template_variant_value_ids.mapped('name')))
                 if bom_line.match_attributes:
-                    failed = False
                     for prod in available_products:
-                        for prod_att_value in final_prod_values.filtered(lambda x: x.attribute_id.name in prod.product_template_variant_value_ids.mapped('attribute_id.name')):
-                            if prod_att_value.name not in prod.product_template_variant_value_ids.mapped('name'):
+                        failed = False
+                        for prod_att_value in final_prod_values:
+                            alias_final_product_values = prod_att_value.mapped('name')
+                            alias_final_product_values.extend(self.env['mrp.attribute.conversion.table'].search(
+                                [('mrp_product_attribute_name', 'in', alias_final_product_values)]).mapped(
+                                'bom_attribute_equivalen_name'))
+                            if not any(alias_final_product_value in prod.product_template_variant_value_ids.mapped('name') for alias_final_product_value in alias_final_product_values):
                                 failed = True
                         if not failed:
                             product_id = prod
