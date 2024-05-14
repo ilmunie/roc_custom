@@ -6,6 +6,14 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    def get_sale_additional_info(self):
+        for record in self:
+            info = False
+            for production in record.mrp_production_ids:
+                info = production.sale_additional_info
+            record.sale_additional_info = info
+    sale_additional_info = fields.Char(compute=get_sale_additional_info, string="Detalle venta")
+
     #def button_confirm(self):
     #    for record in self:
     #        for order_line in record.order_line:

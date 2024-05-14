@@ -7,6 +7,13 @@ from odoo.exceptions import UserError, ValidationError
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+    def _prepare_purchase_order_line_from_procurement(self, product_id, product_qty, product_uom, company_id, values, po):
+        res = super()._prepare_purchase_order_line_from_procurement(product_id, product_qty, product_uom, company_id, values, po)
+        move_dest_ids = values.get('move_dest_ids', False)
+        for move in move_dest_ids:
+            if move.sale_line_id:
+                res['name'] = move.sale_line_id.name
+        return res
 
     def fix_wrong_warehouse_pos(self):
         self.ensure_one()

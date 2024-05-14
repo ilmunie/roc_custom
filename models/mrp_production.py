@@ -78,6 +78,14 @@ class StockMove(models.Model):
 class MrpProduction(models.Model):
     _inherit = 'mrp.production'
 
+    def get_sale_aditional_info(self):
+        for record in self:
+            sale_info = ""
+            for move in record.move_dest_ids.filtered(lambda x: x.sale_line_id):
+                sale_info = move.sale_line_id.display_name + " | " + dict(move._fields['state']._description_selection(self.env)).get(move.state)
+            record.sale_additional_info = sale_info
+
+    sale_additional_info = fields.Char(compute=get_sale_aditional_info, string="Detalle Venta")
     def action_stand_by(self):
         for record in self:
             record.state = 'stand_by'

@@ -309,11 +309,12 @@ class AccountMove(models.Model):
                         tax_data = json_data.get('groups_by_subtotal', False)
                         if tax_data:
                             tax_lines_data = tax_data.get('Importe libre de impuestos', False)
-                            for line in tax_lines_data:
-                                res.append((0, 0, {
-                                            'tax_group_name': line['tax_group_name'],
-                                            'amount_base': line['tax_group_base_amount'],
-                                            'tax_amount': line['tax_group_amount']}))
+                            if tax_lines_data:
+                                for line in tax_lines_data:
+                                    res.append((0, 0, {
+                                                'tax_group_name': line['tax_group_name'],
+                                                'amount_base': line['tax_group_base_amount'],
+                                                'tax_amount': line['tax_group_amount']}))
             record.tax_invoice_report_line_ids = [(5,)] if not res else res
 
     tax_invoice_report_line_ids = fields.Many2many('tax.invoice.report.line', compute=compute_tax_invoice_report_line, store=True, string="Resumen de impuestos")

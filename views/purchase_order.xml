@@ -26,6 +26,7 @@
             </xpath>
             <xpath expr="//field[@name='picking_type_id']" position="after">
                 <field name="delivery_date_status"/>
+                <field name="sale_additional_info" attrs="{'invisible': [('mrp_production_ids','=',False)]}"/>
                 <field name="additional_product_pending" invisible="1"/>
             </xpath>
 

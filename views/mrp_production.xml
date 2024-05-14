@@ -61,6 +61,9 @@
             <field name="analytic_account_id" position="after">
                 <field name="procurement_group_id"/>
             </field>
+            <field name="bom_id" position="after">
+                <field name="sale_additional_info" attrs="{'invisible': [('sale_additional_info','=',False)]}"/>
+            </field>
 
             <xpath expr="//button[@name='action_view_mrp_production_childs']" position="attributes">
                 <attribute name="invisible">1</attribute>
