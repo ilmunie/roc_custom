@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<record id="pos_form_view_inherit" model="ir.ui.view">
+		<field name="name">pos.form.view.inherit</field>
+		<field name="model">pos.order</field>
+		<field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+		<field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="purchase_order_ids" widget="many2many_tags" attrs="{'invisible':[('purchase_order_ids','=', False)]}"/>
+            </field>
+		</field>
+    </record>
+</odoo>

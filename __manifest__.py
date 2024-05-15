@@ -26,6 +26,7 @@
         'web_domain_field',
         'activity_automation',
         'mrp',
+        'point_of_sale',
         'entrivis_kanban_many2many_tags',
         'web_tree_many2one_clickable',
         'stock_available_unreserved',
@@ -66,6 +67,7 @@
         'views/crm_lead.xml',
         'views/purchase_order.xml',
         'views/sale_order.xml',
+        'views/pos_order_views.xml',
         'views/res_partner.xml',
         'views/product_product_views.xml',
         'views/mrp_production.xml',
@@ -77,7 +79,10 @@
     ],
     "assets": {
         "web.assets_backend": ["roc_custom/static/src/js/purchase_stock_widget.js","roc_custom/static/src/js/widget.js","roc_custom/static/src/css/custom_css.css"],
-        "web.assets_qweb": ["roc_custom/static/src/xml/template.xml","roc_custom/static/src/xml/template_stock_wid.xml","roc_custom/static/src/xml/purchase_stock.xml"],
+        "web.assets_qweb": ["roc_custom/static/src/xml/pos_receipt.xml","roc_custom/static/src/xml/template.xml","roc_custom/static/src/xml/template_stock_wid.xml","roc_custom/static/src/xml/purchase_stock.xml"],
+        'point_of_sale.assets': [
+            'roc_custom/static/src/js/pos_customizations.js',
+        ],
     },
     'installable': True,
     'application': True,

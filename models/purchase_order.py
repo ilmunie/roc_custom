@@ -6,13 +6,27 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    def get_pos_order_link(self):
+        for record in self:
+            pos_ids = []
+            for line in record.order_line:
+                if line.move_dest_ids:
+                    for movedest in line.move_dest_ids:
+                        if movedest.picking_id.pos_order_id and movedest.picking_id.pos_order_id.id not in pos_ids:
+                            pos_ids.append(movedest.picking_id.pos_order_id.id)
+            record.pos_order_ids = [(6, 0, pos_ids)]
+    pos_order_ids = fields.Many2many('pos.order', compute=get_pos_order_link, string="Punto de venta")
+
     def get_sale_additional_info(self):
         for record in self:
-            info = False
+            info = ""
             for production in record.mrp_production_ids:
-                info = production.sale_additional_info
+                info += production.sale_additional_info + "<br/>"
+            for pos_order in record.pos_order_ids:
+                for line in pos_order.lines.filtered(lambda x: x.customer_note):
+                    info += line.product_id.name + " | " + line.customer_note + "<br/>"
             record.sale_additional_info = info
-    sale_additional_info = fields.Char(compute=get_sale_additional_info, string="Detalle venta")
+    sale_additional_info = fields.Html(compute=get_sale_additional_info, string="Detalle venta")
 
     #def button_confirm(self):
     #    for record in self:

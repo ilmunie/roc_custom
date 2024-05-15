@@ -4,6 +4,8 @@ from odoo import fields, models, api
 class ProductProduct(models.Model):
     _inherit = "product.product"
 
+    pos_force_ship_later = fields.Boolean(related="product_tmpl_id.pos_force_ship_later")
+
     def _prepare_sellers(self, params=False):
         sellers = super(ProductProduct, self)._prepare_sellers(params=params)
         if len(sellers) > 1 and sellers.filtered(lambda s: s.price > 0):

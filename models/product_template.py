@@ -199,7 +199,7 @@ class ProductTemplate(models.Model):
     _inherit = "product.template"
 
     additional_product_ids = fields.Many2many('purchase.additional.product')
-
+    pos_force_ship_later = fields.Boolean(string="Punto Venta: forzar enviar más tarde")
 
 class PurchaseAdditionalProduct(models.Model):
     _name = "purchase.additional.product"

@@ -68,6 +68,9 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='pos_categ_id']" position="after">
+                <field name="pos_force_ship_later"/>
+            </xpath>
             <xpath expr="//field[@name='variant_seller_ids']" position="after">
                 <group string="Productos Adicionales">
                     <field name="additional_product_ids" widget="one2many" nolabel="1" mode="tree">

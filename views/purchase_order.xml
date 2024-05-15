@@ -19,6 +19,7 @@
                 <field name="sale_partner_id" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
                 <field name="opportunity_id" string="Oportunidad" attrs="{'invisible':[('opportunity_id','=',False)]}"/>
                 <field name="mrp_production_ids" widget="many2many_tags" attrs="{'invisible':[('mrp_production_ids','=',False)]}"/>
+                <field name="pos_order_ids" widget="many2many_tags" attrs="{'invisible':[('pos_order_ids','=',False)]}"/>
             </xpath>
             <xpath expr="//field[@name='notes']//..//.." position="before">
                 <field name="reception_status" widget="statusbar"/>
