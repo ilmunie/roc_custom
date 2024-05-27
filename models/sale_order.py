@@ -4,6 +4,16 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
     _order = 'create_date desc'
 
+    def mark_as_delivered(self):
+        sale_orders = self.env['sale.order'].browse(self._context.get('active_ids', []))
+        for sale in sale_orders.filtered(lambda x: x.state in ('sale', 'done')):
+            for picking in sale.picking_ids.filtered(lambda x: x.state in ('confirmed', 'assigned')):
+                picking.action_force_availability()
+                picking.action_set_quantities_to_reservation()
+                picking.button_validate()
+
+
+
     journal_id = fields.Many2one('account.journal', domain=[('type', '=', 'sale')], string="Diario")
     @api.depends('state', 'order_line', 'order_line.qty_delivered', 'order_line.product_uom_qty')
     def compute_delivery_status(self):

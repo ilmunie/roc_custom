@@ -122,4 +122,14 @@
                 action = records.compute_delivery_status()
         </field>
     </record>
+
+    <record id="action_mark_so_as_delivered" model="ir.actions.server">
+            <field name="name">Marcar como entregado</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id"
+                ref="model_sale_order"/>
+            <field name="binding_model_id"  ref="model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">action = records.mark_as_delivered()</field>
+    </record>
 </odoo>
