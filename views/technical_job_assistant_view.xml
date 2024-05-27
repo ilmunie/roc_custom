@@ -27,6 +27,8 @@
                     <field name="config_id"/>
                     <field name="html_link_to_src_doc"/>
                     <button name="see_src_document" type="object" icon="fa-link"/>
+                    <field name="date_field_value" nolabel="1" widget="remaining_days"/>
+                    <field name="date_field_tag" nolabel="1"/>
                     <field name="job_status"/>
                     <field name="technical_job_count"/>
                     <field name="next_active_job_id" invisible="1"/>
@@ -83,6 +85,7 @@
                 <field name="model_name" invisible="1"/>
                 <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
                 <field name="responsible_user_id"/>
+                <field name="date_field_id"/>
             </tree>
         </field>
     </record>
@@ -104,6 +107,7 @@
                             <field name="model_id"/>
                             <field name="model_name" invisible="1"/>
                             <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
+                            <field name="date_field_id" domain="[('ttype','in',('date', 'datetime')),('model_id','=',model_id)]"/>
                         </group>
                     </group>
                 </sheet>

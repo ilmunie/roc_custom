@@ -9,6 +9,8 @@ class TechnicalJobAssistantConfig(models.Model):
     domain_condition = fields.Char()
     technical_job_type_id = fields.Many2one('technical.job.type')
     responsible_user_id = fields.Many2one('res.users')
+    date_field_id = fields.Many2one('ir.model.fields')
+    date_field_tag = fields.Char()
 
 
 class TechnicalJobAssistant(models.TransientModel):
@@ -34,7 +36,7 @@ class TechnicalJobAssistant(models.TransientModel):
             action_sch = real_rec.action_schedule_job() if real_rec else False
             if action_sch:
                 action["context"].update(action_sch["context"])
-            action["context"].update({'from_calendar': True})
+            action["context"].update({'from_calendar': True, 'initial_date': self.next_active_job_date})
             return action
     def action_schedule_job(self):
         self.ensure_one()
@@ -74,11 +76,13 @@ class TechnicalJobAssistant(models.TransientModel):
             job_status = 'no_job'
             next_job = False
             technical_job_count = 0
+            date_field_value = False
             if record.res_model and record.res_id:
                 real_rec = self.env[record.res_model].browse(record.res_id)
                 if real_rec:
                     technical_job_count = real_rec.technical_job_count
                     show_technical_schedule_job_ids = [(6,0,real_rec.show_technical_schedule_job_ids.mapped('id'))]
+                    date_field_value = real_rec[record.config_id.date_field_id.name]
                     next_job = real_rec.next_active_job_id
                     html += "<table style='border-collapse: collapse; border: none;'>"
                     html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(
@@ -94,6 +98,7 @@ class TechnicalJobAssistant(models.TransientModel):
                             if jobs:
                                 job_status = sorted(jobs, key=lambda r: r.date_schedule, reverse=True)[0].job_status
 
+            record.date_field_value = date_field_value
             record.technical_job_count = technical_job_count
             record.html_link_to_src_doc = html
             record.job_status = job_status
@@ -107,6 +112,8 @@ class TechnicalJobAssistant(models.TransientModel):
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=related_rec_fields, store=True, string="Operaciones")
     next_active_job_id = fields.Many2one('technical.job.schedule', compute=related_rec_fields, store=True, string= "Próx. Planificación")
     next_active_job_date = fields.Date(string="Fecha próx. planificación")
+    date_field_value = fields.Datetime(string="Fecha interés")
+    date_field_tag = fields.Char(string="Solicitud", related="config_id.date_field_tag")
     html_link_to_src_doc = fields.Html(compute=related_rec_fields, store=True, string="Documento origen")
     technical_job_count = fields.Integer(string='Planificaciones activas')
     next_active_job_type_id = fields.Many2one('technical.job.type', string="Tipo próx. trabajo")

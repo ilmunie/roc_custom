@@ -68,6 +68,7 @@
         'views/purchase_order.xml',
         'views/sale_order.xml',
         'views/pos_order_views.xml',
+        'wizards/technical_job_quick_create_view.xml',
         'views/res_partner.xml',
         'views/product_product_views.xml',
         'views/mrp_production.xml',

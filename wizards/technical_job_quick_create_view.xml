@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="technical_job_quick_create_wiz" model="ir.ui.view">
+            <field name="name">technical_job_quick_create_wiz</field>
+            <field name="model">technical.job.assistant.quick.create</field>
+            <field name="arch" type="xml">
+                <form>
+                    
+                    <group class="oe_title">
+                        <field name="default_datetime"/>
+                    </group>
+                    <footer>
+                        <button name="action_done" string="Submit" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="technical_job_quick_create_wiz_action" model="ir.actions.act_window">
+            <field name="name">Creación masiva de trabajos</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">technical.job.assistant.quick.create</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="technical_job_quick_create_wiz"/>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="roc_custom.model_technical_job_assistant" />
+        </record>
+</odoo>
