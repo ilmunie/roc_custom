@@ -10,7 +10,6 @@
                 <field name="product_domain" invisible="1"/>
                 <field name="additional_pricelist" attrs="{'invisible':[('see_additional_pricelist','=',False)]}"/>
             </xpath>
-<!--
             <xpath expr="//notebook[last()]" position="inside">
                     <page string="Tarifas Adicionales" attrs="{'invisible':[('additional_pricelist','=',False)]}">
                         <field name="additional_pricelist_ids" widget="section_and_note_one2many" mode="tree" >
@@ -24,7 +23,7 @@
                             </tree>
                         </field>
                     </page>
-            </xpath>-->
+            </xpath>
         </field>
     </record>
     <record id="product_tmpl_search_inherit_roc_custom" model="ir.ui.view">

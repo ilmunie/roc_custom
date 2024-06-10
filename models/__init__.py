@@ -18,3 +18,4 @@ from . import product_product
 from . import stock_quant
 from . import report_stock_forecasted
 from . import pos_order
+from . import product_template_attribute_value
