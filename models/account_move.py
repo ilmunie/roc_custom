@@ -1,15 +1,63 @@
 from odoo import fields, models, _, api
 import json
-from odoo.exceptions import ValidationError
-
+from odoo.exceptions import ValidationError, UserError
+from odoo.tools import float_is_zero
 class PaymentWay(models.Model):
     _name = 'payment.way'
 
     name = fields.Char(string='Nombre', required=True)
     invoice_payment_instructions = fields.Text(string='Instrucciones factura', required=True)
 
+
+class PosPayment(models.Model):
+    _inherit = 'pos.payment'
+
+    def _create_payment_moves(self):
+        result = self.env['account.move']
+        for payment in self:
+            order = payment.pos_order_id
+            payment_method = payment.payment_method_id
+            if payment_method.type == 'pay_later' or float_is_zero(payment.amount,
+                                                                   precision_rounding=order.currency_id.rounding):
+                continue
+            accounting_partner = self.env["res.partner"]._find_accounting_partner(payment.partner_id)
+            pos_session = order.session_id
+            journal = pos_session.config_id.journal_id
+            payment_move = self.env['account.move'].with_context(default_journal_id=journal.id).create({
+                'journal_id': journal.id,
+                'date': fields.Date.context_today(payment),
+                'ref': _('Invoice payment for %s (%s) using %s') % (
+                order.name, order.account_move.name, payment_method.name),
+                'pos_payment_ids': payment.ids,
+            })
+            result |= payment_move
+            payment.write({'account_move_id': payment_move.id})
+            amounts = pos_session._update_amounts({'amount': 0, 'amount_converted': 0}, {'amount': payment.amount},
+                                                  payment.payment_date)
+            credit_line_vals = pos_session._credit_amounts({
+                'account_id': journal.default_payable_account_id.id,
+                'partner_id': accounting_partner.id,
+                'move_id': payment_move.id,
+            }, amounts['amount'], amounts['amount_converted'])
+            debit_line_vals = pos_session._debit_amounts({
+                'account_id': payment.payment_method_id.receivable_account_id.id or pos_session.company_id.account_default_pos_receivable_account_id.id,
+                'move_id': payment_move.id,
+            }, amounts['amount'], amounts['amount_converted'])
+            self.env['account.move.line'].with_context(check_move_validity=False).create(
+                [credit_line_vals, debit_line_vals])
+            payment_move._post()
+        return result
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
+
+#    @api.model_create_multi
+#    def create(self, vals_list):
+#        #import pdb;pdb.set_trace()
+#        return super(AccountMoveLine, self).create(vals_list)
+#    def _check_reconciliation(self):
+#        return True
+
+
 
     peyga_es_report_status = fields.Char(string='PEYGA ES Report Status', compute='_compute_peyga_es_report_status', store=True)
     peyga_es_report_account_prefix = fields.Char(string='PEYGA ES Report Account Prefix', compute='_compute_peyga_es_report_status', store=True)
@@ -274,9 +322,6 @@ class AccountMoveLine(models.Model):
             'target': 'new',
         }
         return open_wizard
-
-class AccountPayment(models.Model):
-    _inherit = 'account.payment'
 
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
@@ -591,7 +636,6 @@ class AccountMove(models.Model):
 
     def _get_tax_totals(self, partner, tax_lines_data, amount_total, amount_untaxed, currency):
         res = super(AccountMove,self)._get_tax_totals(partner, tax_lines_data, amount_total, amount_untaxed, currency)
-        #import pdb;pdb.set_trace()
         return res
 
 
