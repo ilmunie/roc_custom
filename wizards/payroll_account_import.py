@@ -120,10 +120,13 @@ class PayrollAccountImport(models.TransientModel):
         result = json.loads(self.result)
         journal_id = self.env['account.journal'].search([('name','=','Nominas')])
         payment_journal_id = self.env['account.journal'].search(['|',('name','=','Banco CAIXA  6128 (Impuestos)'),('name','=','Banco CAIXA 6128 (Impuestos)')])
+        EMPLOYEE_payment_journal_id = self.env['account.journal'].search([('name','=','Banco BBVA 4574 (Clientes)')])
         if not journal_id:
             raise ValidationError('No se encontró el diario Nominas')
         if not payment_journal_id:
             raise ValidationError('No se encontró el diario de pagos Banco CAIXA 6128 (Impuestos)')
+        if not EMPLOYEE_payment_journal_id:
+            raise ValidationError('No se encontró el diario de pagos Banco BBVA 4574 (Clientes)')
         for key, values in result.items():
             employee_name = key.split("||")[0]
             date = datetime.strptime(values[0]['date'], '%Y-%m-%d %H:%M:%S')
@@ -208,7 +211,7 @@ class PayrollAccountImport(models.TransientModel):
             self.env['account.move'].create({
                 'ref': key + " | PAGO EMPLEADO",
                 'date': values[0][2]['date'],
-                'journal_id': payment_journal_id[0].id,
+                'journal_id': EMPLOYEE_payment_journal_id[0].id,
                 'line_ids': first_payment_dict[key],
             })
 
