@@ -64,12 +64,14 @@ class PurchaseOrder(models.Model):
             record.order_line = vals
             #add_default_products
             vals = []
+            sequence = 1
             for line in record.order_line.filtered(lambda x: x.product_id.product_tmpl_id.additional_product_ids):
+                sequence += 1
+                vals.append((1, line.id, {'sequence': sequence}))
                 seller = line.product_id._select_seller(partner_id=record.partner_id)
                 additional_prices = False
                 if seller and seller.additional_pricelist and seller.additional_pricelist_ids:
                     additional_prices = seller.additional_pricelist_ids
-                sequence = line.sequence
                 for additional_prod in line.product_id.product_tmpl_id.additional_product_ids:
                     if additional_prod.default_product_ids:
                         sequence += 1
