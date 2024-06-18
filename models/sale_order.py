@@ -4,6 +4,8 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
     _order = 'create_date desc'
 
+
+
     def mark_as_delivered(self):
         sale_orders = self.env['sale.order'].browse(self._context.get('active_ids', []))
         for sale in sale_orders.filtered(lambda x: x.state in ('sale', 'done')):
@@ -36,11 +38,24 @@ class SaleOrder(models.Model):
         string="Ubicación puerta",
     )
 
-    def action_confirm(self):
-        res = super(SaleOrder, self).action_confirm()
+    def action_solved_by_pos(self):
+        """cancela SO (no se confirma - queda reemplazado todo por pedido POS)
+        marca como ganada lead asociada
+        llama metood de valoracion de leads que considera pos orders"""
+        self.action_cancel()
         for record in self:
             if record.opportunity_id:
+                record.opportunity_id.action_set_won()
                 record.opportunity_id.sync_expected_revenue()
+
+    def action_confirm(self):
+        if self.pos_order_line_ids:
+            return self.action_solved_by_pos()
+        else:
+            res = super(SaleOrder, self).action_confirm()
+            for record in self:
+                if record.opportunity_id:
+                    record.opportunity_id.sync_expected_revenue()
         return res
     def action_cancel(self):
         res = super(SaleOrder, self).action_cancel()
