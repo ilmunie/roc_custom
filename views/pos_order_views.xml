@@ -5,8 +5,15 @@
 		<field name="model">pos.order</field>
 		<field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
 		<field name="arch" type="xml">
+            <button name="action_stock_picking" position="before">
+                    <button name="action_view_po" type="object" class="oe_stat_button" icon="fa-credit-card" attrs="{'invisible':[('purchase_order_count', '=', 0)]}">
+                        <field name="purchase_order_ids" invisible="1"/>
+						<field name="purchase_order_count" widget="statinfo" string="Compras"/>
+                    </button>
+            </button>
+
             <field name="name" position="after">
-                <field name="purchase_order_ids" widget="many2many_tags" attrs="{'invisible':[('purchase_order_ids','=', False)]}"/>
+                <field name="opportunity_id"/>
             </field>
 		</field>
     </record>

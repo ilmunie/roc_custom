@@ -40,15 +40,12 @@
                                     <span class="o_stat_text" attrs="{'invisible': [('calendar_event_count', '&gt;', 1)]}"> Reunión</span>
                                 </div>
                             </button>
-
-                                <button name="action_view_pos_order" type="object" class="oe_stat_button" icon="fa-shopping-basket" attrs="{'invisible':[('pos_order_count','=',0)]}" >
-                                    <div class="o_stat_info">
-                                        <field name="pos_order_ids" invisible="1"/>
-                                        <field name="pos_order_count" invisible="1"/>
-                                        <span class="o_stat_text" >Punto de Venta</span>
-                                    </div>
-                                </button>
-
+                            <button name="action_view_pos_order" type="object" class="oe_stat_button" icon="fa-shipping-basket" attrs="{'invisible':[('pos_order_count','=',0)]}" >
+                                <div class="o_stat_info">
+                                    <field name="pos_order_ids" invisible="1"/>
+                                    <field name="pos_order_count" widget="statinfo" string="Punto Venta"/>
+                                </div>
+                            </button>
                                 <button name="action_schedule_job" type="object" class="oe_stat_button" icon="fa-wrench" attrs="{'invisible':[('type','=','lead')]}" readonly="True">
                                     <div class="o_stat_info">
                                         <field name="active_technical_job_count"/>

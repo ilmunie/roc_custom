@@ -14,23 +14,41 @@ class CrmLead(models.Model):
         linked_orders = self.pos_order_ids
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Pedidos Punto de venta',
+            'name': 'Pedidos Punto de venta' if len(linked_orders) > 1 else linked_orders[0].display_name,
+            'res_id': linked_orders[0].id,
             'res_model': 'pos.order',
-            'view_mode': 'tree,form',
+            'view_mode': 'tree,form' if len(linked_orders) > 1 else 'form',
             'domain': [('id', 'in', linked_orders.ids)],
         }
 class PosOrder(models.Model):
     _inherit = 'pos.order'
 
+    def action_view_po(self):
+        self.ensure_one()
+        linked_orders = self.purchase_order_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Pedidos de compra generados' if self.purchase_order_count > 1 else self.purchase_order_ids[0].display_name,
+            'res_model': 'purchase.order',
+            'res_id': self.purchase_order_ids[0].id,
+            'view_mode': 'tree,form' if self.purchase_order_count > 1 else 'form',
+            'domain': [('id', 'in', linked_orders.ids)],
+        }
     def compute_purchase_order(self):
         for record in self:
-            record.purchase_order_ids = [(6,0,self.env['purchase.order'].search([('origin', 'ilike', record.name)]).mapped('id'))]
+            pos = self.env['purchase.order'].search([('origin', 'ilike', record.name)]).mapped('id')
+            record.purchase_order_ids = [(6, 0, pos)]
+            record.purchase_order_count = len(pos)
     purchase_order_ids = fields.Many2many('purchase.order', compute=compute_purchase_order)
-    opportunity_id = fields.Many2one('crm.lead')
+    purchase_order_count = fields.Integer(compute=compute_purchase_order)
+    opportunity_id = fields.Many2one('crm.lead', string="Oportunidad")
 
     @api.depends('state')
     def create_opportunity(self):
         for record in self:
+            if record.sale_order_count > 0:
+                leads = record.lines.mapped('sale_order_origin_id.opportunity_id')
+                record.opportunity_id = leads[0].id if leads else False
             if record.sale_order_count == 0 and record.state in ('paid', 'done', 'invoiced') and not record.opportunity_id:
                 user = False
                 if record.employee_id.user_id:
@@ -75,6 +93,8 @@ class PosOrder(models.Model):
     def _create_invoice(self, move_vals):
         res = super(PosOrder, self)._create_invoice(move_vals)
         for rec in res:
+            for note_line in rec.invoice_line_ids.filtered(lambda x: not x.product_id):
+                rec.invoice_line_ids = [(2, note_line.id)]
             if rec.journal_id.default_payable_account_id.id:
                 rec_line = rec.line_ids.filtered(lambda x: x.account_id.user_type_id.name in ('Receivable','Por cobrar'))
                 rec_line.account_id = rec.journal_id.default_payable_account_id.id

@@ -15,11 +15,9 @@
             </xpath>
 
             <xpath expr="//field[@name='partner_ref']" position="after">
-                <field name="sale_order_ids" widget="many2many_tags" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
-                <field name="sale_partner_id" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
+                <field name="sale_partner_id" attrs="{'invisible':[('sale_partner_id','=',False)]}"/>
                 <field name="opportunity_id" string="Oportunidad" attrs="{'invisible':[('opportunity_id','=',False)]}"/>
-                <field name="mrp_production_ids" widget="many2many_tags" attrs="{'invisible':[('mrp_production_ids','=',False)]}"/>
-                <field name="pos_order_ids" widget="many2many_tags" attrs="{'invisible':[('pos_order_ids','=',False)]}"/>
+                <field name="sale_additional_info" string="Info extra" attrs="{'invisible':[('sale_additional_info','=',False)]}"/>
             </xpath>
             <xpath expr="//field[@name='notes']//..//.." position="before">
                 <field name="reception_status" widget="statusbar"/>
@@ -27,7 +25,6 @@
             </xpath>
             <xpath expr="//field[@name='picking_type_id']" position="after">
                 <field name="delivery_date_status"/>
-                <field name="sale_additional_info" attrs="{'invisible': [('mrp_production_ids','=',False)]}"/>
                 <field name="additional_product_pending" invisible="1"/>
             </xpath>
 
@@ -68,6 +65,23 @@
             <xpath expr="//button[@name='action_product_forecast_report'][last()]" position="replace">
             </xpath>
 
+            <xpath expr="//button[@name='action_view_invoice']" position="before">
+                <button name="action_view_pos_order" type="object" class="oe_stat_button" icon="fa-shopping-basket" attrs="{'invisible':[('pos_order_count','=',0)]}" >
+                    <div class="o_stat_info">
+                        <field name="pos_order_ids" invisible="1"/>
+                        <field name="pos_order_count" widget="statinfo" string="Punto Venta"/>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//button[@name='action_view_sale_orders']" position="replace">
+                <button name="action_view_so" type="object" class="oe_stat_button" icon="fa-dollar" attrs="{'invisible':[('sale_order_count','=',0)]}" >
+                    <div class="o_stat_info">
+                        <field name="sale_order_ids" invisible="1"/>
+                        <field name="sale_order_count" widget="statinfo" string="Orden Venta"/>
+                    </div>
+                </button>
+
+            </xpath>
 
 
             <xpath expr="//tree/field[@name='product_id']" position="attributes">

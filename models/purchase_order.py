@@ -6,6 +6,21 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    def action_view_pos_order(self):
+        self.ensure_one()
+        linked_orders = self.pos_order_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Pedidos Punto de venta' if len(linked_orders) > 1 else linked_orders[0].display_name,
+            'res_id': linked_orders[0].id,
+            'res_model': 'pos.order',
+            'view_mode': 'tree,form' if len(linked_orders) > 1 else 'form',
+            'domain': [('id', 'in', linked_orders.ids)],
+        }
+
+
+
+    @api.depends('order_line', 'order_line.move_dest_ids', 'order_line.move_dest_ids.picking_id.pos_order_id')
     def get_pos_order_link(self):
         for record in self:
             pos_ids = []
@@ -14,8 +29,10 @@ class PurchaseOrder(models.Model):
                     for movedest in line.move_dest_ids:
                         if movedest.picking_id.pos_order_id and movedest.picking_id.pos_order_id.id not in pos_ids:
                             pos_ids.append(movedest.picking_id.pos_order_id.id)
+            record.pos_order_count = len(pos_ids)
             record.pos_order_ids = [(6, 0, pos_ids)]
-    pos_order_ids = fields.Many2many('pos.order', compute=get_pos_order_link, string="Punto de venta")
+    pos_order_ids = fields.Many2many('pos.order', compute=get_pos_order_link, string="Punto de venta", store=True)
+    pos_order_count = fields.Integer(compute=get_pos_order_link, store=True)
 
     def get_sale_additional_info(self):
         for record in self:
@@ -33,12 +50,14 @@ class PurchaseOrder(models.Model):
     #        for order_line in record.order_line:
     #            order_line.fix_wrong_warehouse_pos()
     #    return super(PurchaseOrder, self)
-    @api.depends('sale_order_ids')
+    @api.depends('sale_order_ids', 'pos_order_ids')
     def get_opportunity(self):
         for record in self:
             res = False
             if record.sale_order_ids and record.sale_order_ids.mapped('opportunity_id'):
                 res = record.sale_order_ids.mapped('opportunity_id.id')[0]
+            elif record.pos_order_ids and record.pos_order_ids.mapped('opportunity_id'):
+                res = record.pos_order_ids.mapped('opportunity_id.id')[0]
             record.opportunity_id = res
 
     opportunity_id = fields.Many2one('crm.lead', compute=get_opportunity, store=True, string="Oportunidad")
@@ -75,13 +94,28 @@ class PurchaseOrder(models.Model):
             res.append((rec.id, name))
         return res
 
+    def action_view_mrp(self):
+        self.ensure_one()
+        linked_orders = self.mrp_production_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Ordenes fabricación' if len(linked_orders) > 1 else linked_orders[0].display_name,
+            'res_id': linked_orders[0].id,
+            'res_model': 'mrp.production',
+            'view_mode': 'tree,form' if len(linked_orders) > 1 else 'form',
+            'domain': [('id', 'in', linked_orders.ids)],
+        }
+
     @api.depends('order_line.move_dest_ids.group_id.mrp_production_ids','trigger_compute_rel')
     def _compute_mrp_production_link(self):
         for purchase in self:
-            purchase.mrp_production_ids = [(6,0,purchase._get_mrp_productions().mapped('id'))]
+            mrp_ids = purchase._get_mrp_productions().mapped('id')
+            purchase.mrp_production_ids = [(6, 0, mrp_ids)]
+            purchase.mrp_production_count = len(mrp_ids)
             purchase.trigger_activity_schedule = True
-    mrp_production_ids = fields.Many2many(comodel_name='mrp.production',store=True,compute=_compute_mrp_production_link, string='Órdenes de producción')
 
+    mrp_production_ids = fields.Many2many(comodel_name='mrp.production',store=True,compute=_compute_mrp_production_link, string='Órdenes de producción')
+    mrp_production_count = fields.Integer(store=True,compute=_compute_mrp_production_link)
 
     @api.depends('order_line.sale_order_id','order_line.move_dest_ids.group_id.mrp_production_ids','trigger_compute_rel')
     def compute_sale_origin(self):
@@ -91,10 +125,32 @@ class PurchaseOrder(models.Model):
             for mrp_prod in purchase._get_mrp_productions():
                 if mrp_prod.sale_order_ids:
                     sale_ids.extend(mrp_prod.sale_order_ids.mapped('id'))
-            purchase.sale_order_ids = [(6,0,sale_ids)]
+            purchase.sale_order_ids = [(6, 0, sale_ids)]
+            purchase.sale_order_count = len(sale_ids)
 
+    def action_view_so(self):
+        self.ensure_one()
+        linked_orders = self.sale_order_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Ventas' if len(linked_orders) > 1 else linked_orders[0].display_name,
+            'res_id': linked_orders[0].id,
+            'res_model': 'sale.order',
+            'view_mode': 'tree,form' if len(linked_orders) > 1 else 'form',
+            'domain': [('id', 'in', linked_orders.ids)],
+        }
     sale_order_ids = fields.Many2many(comodel_name='sale.order',store=True,compute=compute_sale_origin, string='Órden Venta')
-    sale_partner_id = fields.Many2one('res.partner',related='sale_order_ids.partner_id',store=True, string='Cliente')
+    sale_order_count = fields.Integer(store=True, compute=compute_sale_origin)
+    @api.depends('sale_order_ids','pos_order_ids')
+    def compute_partner(self):
+        for record in self:
+            if record.sale_order_ids:
+                record.sale_partner_id = record.sale_order_ids[0].partner_id.id
+            elif record.pos_order_ids:
+                record.sale_partner_id = record.pos_order_ids[0].partner_id.id
+            else:
+                record.sale_partner_id = False
+    sale_partner_id = fields.Many2one('res.partner',compute=compute_partner,store=True, string='Cliente')
 
     @api.depends('state', 'order_line', 'order_line.qty_received', 'order_line.product_qty', 'picking_ids', 'picking_ids.state')
     def compute_reception_status(self):
