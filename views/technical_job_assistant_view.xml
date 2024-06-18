@@ -7,12 +7,100 @@
         <field name="code">action = env.get('technical.job.assistant').start_assistant()</field>
     </record>
 
-    <menuitem
-        id="menu_crm_job_assistant"
-        name="Planificación Operaciones"
-        sequence="10"
-        parent="roc_custom.menu_crm_job"
-        action="roc_custom.action_technical_job_assistant"/>
+<record id="technical_job_assistant_kanban_view" model="ir.ui.view">
+    <field name="name">technical.job.assistant.kanban.view</field>
+    <field name="model">technical.job.assistant</field>
+    <field name="arch" type="xml">
+        <kanban class="o_kanban_mobile" sample="1" draggable="false" create="0" group_create="0" default_order="date_field_value desc">
+            <progressbar field="week_action_group" colors="{&quot;done&quot;: &quot;success&quot;, &quot;to_do&quot;: &quot;success&quot;, &quot;no_job&quot;: &quot;warning&quot;, &quot;stand_by&quot;: &quot;danger&quot;}"/>
+            <field name="next_active_job_id" invisible="1"/>
+            <templates>
+                <t t-name="kanban-box">
+                    <div t-attf-class="oe_kanban_global_click">
+                        <!-- First Row: HTML Link to Source Document -->
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>
+                                    <field name="html_link_to_src_doc" widget="html"/>
+                                    <field name="week_group" invisible="1"/>
+                                    <field name="week_action_group" invisible="1"/>
+                                </strong>
+                            </div>
+                        </div>
+
+                        <!-- Second Row: Split into Left and Right sections -->
+                        <div class="row">
+                            <!-- Left Section: See Source Document Button -->
+                            <div class="col-6 text-left">
+                                <button name="see_src_document" type="object" class="btn btn-outline-primary oe_inline oe_stat_button">
+                                    <span>📖 ABRIR</span>
+                                </button>
+                            </div>
+                            <!-- Right Section: Date Fields -->
+                            <div class="col-6 text-right">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <field name="date_field_tag" nolabel="1"/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <field name="date_field_value" nolabel="1" widget="remaining_days"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Third Row: Next Active Job Type ID -->
+                        <div class="row">
+                            <div class="col-12">
+                                <button name="edit_next_job" attrs="{'invisible': [('next_active_job_id','=',False)]}" type="object" class="btn btn-outline-primary oe_inline oe_stat_button" icon="fa-play">
+                                    <strong><span><field name="next_active_job_type_id"/></span> 🛠️ </strong>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Fourth Row: HTML Data from Source Document -->
+                        <div class="row">
+                            <div class="col-12">
+                                <field name="html_data_src_doc" widget="html"/>
+                            </div>
+                        </div>
+
+                        <!-- Fifth Row: Next Job Vehicles and Employees -->
+                        <div class="row">
+                            <div class="col-12">
+                                <field name="next_job_vehicle_ids" widget="many2many_tags"/>
+                                <field name="next_job_employee_ids" widget="many2many_tags"/>
+                            </div>
+                        </div>
+
+
+
+                        <!-- Footer with Action Buttons -->
+                        <div class="oe_kanban_footer">
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <button name="action_schedule_job" type="object" class="btn btn-outline-primarycd  oe_inline oe_stat_button">
+                                        <span>Nueva operación</span>
+                                    </button>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <button name="see_job_in_calendar" attrs="{'invisible': [('next_active_job_id','=',False)]}" type="object" class="btn btn-outline-primary oe_inline oe_stat_button">
+                                        <span>Ver operación 📅 <field name="next_active_job_date" widget="remaining_days"/></span>
+                                    </button>
+                                    <field name="responsible_user_id" widget="many2one_avatar_user"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
+
+
 
 
     <record id="technical_job_assistant_tree_view" model="ir.ui.view">
@@ -20,22 +108,25 @@
             <field name="model">technical.job.assistant</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <tree string="Trabajos" create="0" delete="0" expand="1">
+                <tree string="Trabajos" create="0" delete="0" expand="1" decoration-danger="dec_danger==True">
+                    <field name="dec_danger" invisible="1"/>
                     <field name="res_model" invisible="1"/>
                     <field name="res_id" invisible="1"/>
                     <field name="responsible_user_id"/>
                     <field name="config_id"/>
                     <field name="html_link_to_src_doc"/>
-                    <button name="see_src_document" type="object" icon="fa-link"/>
-                    <field name="date_field_value" nolabel="1" widget="remaining_days"/>
+                    <button name="see_src_document" type="object" icon="fa-edit"/>
+                    <field name="date_field_value" nolabel="1" widget="remaining_days" class="text-right"/>
                     <field name="date_field_tag" nolabel="1"/>
                     <field name="job_status"/>
                     <field name="technical_job_count"/>
                     <field name="next_active_job_id" invisible="1"/>
                     <field name="next_active_job_type_id"/>
+                    <button name="edit_next_job" type="object" icon="fa-edit" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
                     <field name="next_active_job_date" widget="remaining_days"/>
                     <field name="next_job_vehicle_ids" widget="many2many_tags"/>
                     <field name="next_job_employee_ids" widget="many2many_tags"/>
+                    <field name="html_data_src_doc" widget="text_widget"/>
                     <button name="see_job_in_calendar" type="object" string="Ver operación" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
                     <button name="action_schedule_job" type="object" string="Nueva operación"/>
                 </tree>
@@ -47,28 +138,29 @@
             <field name="model">technical.job.assistant</field>
             <field name="arch" type="xml">
                 <search string="Trabajos">
+                    <field name="html_link_to_src_doc"/>
                     <field name="res_model"/>
                     <field name="responsible_user_id"/>
                     <field name="next_active_job_type_id"/>
                     <field name="next_job_vehicle_ids"/>
                     <field name="next_job_employee_ids"/>
                     <field name="config_id"/>
-                    <field name="html_link_to_src_doc"/>
                     <field name="show_technical_schedule_job_ids"/>
                     <separator/>
                     <filter string="Mis planificaciones" name="assigned_to_me" domain="[('responsible_user_id', '=', uid)]"/>
                     <separator/>
                     <group expand="1" string="Group By">
-                        <filter string="Configuración" name="configuration" context="{'group_by':'config_id'}"/>
+                        <filter string="Semana solicitud" name="week_group" context="{'group_by':'week_group'}"/>
+                        <filter string="Estado coordinacion" name="week_action_group" context="{'group_by':'week_action_group'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Responsable" name="responsible_user_id" context="{'group_by':'responsible_user_id'}"/>
                         <separator orientation="vertical"/>
+                        <filter string="Tipo de operacion" name="configuration" context="{'group_by':'config_id'}"/>
                         <filter string="Fecha Próx planificación" name="next_active_job_date" context="{'group_by':'next_active_job_date'}"/>
                         <filter string="Tipo Próx. planificación" name="next_active_job_type_id" context="{'group_by':'next_active_job_type_id'}"/>
                         <filter string="Vehículos Próx. planificación" name="next_job_vehicle_ids" context="{'group_by':'next_job_vehicle_ids'}"/>
                         <filter string="Empleados Próx. planificación" name="next_job_employee_ids" context="{'group_by':'next_job_employee_ids'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Estado" name="job_status" context="{'group_by':'job_status'}"/>
                     </group>
                 </search>
             </field>
@@ -108,12 +200,12 @@
                             <field name="model_id"/>
                             <field name="model_name" invisible="1"/>
                             <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
-                            <field name="date_field_id" domain="[('ttype','in',('date', 'datetime')),('model_id','=',model_id)]"/>
                         </group>
                         <group>
                             <field name="date_field_id" domain="[('ttype','in',('date', 'datetime')),('model_id','=',model_id)]"/>
                             <field name="date_field_tag"/>
                         </group>
+
                     </group>
                 </sheet>
             </form>
@@ -128,13 +220,4 @@
             <p>Cree una nueva configuración de operaciones</p>
         </field>
     </record>
-
-    <menuitem
-        id="menu_technical_job_assistant_config"
-        name="Conf Planif Operaciones"
-        sequence="10"
-        parent="crm.menu_crm_config_lead"
-        action="roc_custom.technical_job_assistant_config_action"
-        groups="base.group_no_one"/>
-
 </odoo>

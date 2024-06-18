@@ -289,6 +289,32 @@
                             </group>
                         </group>
                         <notebook>
+                            <page string="Visita" attrs="{'invisible':[('stage_name','!=','Visita')]}">
+                                <group>
+                                    <field name="visit_payment_type" widget="radio" />
+                                </group>
+                                <group>
+                                    <field name="visit_internal_notes"/>
+                                    <field name="stage_name" invisible="1"/>
+                                </group>
+                                <group string="Disponibilidad cliente" name="customer_availability">
+                                     <group>
+                                        <field name="customer_availability_type"/>
+                                     </group>
+                                     <group>
+                                         <field name="customer_visit_datetime" attrs="{'invisible': [('customer_availability_type', '!=', 'specific_date')]}"/>
+                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}">
+                                                <field name="customer_av_visit_date" class="oe_inline"/>
+                                                <field name="customer_av_hour_start" class="oe_inline" />
+                                                <field name="customer_av_min_start" class="oe_inline" />
+                                                <field name="customer_av_hour_end" class="oe_inline" />
+                                                <field name="customer_av_min_end" class="oe_inline" />
+                                         </div>
+                                     </group>
+                                    <field name="customer_availability_info" nolabel="1" attrs="{'invisible': [('customer_availability_type', '!=', 'week_availability')]}"
+                                    />
+                                </group>
+                            </page>
                             <page string="Internal Notes" name="internal_notes">
                                 <group name="other_info_lead" string="Otra información del Lead" attrs="{'invisible':[('type','!=','lead')]}">
                                     <group name="other_info_lead_left">
@@ -304,6 +330,7 @@
                                 <label for="description" string="Notas internas"/>
                                 <field name="description" placeholder="Añada una descripción..."/>
                             </page>
+
                             <page name="extra_data" string="Información Extra" attrs="{'invisible': [('type', '=', 'lead')]}">
                                 <group>
                                     <group string="Información del contacto">

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 <data>
+     <record id="technical_job_user" model="res.groups">
+        <field name="name">Calendario de trabajo: usuario</field>
+    </record>
+     <record id="technical_job_planner" model="res.groups">
+        <field name="name">Calendario de trabajo: coordinador</field>
+    </record>
+
      <record id="group_see_payroll_account_move" model="res.groups">
         <field name="name">Ver y crear asientos contables de Nominas</field>
     </record>

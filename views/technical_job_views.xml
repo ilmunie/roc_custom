@@ -60,6 +60,7 @@
                     <field name="job_vehicle_id" />
                     <field name="user_id" avatar_field="avatar_128"/>
                     <field name="html_data_src_doc"/>
+                    <field name="internal_notes"/>
                 </tree>
             </field>
         </record>
@@ -87,31 +88,40 @@
             <field name="arch" type="xml">
                 <form string="Trabajo Técnico" >
                     <header>
-                        <field name="job_status" widget="statusbar" options="{'clickable':True}"/>
+                        <field name="job_status" widget="statusbar" options="{'clickable':False}"/>
                         <button name="delete_schedule" type="object" string="Eliminar" class="btn-danger"/>
+                        <button name="stand_by" type="object" string="Stand by" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
+                        <button name="set_draft" type="object" string="Borrador"  attrs="{'invisible': [('job_status','in',('to_do'))]}"/>
+                        <button name="mark_as_done" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
                     </header>
                     <sheet>
                     <group>
                         <group>
                             <field name="html_link_to_src_doc" readonly="True"/>
-                            <field name="source_document_display_name" invisible="True"/>
-                            <field name="res_model" invisible="True"/>
-                            <field name="res_id" invisible="True"/>
-                            <field name="job_type_id"/>
-                            <field name="date_status" widget="remaining_days"/>
+                            <field name="source_document_display_name" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="res_model" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="res_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="job_type_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="date_status" widget="remaining_days" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                         </group>
                         <group>
                             <label class="o_form_label oe_inline" for="date_schedule"/>
                             <div class="o_row oe_inline" >
-                                    <field name="date_schedule" class="oe_inline o_datepicker_input"/>
-                                    <field name="job_duration" class="oe_inline" />
+                                    <field name="date_schedule" class="oe_inline o_datepicker_input" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                                    <field name="job_duration" class="oe_inline" attrs="{'readonly':[('job_status','in',('done','cancel'))]}" />
                                     <span class="o_duration_suffix"> hs.</span>
                             </div>
-                            <field name="job_employee_ids" widget="many2many_tags"/>
-                            <field name="job_vehicle_ids" widget="many2many_tags"/>
-                            <field name="user_id"/>
-                            <field name="schedule_id" invisible="True"/>
+                            <field name="job_employee_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="job_vehicle_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="user_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="schedule_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                         </group>
+                    </group>
+                    <group>
+                        <field name="attch_ids" widget="many2many_binary" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                    </group>
+                    <group>
+                        <field name="internal_notes" widget="text" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                     </group>
                     <group>
                         <field name="html_data_src_doc" readonly="True"/>
@@ -155,6 +165,9 @@
                     <group>
                         <field name="html_data_src_doc" readonly="True"/>
                     </group>
+                    <group>
+                        <field name="internal_notes" widget="text"/>
+                    </group>
                     </sheet>
                 </form>
             </field>
@@ -186,21 +199,44 @@
     </record>
 
     <menuitem
-        id="menu_crm_job"
+        id="menu_job"
         name="Operaciones"
-        sequence="10"
-        parent="crm.crm_menu_root"/>
-
+        groups="roc_custom.technical_job_planner,roc_custom.technical_job_user"
+        sequence="10"/>
     <menuitem
         id="menu_crm_job_calendar"
         name="Calendario de Trabajos"
         sequence="10"
-        parent="roc_custom.menu_crm_job"
+        parent="roc_custom.menu_job"
         action="roc_custom.action_technical_job"/>
     <menuitem
-        id="menu_inventory_job"
-        name="Calendario de Trabajos"
-        sequence="2"
-        parent="stock.menu_stock_root"
-        action="roc_custom.action_technical_job"/>
+        id="menu_crm_job_config"
+        name="Configuracion"
+        sequence="90"
+        parent="roc_custom.menu_job"/>
+        <menuitem
+            id="menu_crm_job_assistant_planner"
+            name="Coordinación Operaciones"
+            sequence="10"
+            parent="roc_custom.menu_job"
+            groups="roc_custom.technical_job_planner"
+            action="roc_custom.action_technical_job_assistant"/>
+    <menuitem
+            id="menu_plan_job_assistant_user"
+            name="Planificación Operaciones"
+            sequence="10"
+            parent="roc_custom.menu_job"
+            groups="roc_custom.technical_job_user"
+            action="roc_custom.action_technical_job_assistant"/>
+    <menuitem
+        id="menu_technical_job_assistant_config"
+        name="Conf Planif Operaciones"
+        sequence="10"
+        parent="roc_custom.menu_crm_job_config"
+        action="roc_custom.technical_job_assistant_config_action"
+        groups="base.group_no_one"/>
+
+
+
+
 </odoo>

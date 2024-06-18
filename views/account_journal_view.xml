@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="account.view_account_journal_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='default_account_id']" position="after">
-                <field name="default_payable_account_id" attrs="{'invisible':[('type','!=','sale')],'required':[('type','=','sale')]}"/>
+                <field name="default_payable_account_id" attrs="{'invisible':[('type','!=','sale'),('type','!=','general')],'required':[('type','=','sale')]}"/>
             </xpath>
             <xpath expr="//field[@name='code']" position="after">
                 <field name="invoice_payment_label" attrs="{'invisible':[('type','not in',('cash','bank'))]}"/>
