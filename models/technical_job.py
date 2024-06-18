@@ -419,7 +419,7 @@ class TechnicalJobMixin(models.AbstractModel):
             if self.env[self._name].search(domain):
                 job_type_id = config.technical_job_type_id.id if config.technical_job_type_id else False
                 break
-        action = self.env["ir.actions.actions"]._for_xml_id("roc_custom.action_technical_job")
+        action = self.sudo().env["ir.actions.actions"]._for_xml_id("roc_custom.action_technical_job")
         self.write({'technical_schedule_job_ids': [(0, 0, {'res_model': self._name, 'res_id': self.id})]})
         action['name'] = 'Nueva operación ' + self.display_name
 

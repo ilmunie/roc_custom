@@ -81,6 +81,7 @@
                 </calendar>
             </field>
         </record>
+
         <record id="technical_job_form_view" model="ir.ui.view">
             <field name="name">technical.job.form.view</field>
             <field name="model">technical.job</field>
@@ -200,6 +201,7 @@
 
     <menuitem
         id="menu_job"
+        web_icon="roc_custom,static/src/description/operation_icon.png"
         name="Operaciones"
         groups="roc_custom.technical_job_planner,roc_custom.technical_job_user"
         sequence="10"/>
