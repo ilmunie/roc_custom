@@ -16,17 +16,21 @@
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
             <search string="Search Jobs">
+                <field name="html_link_to_src_doc"/>
                 <field name="user_id"/>
+                <field name="job_employee_id"/>
+                <field name="job_vehicle_id"/>
                 <field name="res_id" invisible="1"/>
                 <field name="res_model" invisible="1"/>
                 <filter string="Mis trabajos" help="My Meetings" name="mymeetings" domain="[('user_id', 'in', [uid])]"/>
                 <separator/>
                 <filter string="Date" name="filter_start_date" date="date_schedule"/>
                 <separator/>
-                <filter string="Planificados" name="busy" domain="[('job_status', '=', 'to_do')]"/>
-                <filter string="Stand by" name="free" domain="[('job_status', '=', 'stand_by')]"/>
-                <filter string="Terminados" name="free" domain="[('job_status', '=', 'done')]"/>
-                <filter string="Cancelados" name="free" domain="[('job_status', '=', 'cancel')]"/>
+                <filter string="Planificados" name="to_do" domain="[('job_status', '=', 'to_do')]"/>
+                <filter string="Confirmados" name="confirmed" domain="[('job_status', '=', 'confirmed')]"/>
+                <filter string="Esperando tecnico" name="stand_by" domain="[('job_status', '=', 'stand_by')]"/>
+                <filter string="Terminados" name="done" domain="[('job_status', '=', 'done')]"/>
+                <filter string="Cancelados" name="cancel" domain="[('job_status', '=', 'cancel')]"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter string="Coordinación" name="schedule_id" domain="[]" context="{'group_by': 'schedule_id'}"/>

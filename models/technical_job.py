@@ -159,6 +159,9 @@ class TechnicalJobSchedule(models.Model):
     html_data_src_doc = fields.Html(compute=get_data_src_doc, string="Info")
 
 
+
+
+    @api.depends('res_model', 'res_id')
     def get_html_link_to_src_doc(self):
         for record in self:
             html = ""
@@ -169,7 +172,7 @@ class TechnicalJobSchedule(models.Model):
             html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(record.source_document_display_name)
             record.html_link_to_src_doc = html
 
-    html_link_to_src_doc = fields.Html(compute=get_html_link_to_src_doc, string="Doc. Origen")
+    html_link_to_src_doc = fields.Html(compute=get_html_link_to_src_doc, string="Doc. Origen", store=True)
     @api.depends('res_id','res_model')
     def get_source_doc_name(self):
         for record in self:
@@ -403,7 +406,7 @@ class TechnicalJob(models.Model):
 
     internal_notes = fields.Text(related="schedule_id.internal_notes", store=True, readonly=False, force_save=True)
     html_data_src_doc = fields.Html(related='schedule_id.html_data_src_doc', readonly=False, force_save=True)
-    html_link_to_src_doc = fields.Html(related='schedule_id.html_link_to_src_doc', readonly=False, force_save=True)
+    html_link_to_src_doc = fields.Html(related='schedule_id.html_link_to_src_doc', readonly=False, force_save=True, store=True)
     source_document_display_name = fields.Char(related='schedule_id.source_document_display_name', readonly=False, force_save=True)
     active = fields.Boolean(default=True)
     schedule_id = fields.Many2one('technical.job.schedule', ondelete='cascade')
