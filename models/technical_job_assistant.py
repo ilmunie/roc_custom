@@ -52,7 +52,7 @@ class TechnicalJobAssistant(models.Model):
             if record.html_data_src_doc and "URGENT" in record.html_data_src_doc:
                 res = "1. Urgente"
             elif record.job_status == "stand_by":
-                res = "2. Stand by"
+                res = "2. Esperando tecnico"
             elif not record.next_active_job_id:
                 res = "4. Sin coordinar"
             else:
@@ -242,7 +242,8 @@ class TechnicalJobAssistant(models.Model):
 
     job_status = fields.Selection([('no_job','Sin planificaciones'),
                                    ('to_do', 'Planificado'),
-                                   ('stand_by', 'Stand By'),
+                                   ('confirmed', 'Confirmado'),
+                                   ('stand_by', 'Esperando tecnico'),
                                    ('done', 'Terminado'),
                                    ], store=True, compute=compute_assistant_status, string="Estado")
 

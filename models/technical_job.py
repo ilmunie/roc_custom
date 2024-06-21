@@ -1,17 +1,98 @@
 from odoo import fields, models, api, SUPERUSER_ID
+from datetime import timedelta, datetime
+import pytz
+from odoo.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
 
 class TechnicalJobType(models.Model):
     _name = 'technical.job.type'
 
     name = fields.Char(string="Name")
     default_duration_hs = fields.Float(string="Duración Hs")
+    default_job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita", domain=[('technical','=',True)])
+    default_job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Vehículo")
+
 
 
 class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
     order = 'date_schedule DESC'
 
+    def get_job_time_str(self):
+        """
+        Generate a string representing the job's start date, start time, and end time in the user's timezone.
+        :return: A string in the format 'start date HH:mm(start-time) - HH:mm(end-time)'.
+        """
+        if not self.date_schedule:
+            return ""
 
+        # Get the user's timezone
+        user_tz = self.env.user.tz or 'UTC'
+        local_tz = pytz.timezone(user_tz)
+
+        # Convert the date_schedule to a datetime object in UTC
+        start_datetime_utc = fields.Datetime.from_string(self.date_schedule)
+
+        # Convert the start time to the user's timezone
+        start_datetime = start_datetime_utc.astimezone(local_tz)
+
+        # Calculate the end time
+        end_datetime = start_datetime + timedelta(hours=self.job_duration)
+
+        # Format the start and end times
+        start_time_str = start_datetime.strftime("%H:%M")
+        end_time_str = end_datetime.strftime("%H:%M")
+        date_str = start_datetime.strftime("%d/%m/%y")
+
+        return f"{date_str} {start_time_str} - {end_time_str}"
+
+    @api.depends('job_status', 'date_schedule', 'job_employee_ids', 'job_vehicle_ids', 'job_duration')
+    def warning_full_calendar(self):
+        #import pdb;pdb.set_trace()
+        wrn_msg_emp = ''
+        wrn_msg_vh = ''
+        employee_not = []
+        vehicle_not = []
+        for record in self:
+            if record.job_status in ('done', 'cancel'):
+                record.trigger_warning_full_calendar = False
+                continue
+            start_time = record.date_schedule
+            end_time = start_time + timedelta(hours=record.job_duration) if start_time else start_time
+            for employee_id in record.job_employee_ids:
+            # Check for overlaps with employee's calendar
+                if employee_id and record.date_schedule:
+                    overlapping_jobs_employee = self.env['technical.job'].search([
+                        ('schedule_id', '!=', record.id),
+                        ('job_employee_id', '=', employee_id.id),
+                        ('date_schedule', '<=', end_time),
+                        ('job_status', '=', 'confirmed'),
+                        ('end_time', '>=', record.date_schedule)
+                    ])
+                    if overlapping_jobs_employee and employee_id.id not in employee_not:
+                        wrn_msg_emp += f"{employee_id.name} | Agenda ocupada {overlapping_jobs_employee[0].schedule_id.get_job_time_str()}  ----  "
+                        employee_not.append(employee_id.id)
+                    # Check for overlaps with vehicle's calendar
+            for job_vehicle_id in record.job_vehicle_ids:
+                if job_vehicle_id and record.date_schedule:
+                    overlapping_jobs_vehicle = self.env['technical.job'].search([
+                        ('id', '!=', record.id),
+                        ('schedule_id', '!=', record.id),
+                        ('job_vehicle_id', '=', job_vehicle_id.id),
+                        ('date_schedule', '<=', end_time),
+                        ('job_status', '=', 'confirmed'),
+                        ('end_time', '>=', record.date_schedule)])
+                    if overlapping_jobs_vehicle and job_vehicle_id.id not in vehicle_not:
+                        wrn_msg_vh += f"{job_vehicle_id.name} | Agenda ocupada {overlapping_jobs_vehicle[0].schedule_id.get_job_time_str()}  ----  "
+                        vehicle_not.append(job_vehicle_id.id)
+                    # Set the warning flag
+            record.trigger_warning_full_calendar = bool(wrn_msg_emp) or bool(wrn_msg_vh)
+                # Optionally, you could store or log the warning message somewhere if needed
+        if wrn_msg_emp:
+            self.env.user.notify_warning(message=wrn_msg_emp, sticky=True)
+        if wrn_msg_vh:
+            self.env.user.notify_warning(message=wrn_msg_vh, sticky=True)
+
+    trigger_warning_full_calendar = fields.Boolean(compute=warning_full_calendar, store=True)
 
 
     def open_form_view(self):
@@ -86,11 +167,7 @@ class TechnicalJobSchedule(models.Model):
                     name = rec.display_name
             record.source_document_display_name = name
     source_document_display_name = fields.Char(compute=get_source_doc_name, string="Documento origen", store=True)
-    @api.onchange('job_type_id')
-    def _onchange_job_type_id(self):
-        for record in self:
-            if record.job_type_id:
-                record.job_duration = record.job_type_id.default_duration_hs
+
 
     job_type_id = fields.Many2one('technical.job.type', string="Tipo trabajo")
     res_model = fields.Char()
@@ -101,7 +178,7 @@ class TechnicalJobSchedule(models.Model):
     user_id = fields.Many2one('res.users', store=True, string="Responsable")
     job_duration = fields.Float(string="Tiempo trabajo (hs.)")
     job_status = fields.Selection(
-        selection=[('to_do', 'Planificado'), ('stand_by', 'Stand By'), ('done', 'Terminado'), ('cancel', 'Cancelado')],
+        selection=[('to_do', 'Planificado'), ('confirmed', 'Confirmado'), ('stand_by', 'Esperando tecnico'), ('done', 'Terminado'), ('cancel', 'Cancelado')],
         string="Estado", default='to_do')
     internal_notes = fields.Text(string="Notas internas")
     attch_ids = fields.Many2many('ir.attachment', 'ir_attach_rel', 'technical_job', 'attachment_id',
@@ -119,6 +196,8 @@ class TechnicalJobSchedule(models.Model):
 
 
     trigger_refresh_jobs = fields.Boolean(compute='refresh_jobs', store=True)
+
+
 
     @api.depends('job_employee_ids', 'job_vehicle_ids')
     def refresh_jobs(self):
@@ -163,31 +242,68 @@ class TechnicalJob(models.Model):
     _name = 'technical.job'
 
 
+    @api.onchange('job_type_id')
+    def _onchange_job_type_id(self):
+        for record in self:
+            if record.job_type_id.default_job_employee_ids:
+                record.job_employee_ids = [(6, 0, record.job_type_id.default_job_employee_ids.mapped('id'))]
+            if record.job_type_id.default_job_vehicle_ids:
+                record.job_vehicle_ids = [(6, 0, record.job_type_id.default_job_vehicle_ids.mapped('id'))]
+            if record.job_type_id.default_duration_hs:
+                record.job_duration = record.job_type_id.default_duration_hs
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        new_vals = []
+        for vals in vals_list:
+            if 'schedule_id' in vals.keys() and not vals.get('schedule_id', False):
+                vals.pop('schedule_id')
+                vals['schedule_id'] = self.env['technical.job.schedule'].create(vals).id
+                new_vals.append(vals)
+            else:
+                new_vals.append(vals)
+        records = super().create(new_vals)
+        return records
+    def confirm(self):
+        for record in self:
+            jobs_edit = []
+            jobs_edit.append(record)
+            if record.schedule_id:
+                jobs_edit.extend(
+                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
+            for job in jobs_edit:
+                job.write({'job_status': 'confirmed'})
     def stand_by(self):
         for record in self:
             jobs_edit = []
             jobs_edit.append(record)
-            jobs_edit.extend(
-                self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
+            if record.schedule_id:
+                jobs_edit.extend(
+                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
             for job in jobs_edit:
                 job.write({'job_status': 'stand_by'})
     def set_draft(self):
         for record in self:
             jobs_edit = []
             jobs_edit.append(record)
-            jobs_edit.extend(
-                self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
+            if record.schedule_id:
+                jobs_edit.extend(
+                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
             for job in jobs_edit:
                 job.write({'job_status': 'to_do'})
 
     def mark_as_done(self):
         for record in self:
+            import pdb;pdb.set_trace()
             jobs_to_make_done = []
             jobs_to_make_done.append(record)
-            jobs_to_make_done.extend(
-                self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
+            if record.schedule_id:
+                jobs_to_make_done.extend(
+                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
             for job in jobs_to_make_done:
                 job.write({'job_status': 'done'})
+
+            #generic implementation comment and attachments
             schedule_id = record.schedule_id
             if schedule_id.attch_ids or schedule_id.internal_notes and (record.res_id and record.res_model):
                 rec = self.env[record.res_model].browse(record.res_id)
@@ -197,6 +313,23 @@ class TechnicalJob(models.Model):
                         body += "<br/>"
                     body += "Ha modificado los archivos adjuntos"
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment', attachment_ids=schedule_id.attch_ids.mapped('id'))
+            if (record.res_id and record.res_model):
+                body = "Ha finalizado la operación: " + record.job_type_id.name
+                rec = self.env[record.res_model].browse(record.res_id)
+                rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment',
+                                                                            partner_ids=rec.user_id.mapped(
+                                                                                'partner_id.id'))
+            #custom implementation for crm lead mark as done
+            if (record.res_id and record.res_model and record.res_model == 'crm.lead'):
+                rec = self.env[record.res_model].browse(record.res_id)
+                if rec.stage_id.name == 'Visita':
+                    stages = self.env['crm.stage'].search([('name', '=', 'Procesamiento Roconsa')])
+                    if not stages:
+                        raise ValueError('No hay etapa de crm llamada Procesamiento Roconsa')
+                    else:
+                        rec.stage_id = stages[0].id
+                assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])
+                assistant_to_delete.unlink()
 
 
     def delete_schedule_tree(self):
@@ -211,31 +344,13 @@ class TechnicalJob(models.Model):
 
     def delete_schedule(self):
         for record in self:
-            from_calendar = self.env.context.get("from_calendar", False)
-            if record.res_model and record.res_id and not from_calendar:
-                action = {
-                    'type': 'ir.actions.act_window',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_model': self.res_model,
-                    'target': 'current',
-                    'res_id': self.res_id,
-                }
-            else:
-                action = {
-                    'name': "Planificación de Operaciones",
-                    'res_model': 'technical.job.assistant',
-                    'type': 'ir.actions.act_window',
-                    'context': {'search_default_assigned_to_me': 1, 'search_default_configuration': 1, 'search_default_job_status': 1,},
-                    'domain': [('create_uid','=',self.env.user.id)],
-                    'views': [(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')],
-                }
-
+            action = self.schedule_id.open_in_calendar_view()
+            action.pop('context')
             if record.schedule_id:
                 record.schedule_id.unlink()
             else:
                 record.unlink()
-            return False
+            return action
 
     def clean_technical_job(self):
         self.env['technical.job'].search([('active','=',False)]).unlink()
@@ -245,8 +360,12 @@ class TechnicalJob(models.Model):
         res = []
         for rec in self:
             name = ''
+            if rec.job_status:
+                name += dict(rec._fields['job_status']._description_selection(self.env)).get(rec.job_status).upper()
             if rec.source_document_display_name:
-                name = rec.source_document_display_name
+                if name:
+                    name += " | "
+                name += rec.source_document_display_name
             if rec.job_type_id:
                 if name:
                     name += " | "
@@ -283,10 +402,15 @@ class TechnicalJob(models.Model):
     date_schedule = fields.Datetime(related="schedule_id.date_schedule", force_save=True, readonly=False, store=True)
     user_id = fields.Many2one(related="schedule_id.user_id", force_save=True, readonly=False, store=True)
     job_duration = fields.Float(related="schedule_id.job_duration", force_save=True, readonly=False, store=True )
-    job_status = fields.Selection(related="schedule_id.job_status", force_save=True, readonly=False, store=True )
+    job_status = fields.Selection(related="schedule_id.job_status", force_save=True, readonly=False, store=True, default='to_do' )
     job_employee_ids = fields.Many2many(related='schedule_id.job_employee_ids', force_save=True, readonly=False )
     job_vehicle_ids = fields.Many2many(related='schedule_id.job_vehicle_ids', force_save=True, readonly=False)
 
+    @api.depends('date_schedule', 'job_duration')
+    def get_end_time(self):
+        for record in self:
+            record.end_time = record.date_schedule + timedelta(hours=record.job_duration) if record.date_schedule else False
+    end_time = fields.Datetime(compute=get_end_time, store=True)
 
 
 class TechnicalJobMixin(models.AbstractModel):
@@ -309,7 +433,12 @@ class TechnicalJobMixin(models.AbstractModel):
                                 lambda x: x.job_type_id.id == config[0].technical_job_type_id.id):
                         record.write({'technical_schedule_job_ids': [(0, 0,
                                                                       {'res_model': record._name,
+                                                                       'job_status': 'confirmed',
                                                                        'res_id': record.id,
+                                                                       'job_employee_ids': [(6, 0, config[
+                                                                           0].technical_job_type_id.default_job_employee_ids.mapped('id'))],
+                                                                       'job_vehicle_ids': [(6, 0, config[
+                                                                           0].technical_job_type_id.default_job_vehicle_ids.mapped('id'))],
                                                                        'job_type_id': config[
                                                                            0].technical_job_type_id.id,
                                                                        'job_duration': config[
@@ -415,7 +544,7 @@ class TechnicalJobMixin(models.AbstractModel):
         job_type_id = False
         for config in configs:
             domain = eval(config.domain_condition)
-            domain.insert(0,('id','=',self.id))
+            domain.insert(0, ('id', '=', self.id))
             if self.env[self._name].search(domain):
                 job_type_id = config.technical_job_type_id.id if config.technical_job_type_id else False
                 break

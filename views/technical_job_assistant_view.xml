@@ -205,7 +205,6 @@
                             <field name="date_field_id" domain="[('ttype','in',('date', 'datetime')),('model_id','=',model_id)]"/>
                             <field name="date_field_tag"/>
                         </group>
-
                     </group>
                 </sheet>
             </form>

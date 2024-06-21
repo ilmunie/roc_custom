@@ -69,13 +69,14 @@
             <field name="model">technical.job</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <calendar delete="0" string="Calendario de trabajos" quick_add="False" event_open_popup="False"  date_delay="job_duration" create="1" mode="week" date_start="date_schedule" color="job_status" >
-                    <field name="source_document_display_name" filters="True" invisible="True"/>
+                <calendar delete="0" string="Calendario de trabajos" quick_add="False" event_open_popup="False"  date_delay="job_duration" create="1" mode="week" date_start="date_schedule"
+                          color="job_employee_id" >
+                    <field name="source_document_display_name" invisible="True"/>
                     <field name="html_link_to_src_doc"/>
                     <field name="job_status" filters="True"/>
-                    <field name="job_type_id" filters="True"/>
                     <field name="job_employee_id" avatar_field="avatar_128" filters="True"/>
                     <field name="job_vehicle_id" filters="True" />
+                    <field name="job_type_id" filters="True"/>
                     <field name="user_id" avatar_field="avatar_128" filters="True"/>
                     <field name="html_data_src_doc"/>
                 </calendar>
@@ -91,6 +92,7 @@
                     <header>
                         <field name="job_status" widget="statusbar" options="{'clickable':False}"/>
                         <button name="delete_schedule" type="object" string="Eliminar" class="btn-danger"/>
+                        <button name="confirm" type="object" string="Confirmar" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','confirmed'))]}"/>
                         <button name="stand_by" type="object" string="Stand by" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
                         <button name="set_draft" type="object" string="Borrador"  attrs="{'invisible': [('job_status','in',('to_do'))]}"/>
                         <button name="mark_as_done" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
@@ -103,7 +105,7 @@
                             <field name="res_model" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="res_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="job_type_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="date_status" widget="remaining_days" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="date_status" widget="remaining_days" readonly="1"/>
                         </group>
                         <group>
                             <label class="o_form_label oe_inline" for="date_schedule"/>
@@ -174,6 +176,32 @@
             </field>
         </record>
 
+        <record id="technical_job_type_form_view" model="ir.ui.view">
+            <field name="name">technical.job.type.form.view</field>
+            <field name="model">technical.job.type</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <form string="Tipo Trabajo Técnico" >
+                    <sheet>
+                        <group>
+                            <field name="name" />
+                            <field name="default_duration_hs"/>
+                            <field name="default_job_employee_ids" widget="many2many_tags"/>
+                            <field name="default_job_vehicle_ids" widget="many2many_tags"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    <record id="action_technical_job_type" model="ir.actions.act_window">
+        <field name="name">Tipos de trabajo técnicos</field>
+        <field name="res_model">technical.job.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+
 
     <record id="action_technical_job_form" model="ir.actions.act_window">
         <field name="name">Calendario de Trabajos</field>
@@ -237,8 +265,23 @@
         parent="roc_custom.menu_crm_job_config"
         action="roc_custom.technical_job_assistant_config_action"
         groups="base.group_no_one"/>
+    <menuitem
+        id="menu_technical_job_type_config"
+        name="Tipos de trabajo"
+        sequence="10"
+        parent="roc_custom.menu_crm_job_config"
+        action="roc_custom.action_technical_job_type"/>
 
 
-
+        <record id="action_confirm_multiple_technical_jobs" model="ir.actions.server">
+            <field name="name">Confirmar</field>
+            <field name="model_id" ref="model_technical_job"/>
+            <field name="binding_model_id" ref="roc_custom.model_technical_job"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+                    action = records.confirm()
+            </field>
+        </record>
 
 </odoo>

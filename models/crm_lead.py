@@ -9,6 +9,16 @@ class CrmLead(models.Model):
     force_close_date = fields.Datetime(string="Forzar cierre")
     date_closed = fields.Datetime(tracking=True)
 
+    @api.model
+    def name_get(self):
+        res = []
+        for rec in self:
+            name = rec.name
+            if rec.partner_id:
+                name += " | " + rec.partner_id.display_name
+            res.append((rec.id, name))
+        return res
+
 
     def compute_won_written(self):
         for record in self:
