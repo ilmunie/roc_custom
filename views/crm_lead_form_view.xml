@@ -372,9 +372,13 @@
                                 </group>
                             </page>
                             <page string="Órdenes de trabajo" attrs="{'invisible':[('type','=','lead')]}">
+                                <group>
+                                    <field name="total_job_minutes" string="Min totales registrados"/>
+                                </group>
                                 <field name="show_technical_schedule_job_ids" readonly="0">
                                     <tree create="0" delete="0" editable="False">
                                         <field name="job_type_id"/>
+                                        <field name="minutes_in_job" string="Min registrados"/>
                                         <field name="job_employee_ids" widget="many2many_tags"/>
                                         <field name="job_vehicle_ids" widget="many2many_tags"/>
                                         <field name="date_schedule"/>

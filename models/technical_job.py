@@ -17,6 +17,19 @@ class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
     order = 'date_schedule DESC'
 
+    def stop_tracking(self):
+        self.ensure_one()
+        time_difference = fields.Datetime.now() - self.start_tracking_time
+        self.minutes_in_job += time_difference.total_seconds() / 60
+        self.start_tracking_time = False
+
+    def start_tracking(self):
+        self.ensure_one()
+        self.start_tracking_time = fields.Datetime.now()
+
+    minutes_in_job = fields.Float(string="Minutos trabajados")
+    start_tracking_time = fields.Datetime()
+
     def get_job_time_str(self):
         """
         Generate a string representing the job's start date, start time, and end time in the user's timezone.
@@ -294,7 +307,6 @@ class TechnicalJob(models.Model):
 
     def mark_as_done(self):
         for record in self:
-            import pdb;pdb.set_trace()
             jobs_to_make_done = []
             jobs_to_make_done.append(record)
             if record.schedule_id:
@@ -315,6 +327,8 @@ class TechnicalJob(models.Model):
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment', attachment_ids=schedule_id.attch_ids.mapped('id'))
             if (record.res_id and record.res_model):
                 body = "Ha finalizado la operación: " + record.job_type_id.name
+                if record.minutes_in_job:
+                    body += f"<br/> TIEMPO TOTAL REGISTRADO: {round(record.minutes_in_job, 0)} min"
                 rec = self.env[record.res_model].browse(record.res_id)
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment',
                                                                             partner_ids=rec.user_id.mapped(
@@ -406,6 +420,16 @@ class TechnicalJob(models.Model):
     job_employee_ids = fields.Many2many(related='schedule_id.job_employee_ids', force_save=True, readonly=False )
     job_vehicle_ids = fields.Many2many(related='schedule_id.job_vehicle_ids', force_save=True, readonly=False)
 
+    minutes_in_job = fields.Float(related='schedule_id.minutes_in_job', force_save=True)
+    start_tracking_time = fields.Datetime(related='schedule_id.start_tracking_time', force_save=True)
+
+    def stop_tracking(self):
+        if self.schedule_id:
+            self.schedule_id.stop_tracking()
+
+    def start_tracking(self):
+        if self.schedule_id:
+            self.schedule_id.start_tracking()
     @api.depends('date_schedule', 'job_duration')
     def get_end_time(self):
         for record in self:
@@ -447,6 +471,8 @@ class TechnicalJobMixin(models.AbstractModel):
                                                                            0].responsible_user_id.id,
                                                                        'date_schedule': record.customer_visit_datetime})]})
             record.trigger_visit_job_generation = True if record.trigger_visit_job_generation else False
+
+
 
     trigger_visit_job_generation = fields.Boolean(store=True, compute=visit_job_generation)
     visit_payment_type = fields.Selection(string="Política de cobro", selection=[('free','Sin cargo'), ('to_bill','Con cargo')])
@@ -507,6 +533,13 @@ class TechnicalJobMixin(models.AbstractModel):
             record.show_technical_schedule_job_ids = [(6,0,record.technical_schedule_job_ids.filtered(lambda x: x.date_schedule).mapped('id'))]
 
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=show_technical_jobs, string="Trabajos técnicos", order='date_schedule DESC')
+
+    @api.depends('technical_schedule_job_ids','technical_schedule_job_ids.minutes_in_job')
+    def compute_total_job_minutes(self):
+        for record in self:
+            minutes = record.technical_schedule_job_ids.filtered(lambda x: x.minutes_in_job).mapped('minutes_in_job')
+            record.total_job_minutes = sum(minutes) if minutes else 0
+    total_job_minutes = fields.Float(string="Min. registrados", compute="compute_total_job_minutes", store=True)
     def get_qty_technical_jobs(self):
         for record in self:
             qty = 0
