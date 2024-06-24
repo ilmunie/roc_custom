@@ -103,6 +103,6 @@ class PosOrder(models.Model):
 
     def _apply_invoice_payments(self):
         payment_moves = self.payment_ids.sudo().with_company(self.company_id)._create_payment_moves()
-        self.account_move.js_assign_outstanding_line(payment_moves.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.name in ('Receivable','Por cobrar')).id)
+        self.account_move.js_assign_outstanding_line(payment_moves.mapped('line_ids').filtered(lambda x: x.account_id.user_type_id.name in ('Receivable','Por cobrar'))[-1].id)
                 #payment_receivables = payment_moves.mapped('line_ids').filtered(lambda line: line.account_id == receivable_account and line.partner_id)
                 #(invoice_receivables | payment_receivables).sorted(key=lambda l: l.amount_currency).sudo().with_company(self.company_id).reconcile()
