@@ -46,27 +46,38 @@ class TechnicalJobAssistant(models.Model):
 
     @api.depends('html_data_src_doc', 'next_active_job_id', 'next_active_job_date')
     def _compute_week_action_group(self):
+        """
+            -->  Urgente (no coordinado y marcado como urgente por comercial/coordinador)
+            -->  Esperando coordinacion (no coordinado con info de disponibilidad cliente agregada por por comercial/coordinador)
+            -->  Recoordinar/Aplazado (coordinaciones de semanas anteriores y trabajos marcados por tecnico en stand-by)
+            -->  Sin coordinar (sin data de disponibilidad del cliente y sin coordinar)
+            -->  Coordinado esta semana (con trabajos que vencen en la semana en curso puede contener cosas que vencieron ayer siempre y cuando sean de la misma semana)
+            -->  Coordinado en x semanas (trabajos coordinados para el futuro 2 semanas #2+ Semanas)
+        """
         for record in self:
             res = ''
-#            -3 Urgente //#-2 Recoordinar#-1 Sin coordinar#0 Esta semana#1 semanas#2 semanas #2+ Semanas
-            if record.html_data_src_doc and "URGENT" in record.html_data_src_doc:
-                res = "1. Urgente"
-            elif record.job_status == "stand_by":
-                res = "2. Esperando tecnico"
-            elif not record.next_active_job_id:
-                res = "4. Sin coordinar"
+            if not record.next_active_job_id:
+                if record.html_data_src_doc and "URGENT" in record.html_data_src_doc:
+                    res = "1. Urgente"
+                elif record.job_status == "waiting_job":
+                    res = "2. Esperando coordinacion"
+                elif not record.next_active_job_id:
+                    res = "4. Sin coordinar"
             else:
-                date_to_use = record.next_active_job_date
-                if date_to_use:
-                    week_diff = self.weeks_difference(date_to_use)
-                    if week_diff == 0:
-                        res = "5. Esta semana"
-                    elif week_diff <= -1:
-                        res = f"3. Recoordinar"
-                    elif week_diff < 4:
-                        res = f"6. {week_diff} Semanas"
-                    else:
-                        res = f"7. +4 Semanas"
+                if record.job_status == 'stand_by':
+                    res = f"3. Recoordinar / Aplazado"
+                else:
+                    date_to_use = record.next_active_job_date
+                    if date_to_use:
+                        week_diff = self.weeks_difference(date_to_use)
+                        if week_diff == 0:
+                            res = "5. Esta semana"
+                        elif week_diff <= -1:
+                            res = f"3. Recoordinar / Aplazado"
+                        elif week_diff < 2:
+                            res = f"6. En {week_diff} Semanas"
+                        else:
+                            res = f"7. +1 Semanas"
             record.week_action_group = res
 
     week_action_group = fields.Char(string='Week Action Group', compute='_compute_week_action_group', store=True)
@@ -150,6 +161,7 @@ class TechnicalJobAssistant(models.Model):
         self.env['technical.job.assistant'].search([('create_uid','=', self.env.user.id)]).unlink()
         configs = self.env['technical.job.assistant.config'].search([('id', '!=', 0)])
         recs_to_create = []
+        user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
         for config in configs:
             domain_to_check = eval(config.domain_condition) if config.domain_condition else []
             matching_records = self.env[config.model_id.model].search(domain_to_check)
@@ -159,9 +171,13 @@ class TechnicalJobAssistant(models.Model):
             'name': "Planificación de Operaciones",
             'res_model': 'technical.job.assistant',
             'type': 'ir.actions.act_window',
-            'context': {'search_default_assigned_to_me': 1, 'search_default_week_action_group': 1, 'search_default_configuration': 1},
-            'domain': [('create_uid','=',self.env.user.id)],
-            'views': [(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree'),(False,'kanban')],
+            'context': {
+                    'search_default_assigned_to_me': 1 if user_type == 'planner' else 0,
+                    'search_default_myjobs': 1 if user_type == 'user' else 0,
+                    'search_default_week_action_group': 1
+                },
+            'domain': [('create_uid', '=', self.env.user.id)],
+            'views': [(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree'),(False,'kanban')] if user_type=='planner' else [(False,'kanban'),(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')] ,
         }
 
     res_model = fields.Char(string="Modelo")
@@ -229,7 +245,7 @@ class TechnicalJobAssistant(models.Model):
                         if record.res_id and record.res_model == 'crm.lead' and \
                                 not real_rec.show_technical_schedule_job_ids and \
                                 real_rec.customer_availability_type in ('hour_range', 'week_availability', 'urgent'):
-                            job_status = 'stand_by'
+                            job_status = 'waiting_job'
                         elif next_job and next_job.job_type_id and next_job.job_type_id.id == technical_job:
                             job_status = next_job.job_status
                         else:
@@ -241,9 +257,10 @@ class TechnicalJobAssistant(models.Model):
 
 
     job_status = fields.Selection([('no_job','Sin planificaciones'),
+                                   ('waiting_job', 'Esperando coordinacion'),
                                    ('to_do', 'Planificado'),
                                    ('confirmed', 'Confirmado'),
-                                   ('stand_by', 'Esperando tecnico'),
+                                   ('stand_by', 'Aplazado'),
                                    ('done', 'Terminado'),
                                    ], store=True, compute=compute_assistant_status, string="Estado")
 

@@ -300,10 +300,14 @@
                                      </group>
                                      <group>
                                          <field name="customer_visit_datetime" attrs="{'invisible': [('customer_availability_type', '!=', 'specific_date')]}"/>
-                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}">
-                                                <field name="customer_av_visit_date" class="oe_inline"/>
+                                         <field name="customer_av_visit_date"/>
+                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
+                                                <strong><span>DE:   </span></strong>
                                                 <field name="customer_av_hour_start" class="oe_inline" />
                                                 <field name="customer_av_min_start" class="oe_inline" />
+                                         </div>
+                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
+                                                <strong><span>HASTA:   </span></strong>
                                                 <field name="customer_av_hour_end" class="oe_inline" />
                                                 <field name="customer_av_min_end" class="oe_inline" />
                                          </div>

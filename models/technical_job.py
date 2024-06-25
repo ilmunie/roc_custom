@@ -78,7 +78,7 @@ class TechnicalJobSchedule(models.Model):
                         ('schedule_id', '!=', record.id),
                         ('job_employee_id', '=', employee_id.id),
                         ('date_schedule', '<=', end_time),
-                        ('job_status', '=', 'confirmed'),
+                        ('job_status', 'in', ('confirmed', 'to_do', 'stand_by')),
                         ('end_time', '>=', record.date_schedule)
                     ])
                     if overlapping_jobs_employee and employee_id.id not in employee_not:
@@ -92,7 +92,7 @@ class TechnicalJobSchedule(models.Model):
                         ('schedule_id', '!=', record.id),
                         ('job_vehicle_id', '=', job_vehicle_id.id),
                         ('date_schedule', '<=', end_time),
-                        ('job_status', '=', 'confirmed'),
+                        ('job_status', 'in', ('confirmed', 'to_do', 'stand_by')),
                         ('end_time', '>=', record.date_schedule)])
                     if overlapping_jobs_vehicle and job_vehicle_id.id not in vehicle_not:
                         wrn_msg_vh += f"{job_vehicle_id.name} | Agenda ocupada {overlapping_jobs_vehicle[0].schedule_id.get_job_time_str()}  ----  "
@@ -194,7 +194,7 @@ class TechnicalJobSchedule(models.Model):
     user_id = fields.Many2one('res.users', store=True, string="Responsable")
     job_duration = fields.Float(string="Tiempo trabajo (hs.)")
     job_status = fields.Selection(
-        selection=[('to_do', 'Planificado'), ('confirmed', 'Confirmado'), ('stand_by', 'Esperando tecnico'), ('done', 'Terminado'), ('cancel', 'Cancelado')],
+        selection=[('to_do', 'Planificado'), ('confirmed', 'Confirmado'), ('stand_by', 'Aplazado'), ('done', 'Terminado'), ('cancel', 'Cancelado')],
         string="Estado", default='to_do')
     internal_notes = fields.Text(string="Notas internas")
     attch_ids = fields.Many2many('ir.attachment', 'ir_attach_rel', 'technical_job', 'attachment_id',
@@ -257,6 +257,14 @@ class TechnicalJobSchedule(models.Model):
 class TechnicalJob(models.Model):
     _name = 'technical.job'
 
+    def menu_to_calendar(self):
+        action = self.env.ref('roc_custom.action_technical_job').read()[0]
+        user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
+        if user_type == 'user':
+            context = {'search_default_myjobs': 1}
+            action['context'] = context
+        return action
+    #
 
     @api.onchange('job_type_id')
     def _onchange_job_type_id(self):
@@ -347,6 +355,18 @@ class TechnicalJob(models.Model):
                         rec.stage_id = stages[0].id
                 assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])
                 assistant_to_delete.unlink()
+                if self.env.context.get("from_kanban", False):
+                    ctx = self.env.context.copy()
+                    ctx.pop('from_kanban')
+                    return {
+                        'name': "Planificación de Operaciones",
+                        'res_model': 'technical.job.assistant',
+                        'type': 'ir.actions.act_window',
+                        'context': ctx,
+                        'domain': [('create_uid', '=', self.env.user.id)],
+                        'views': [(False, 'kanban'), (self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')],
+                    }
+
 
 
     def delete_schedule_tree(self):
@@ -513,12 +533,12 @@ class TechnicalJobMixin(models.AbstractModel):
                 else:
                     availability_text = "Coordinación exacta: Fecha y hora no especificadas"
             elif record.customer_availability_type == 'hour_range':
-                if record.customer_av_visit_date and record.customer_av_hour_start and record.customer_av_min_start and record.customer_av_hour_end and record.customer_av_min_end:
-                    start_time = f"{record.customer_av_hour_start}:{record.customer_av_min_start}"
-                    end_time = f"{record.customer_av_hour_end}:{record.customer_av_min_end}"
-                    availability_text = f"Franja horaria: {record.customer_av_visit_date} de {start_time} a {end_time}"
-                else:
-                    availability_text = "Franja horaria: Información incompleta"
+                availability_text = f"Franja horaria:"
+                if record.customer_av_visit_date:
+                    availability_text += f" día {record.customer_av_visit_date}"
+                if record.customer_av_hour_start and record.customer_av_min_start and record.customer_av_hour_end and record.customer_av_min_end:
+                    availability_text += f" de {record.customer_av_hour_start}:{record.customer_av_min_start}"
+                    availability_text += f" a {record.customer_av_hour_end}:{record.customer_av_min_end}"
             elif record.customer_availability_type == 'week_availability':
                 availability_text = "Disponibilidad semanal: Por definir"
             elif record.customer_availability_type == 'urgent':
