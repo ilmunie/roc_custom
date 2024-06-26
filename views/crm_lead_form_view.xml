@@ -300,7 +300,7 @@
                                      </group>
                                      <group>
                                          <field name="customer_visit_datetime" attrs="{'invisible': [('customer_availability_type', '!=', 'specific_date')]}"/>
-                                         <field name="customer_av_visit_date"/>
+                                         <field name="customer_av_visit_date" attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}"/>
                                          <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
                                                 <strong><span>DE:   </span></strong>
                                                 <field name="customer_av_hour_start" class="oe_inline" />
@@ -379,10 +379,10 @@
                                 <group>
                                     <field name="total_job_minutes" string="Min totales registrados"/>
                                 </group>
-                                <field name="show_technical_schedule_job_ids" readonly="0">
+                                <field name="show_technical_schedule_job_ids" readonly="1">
                                     <tree create="0" delete="0" editable="False">
                                         <field name="job_type_id"/>
-                                        <field name="minutes_in_job" string="Min registrados"/>
+                                        <field name="minutes_in_job" string="Min registrados" readonly="1"/>
                                         <field name="job_employee_ids" widget="many2many_tags"/>
                                         <field name="job_vehicle_ids" widget="many2many_tags"/>
                                         <field name="date_schedule"/>

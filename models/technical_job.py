@@ -116,7 +116,7 @@ class TechnicalJobSchedule(models.Model):
     def open_in_calendar_view(self):
         action = self.env.ref('roc_custom.action_technical_job').read()[0]
         action['context'] = {
-                'default_mode': 'week',
+                'default_mode': 'week' if self.env.user.has_group('roc_custom.technical_job_planner') else 'day',
                 'initial_date': self.date_schedule,
                 'search_default_res_model': self.res_model,
                 'search_default_res_id': self.res_id,
@@ -261,7 +261,9 @@ class TechnicalJob(models.Model):
         action = self.env.ref('roc_custom.action_technical_job').read()[0]
         user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
         if user_type == 'user':
-            context = {'search_default_myjobs': 1}
+            context = {
+                'search_default_myjobs': 1,
+                'default_mode': "week" if self.env.user.has_group('roc_custom.technical_job_planner') else "day"}
             action['context'] = context
         return action
     #
@@ -392,6 +394,7 @@ class TechnicalJob(models.Model):
     def clean_technical_job(self):
         self.env['technical.job'].search([('active','=',False)]).unlink()
         return
+
     @api.model
     def name_get(self):
         res = []
@@ -614,7 +617,7 @@ class TechnicalJobMixin(models.AbstractModel):
             'default_job_type_id': job_type_id,
             'default_res_model': self._name,
             'default_user_id': self.env.user.id,
-            'default_mode': "week",
+            'default_mode': "week" if self.env.user.has_group('roc_custom.technical_job_planner') else "day",
             'initial_date': False,
         }
         #import pdb;pdb.set_trace()

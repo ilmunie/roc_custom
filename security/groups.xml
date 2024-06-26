@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 <data>
+
+     <record id="technical_job_module_category" model="ir.module.category">
+        <field name="name">Operaciones</field>
+    </record>
      <record id="technical_job_user" model="res.groups">
-        <field name="name">Calendario de trabajo: usuario</field>
+        <field name="name">Operaciones: usuario tecnico</field>
+         <field ref="roc_custom.technical_job_module_category" name="category_id"/>
     </record>
      <record id="technical_job_planner" model="res.groups">
-        <field name="name">Calendario de trabajo: coordinador</field>
+        <field name="name">Operaciones: coordinador</field>
+         <field ref="roc_custom.technical_job_module_category" name="category_id"/>
     </record>
 
      <record id="group_see_payroll_account_move" model="res.groups">
