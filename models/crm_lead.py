@@ -5,6 +5,17 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
+    def _merge_opportunity(self, user_id=False, team_id=False, auto_unlink=True, max_length=5):
+        act_automation_conf = self.env['activity.automation.config'].search([('model_id.model', '=', 'crm.lead')])
+        unlink_lines = act_automation_conf.line_ids.filtered(lambda x: x.action_type == 'delete')
+        act_types_to_delete = []
+        for unlink_line in unlink_lines:
+            act_types_to_delete.extend(unlink_line.activity_type_ids.mapped('id'))
+        for record in self:
+            record.activity_ids.filtered(lambda x: x.activity_type_id.id in act_types_to_delete).unlink()
+        res = super()._merge_opportunity(user_id, team_id, auto_unlink, max_length)
+        return res
+
     medium_written = fields.Boolean()
     force_close_date = fields.Datetime(string="Forzar cierre")
     date_closed = fields.Datetime(tracking=True)
