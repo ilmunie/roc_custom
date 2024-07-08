@@ -552,7 +552,7 @@ class TechnicalJobMixin(models.AbstractModel):
     def get_job_data(self):
         return False
 
-    technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', order='date_schedule DESC')
+    technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', order='date_schedule DESC', copy=False)
     @api.depends('technical_schedule_job_ids','technical_schedule_job_ids.date_schedule')
     def show_technical_jobs(self):
         for record in self:
