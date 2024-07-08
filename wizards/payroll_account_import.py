@@ -51,7 +51,7 @@ conversion_dict = {
 }
 
 first_payment = {
-    'debe_concepts': ['TOTAL LIQUIDO'],
+    'debe_concepts': ['TOTAL LIQUIDO', '(00008) 838 DTO.C.COM', '(00008) 840 DTO.ACC.'],
     'haber_account': '572000001',
 }
 # total liquido (debe: 465000000) vs banco al haber
