@@ -5,6 +5,10 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
+    def copy(self, default=None):
+        copied = super(CrmLead, self).copy(default)
+        copied.autocomplete_name()
+        return copied
     def _merge_opportunity(self, user_id=False, team_id=False, auto_unlink=True, max_length=5):
         act_automation_conf = self.env['activity.automation.config'].search([('model_id.model', '=', 'crm.lead')])
         unlink_lines = act_automation_conf.line_ids.filtered(lambda x: x.action_type == 'delete')
@@ -163,7 +167,7 @@ class CrmLead(models.Model):
                         record.name = name
                         break
             record.trigger_name_autocomplete = False if record.trigger_name_autocomplete else True
-    trigger_name_autocomplete = fields.Boolean(compute=autocomplete_name, store=True)
+    trigger_name_autocomplete = fields.Boolean(compute=autocomplete_name, store=True, copy=False)
     @api.depends('lead_stage_change_ids')
     def compute_datetime_last_lead_stage(self):
         for record in self:
