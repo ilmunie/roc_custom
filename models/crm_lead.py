@@ -1,5 +1,6 @@
 from odoo import fields, models, api, SUPERUSER_ID, tools
 from odoo.exceptions import UserError, ValidationError
+from datetime import timedelta
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
@@ -172,14 +173,14 @@ class CrmLead(models.Model):
     def compute_datetime_last_lead_stage(self):
         for record in self:
             if record.lead_stage_change_ids:
-                record.datetime_in_lead_stage = sorted(record.lead_stage_change_ids, key=lambda r: r.date, reverse=True)[0].date
+                record.datetime_in_lead_stage = sorted(record.lead_stage_change_ids, key=lambda r: r.date, reverse=True)[0].date + timedelta(days=1)
             else:
                 record.datetime_in_lead_stage = record.create_date
     @api.depends('stage_change_ids')
     def compute_datetime_last_stage(self):
         for record in self:
             if record.stage_change_ids:
-                record.datetime_in_stage = sorted(record.stage_change_ids, key=lambda r: r.date, reverse=True)[0].date
+                record.datetime_in_stage = sorted(record.stage_change_ids, key=lambda r: r.date, reverse=True)[0].date + timedelta(days=1)
             else:
                 record.datetime_in_stage = record.create_date
 

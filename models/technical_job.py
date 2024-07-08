@@ -560,7 +560,7 @@ class TechnicalJobMixin(models.AbstractModel):
 
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=show_technical_jobs, string="Trabajos técnicos", order='date_schedule DESC')
 
-    @api.depends('technical_schedule_job_ids','technical_schedule_job_ids.minutes_in_job')
+    @api.depends('technical_schedule_job_ids', 'technical_schedule_job_ids.minutes_in_job')
     def compute_total_job_minutes(self):
         for record in self:
             minutes = record.technical_schedule_job_ids.filtered(lambda x: x.minutes_in_job).mapped('minutes_in_job')
