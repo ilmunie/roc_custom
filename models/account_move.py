@@ -345,6 +345,23 @@ class TaxInvoiceReportLine(models.Model):
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    def button_cancel_custom(self):
+        #draft --> cancel payments
+        #draft --> cancel invoice
+        for record in self:
+            payments = []
+            if record.invoice_payments_widget:
+                dict = json.loads(record.invoice_payments_widget)
+                if dict and 'content' in dict and dict['content']:
+                    for payment in dict['content']:
+                        payments.append(payment['move_id'])
+            for payment in payments:
+                payment_rec = self.env['account.move'].browse(payment)
+                payment_rec.button_draft()
+                payment_rec.button_cancel()
+            record.button_draft()
+            record.button_cancel()
+
     @api.depends('state')
     def compute_tax_invoice_report_line(self):
         for record in self:
