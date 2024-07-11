@@ -12,3 +12,4 @@ from . import change_aml_tax_wiz
 from . import mrp_alternative_product_assistant
 from . import po_alternative_additional_product_assistant
 from . import technical_job_assistant_quick_create
+from . import massive_pos_billing

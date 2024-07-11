@@ -1,4 +1,5 @@
 from odoo import fields, models, api
+import pytz
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
@@ -99,6 +100,14 @@ class PosOrder(models.Model):
                 rec_line = rec.line_ids.filtered(lambda x: x.account_id.user_type_id.name in ('Receivable','Por cobrar'))
                 rec_line.account_id = rec.journal_id.default_payable_account_id.id
         return res
+
+    def _prepare_invoice_vals(self):
+        res = super(PosOrder, self)._prepare_invoice_vals()
+        billing_date = self.env.context.get('billing_date', False)
+        if billing_date:
+            res['invoice_date'] = billing_date
+        return res
+
 
 
     def _apply_invoice_payments(self):
