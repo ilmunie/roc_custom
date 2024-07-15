@@ -38,6 +38,7 @@ access_mrp_attribute_conversion_table,roc_custom.mrp_attribute_conversion_table,
 access_technical_job_user_lead,roc_custom.technical_job_user_lead,model_crm_lead,roc_custom.technical_job_user,1,1,1,1
 access_technical_job_planner_lead,roc_custom.access_technical_job_planner_lead,model_crm_lead,roc_custom.technical_job_planner,1,1,1,1
 access_massive_pos_billing,roc_custom.access_massive_pos_billing,model_massive_pos_billing,base.group_user,1,1,1,1
+access_technical_job_tag,roc_custom.access_technical_job_tag,model_technical_job_tag,base.group_user,1,1,1,1
 
 
 

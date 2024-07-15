@@ -192,9 +192,11 @@ class TechnicalJobAssistant(models.Model):
             next_job = False
             technical_job_count = 0
             date_field_value = False
+            tag_ids = [(5,)]
             if record.res_model and record.res_id:
                 real_rec = self.env[record.res_model].browse(record.res_id)
                 if real_rec:
+                    tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
                     html_data_src_doc = real_rec.get_job_data()
                     technical_job_count = real_rec.technical_job_count
                     show_technical_schedule_job_ids = [(6,0,real_rec.show_technical_schedule_job_ids.mapped('id'))]
@@ -206,6 +208,7 @@ class TechnicalJobAssistant(models.Model):
                         record.res_model)
                     html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
 
+            record.technical_job_tag_ids = tag_ids
             record.date_field_value = date_field_value.date()
             record.technical_job_count = technical_job_count
             record.html_link_to_src_doc = html
@@ -214,6 +217,7 @@ class TechnicalJobAssistant(models.Model):
             record.show_technical_schedule_job_ids = show_technical_schedule_job_ids if show_technical_schedule_job_ids else False
 
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=related_rec_fields, store=True, string="Operaciones")
+    technical_job_tag_ids = fields.Many2many(comodel_name='technical.job.tag', compute=related_rec_fields, store=True, string="Etiquetas")
     next_active_job_id = fields.Many2one('technical.job.schedule', compute=related_rec_fields, store=True, string= "Próx. Planificación", ondelete='SET NULL')
 
     next_active_job_date = fields.Datetime(string="Fecha próx. planificación", related='next_active_job_id.date_schedule', store=True)

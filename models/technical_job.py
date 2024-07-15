@@ -1,7 +1,22 @@
 from odoo import fields, models, api, SUPERUSER_ID
 from datetime import timedelta, datetime
 import pytz
-from odoo.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
+from random import randint
+
+
+class TechnicalJobTag(models.Model):
+    _name = "technical.job.tag"
+    _description = "Technical Job Tag"
+
+    def _get_default_color(self):
+        return randint(1, 11)
+
+    name = fields.Char('Tag Name', required=True, translate=True)
+    color = fields.Integer('Color', default=_get_default_color)
+
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', "Tag name already exists !"),
+    ]
 
 class TechnicalJobType(models.Model):
     _name = 'technical.job.type'
@@ -17,6 +32,14 @@ class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
     order = 'date_schedule DESC'
 
+    def write(self, vals):
+        res = super().write(vals)
+        if 'technical_job_tag_ids' in vals:
+            if self.res_id and self.res_model:
+                real_rec = self.env[self.res_model].browse(self.res_id)
+                if real_rec.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
+                    real_rec.technical_job_tag_ids = vals.get('technical_job_tag_ids', [(5,)])
+        return res
     def stop_tracking(self):
         self.ensure_one()
         time_difference = fields.Datetime.now() - self.start_tracking_time
@@ -190,6 +213,9 @@ class TechnicalJobSchedule(models.Model):
     res_id = fields.Integer()
     job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita", domain=[('technical','=',True)])
     job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Vehículo")
+
+
+    technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas")
     date_schedule = fields.Datetime(string="Fecha a visitar")
     user_id = fields.Many2one('res.users', store=True, string="Responsable")
     job_duration = fields.Float(string="Tiempo trabajo (hs.)")
@@ -268,6 +294,13 @@ class TechnicalJob(models.Model):
         return action
     #
 
+    @api.onchange('res_id')
+    def _onchange_res_id(self):
+        for record in self:
+            if record.res_id and record.res_model:
+                real_rec = self.env[self.res_model].browse(self.res_id)
+                if real_rec.technical_job_tag_ids:
+                    record.technical_job_tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
     @api.onchange('job_type_id')
     def _onchange_job_type_id(self):
         for record in self:
@@ -400,7 +433,11 @@ class TechnicalJob(models.Model):
         res = []
         for rec in self:
             name = ''
+            if rec.technical_job_tag_ids:
+                name += ' - '.join(rec.technical_job_tag_ids.mapped('name'))
             if rec.job_status:
+                if name:
+                    name += " | "
                 name += dict(rec._fields['job_status']._description_selection(self.env)).get(rec.job_status).upper()
             if rec.source_document_display_name:
                 if name:
@@ -426,7 +463,7 @@ class TechnicalJob(models.Model):
         return res
 
     attch_ids = fields.Many2many(related="schedule_id.attch_ids", readonly=False)
-
+    technical_job_tag_ids = fields.Many2many(related="schedule_id.technical_job_tag_ids", readonly=False)
     internal_notes = fields.Text(related="schedule_id.internal_notes", store=True, readonly=False, force_save=True)
     html_data_src_doc = fields.Html(related='schedule_id.html_data_src_doc', readonly=False, force_save=True)
     html_link_to_src_doc = fields.Html(related='schedule_id.html_link_to_src_doc', readonly=False, force_save=True, store=True)
@@ -466,10 +503,17 @@ class TechnicalJob(models.Model):
 class TechnicalJobMixin(models.AbstractModel):
     _name = 'technical.job.mixing'
 
+    technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas")
+
     def write(self, vals):
         res = super().write(vals)
         if self.env.context.get("update_assistant_id", False):
             self.env['technical.job.assistant'].browse(self.env.context.get("update_assistant_id", False)).related_rec_fields()
+        if 'technical_job_tag_ids' in vals:
+            if self.technical_schedule_job_ids:
+                for job in self.technical_schedule_job_ids:
+                    if job.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
+                        job.technical_job_tag_ids = [(6, 0, self.technical_job_tag_ids.mapped('id'))]
         return res
 
     @api.depends('customer_availability_type', 'customer_visit_datetime')

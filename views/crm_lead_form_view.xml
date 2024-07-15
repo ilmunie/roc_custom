@@ -288,7 +288,12 @@
                         <notebook>
                             <page string="Visita" attrs="{'invisible':[('stage_name','!=','Visita')]}">
                                 <group>
-                                    <field name="visit_payment_type" widget="radio" />
+                                    <group>
+                                        <field name="visit_payment_type" widget="radio" />
+                                    </group>
+                                    <group>
+                                        <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
+                                    </group>
                                 </group>
                                 <group>
                                     <field name="visit_internal_notes"/>

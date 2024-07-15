@@ -20,8 +20,16 @@
                 <field name="user_id"/>
                 <field name="job_employee_id"/>
                 <field name="job_vehicle_id"/>
+                <field name="technical_job_tag_ids"/>
                 <field name="res_id" invisible="1"/>
                 <field name="res_model" invisible="1"/>
+                <separator/>
+                <filter string="Primario" name="primary" domain="[('technical_job_tag_ids.name', 'ilike', 'Pri')]"/>
+                <filter string="Secundario" name="secondary" domain="[('technical_job_tag_ids.name', 'ilike', 'Sec')]"/>
+                <filter string="Comodín" name="joker" domain="[('technical_job_tag_ids.name', 'ilike', 'Com')]"/>
+                <separator/>
+                <filter string="Etiquetas" name="technical_job_tag" context="{'group_by':'technical_job_tag_ids'}"/>
+                <separator/>
                 <filter string="Mis coordinaciones" help="Mis coordinaciones: usted es el coordinador" name="mymeetings" domain="[('user_id', 'in', [uid])]"/>
                 <separator/>
                 <filter string="Mis trabajos" help="Mis trabajos: usted es el empleado" name="myjobs" domain="[('job_employee_id.user_id', 'in', [uid])]"/>
@@ -64,6 +72,7 @@
                 <tree string="Trabajos" delete="0">
                     <field name="display_name"/>
                     <field name="html_link_to_src_doc"/>
+                    <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
                     <field name="job_status" />
                     <field name="job_type_id" />
                     <field name="job_employee_id" avatar_field="avatar_128"/>
@@ -83,6 +92,7 @@
                           color="job_employee_id" >
                     <field name="source_document_display_name" invisible="True"/>
                     <field name="html_link_to_src_doc"/>
+                    <field name="technical_job_tag_ids" widget="many2many_tags"/>
                     <field name="job_status" filters="True"/>
                     <field name="job_employee_id" avatar_field="avatar_128" filters="True"/>
                     <field name="job_vehicle_id" filters="True" />
@@ -116,6 +126,7 @@
                             <field name="res_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="job_type_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="date_status" widget="remaining_days" readonly="1"/>
+                            <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
                         </group>
                         <group>
                             <label class="o_form_label oe_inline" for="date_schedule"/>
@@ -172,6 +183,8 @@
                             <field name="res_id" invisible="True"/>
                             <field name="job_type_id"/>
                             <field name="date_status" widget="remaining_days"/>
+                            <field name="technical_job_tag_ids" widget="many2many_tags"
+                                   options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
                         </group>
                         <group>
                             <label class="o_form_label oe_inline" for="date_schedule"/>
@@ -213,13 +226,28 @@
                 </form>
             </field>
         </record>
+        <record id="technical_job_tag" model="ir.ui.view">
+            <field name="name">technical.job.tag</field>
+            <field name="model">technical.job.tag</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <tree string="Etiquetas" editable="bottom" sample="1">
+                    <field name="name"/>
+                    <field name="color" widget="color_picker"/>
+                </tree>
+            </field>
+        </record>
 
     <record id="action_technical_job_type" model="ir.actions.act_window">
         <field name="name">Tipos de trabajo técnicos</field>
         <field name="res_model">technical.job.type</field>
         <field name="view_mode">tree,form</field>
     </record>
-
+    <record id="action_technical_job_tag" model="ir.actions.act_window">
+        <field name="name">Etiquetas de trabajo técnicos</field>
+        <field name="res_model">technical.job.tag</field>
+        <field name="view_mode">tree</field>
+    </record>
 
 
 
@@ -231,7 +259,7 @@
         <field name="view_id" ref="roc_custom.technical_job_schedule_form_view"/>
     </record>
     <record model="ir.actions.server" id="action_technical_job_python">
-        <field name="name">Job Calendar</field>
+        <field name="name">Calendario de trabajos</field>
         <field name="model_id" ref="model_technical_job"/>
         <field name="state">code</field>
         <field name="code">action = env.get('technical.job').menu_to_calendar()</field>
@@ -282,6 +310,13 @@
         sequence="10"
         parent="roc_custom.menu_crm_job_config"
         action="roc_custom.technical_job_assistant_config_action"
+        groups="base.group_no_one"/>
+    <menuitem
+        id="menu_technical_job_tag"
+        name="Etiquetas"
+        sequence="12"
+        parent="roc_custom.menu_crm_job_config"
+        action="roc_custom.action_technical_job_tag"
         groups="base.group_no_one"/>
     <menuitem
         id="menu_technical_job_type_config"
