@@ -6,6 +6,7 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
+    partner_vat = fields.Char(related='partner_id.vat')
     def copy(self, default=None):
         copied = super(CrmLead, self).copy(default)
         copied.autocomplete_name()

@@ -64,6 +64,13 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button name="open_form_partner" type="object" class="btn btn-outline-primary oe_inline oe_stat_button" icon="fa-user">
+                                    <strong><span> Ver | Editar Datos Contacto 📒️</span></strong>
+                                </button>
+                            </div>
+                        </div>
 
                         <!-- Fourth Row: HTML Data from Source Document -->
                         <div class="row">
@@ -79,9 +86,6 @@
                                 <field name="next_job_employee_ids" widget="many2many_tags"/>
                             </div>
                         </div>
-
-
-
                         <!-- Footer with Action Buttons -->
                         <div class="oe_kanban_footer">
                             <div class="o_kanban_record_bottom">
@@ -122,6 +126,7 @@
                     <field name="config_id"/>
                     <field name="html_link_to_src_doc"/>
                     <button name="see_src_document" type="object" icon="fa-edit"/>
+                    <button name="open_form_partner" type="object" icon="fa-user"/>
                     <field name="date_field_value" nolabel="1" widget="remaining_days" class="text-right"/>
                     <field name="date_field_tag" nolabel="1"/>
                     <field name="job_status"/>

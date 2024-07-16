@@ -1,7 +1,6 @@
 import datetime
 from odoo import fields, models, api, SUPERUSER_ID
 from dateutil.relativedelta import relativedelta
-
 class TechnicalJobAssistantConfig(models.Model):
     _name = 'technical.job.assistant.config'
 
@@ -17,6 +16,20 @@ class TechnicalJobAssistantConfig(models.Model):
 
 class TechnicalJobAssistant(models.Model):
     _name = 'technical.job.assistant'
+
+    def open_form_partner(self):
+        action = self.env.ref('roc_custom.action_technical_job_partner_form').read()[0]
+        context = {'update_assistant_id': self.id}
+        action['context'] = context
+        if self.res_model == 'crm.lead':
+            real_rec = self.env[self.res_model].browse(self.res_id)
+            if real_rec.partner_id:
+                action["res_id"] = real_rec.id
+            else:
+                UserWarning('No hay una cliente asociado al registro')
+        else:
+            UserWarning('No hay una configuración de Cliente Definida')
+        return action
 
     @api.model
     def weeks_difference(self, input_date):

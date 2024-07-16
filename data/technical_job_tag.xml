@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<odoo>
+<data noupdate="0">
+    <record id="tj_tag_1" model="technical.job.tag">
+        <field name="name">Primario</field>
+        <field name="color" eval="1"/>
+    </record>
+    <record id="tj_tag_2" model="technical.job.tag">
+        <field name="name">Secundario</field>
+        <field name="color" eval="3"/>
+    </record>
+    <record id="tj_tag_3" model="technical.job.tag">
+        <field name="name">Comodin</field>
+        <field name="color" eval="0"/>
+    </record>
+    <record id="technical_job_type_1" model="technical.job.type">
+        <field name="name">Medición Técnica</field>
+        <field name="default_duration_hs">1</field>
+    </record>
+    <record id="technical_job_type_2" model="technical.job.type">
+        <field name="name">Reparación</field>
+        <field name="default_duration_hs">2</field>
+    </record>
+    <record id="technical_job_type_3" model="technical.job.type">
+        <field name="name">Otras actividades</field>
+        <field name="default_duration_hs">0.5</field>
+    </record>
+    <record id="technical_job_config_lead_med" model="technical.job.assistant.config">
+        <field name="name">Visita Medición</field>
+        <field name="model_id" eval="ref('crm.model_crm_lead')"/>
+        <field name="technical_job_type_id" eval="ref('roc_custom.technical_job_type_1')"/>
+        <field name="domain_condition" eval="[('stage_id.name','=','Visita'),('team_id.name','not ilike','Reparac')]"/>
+        <field name="date_field_id" eval="ref('roc_custom.field_crm_lead__datetime_in_stage')"/>
+        <field name="date_field_tag">Solicitud visita</field>
+    </record>
+    <record id="technical_job_config_lead_rep" model="technical.job.assistant.config">
+        <field name="name">Visita Reparacion</field>
+        <field name="model_id" eval="ref('crm.model_crm_lead')"/>
+        <field name="technical_job_type_id" eval="ref('roc_custom.technical_job_type_2')"/>
+        <field name="domain_condition" eval="[('stage_id.name','=','Visita'),('team_id.name','ilike','Reparac')]"/>
+        <field name="date_field_id" eval="ref('roc_custom.field_crm_lead__datetime_in_stage')"/>
+        <field name="date_field_tag">Solicitud visita</field>
+    </record>
+</data>
+</odoo>
+
+
+
+
+
+
+
+
+

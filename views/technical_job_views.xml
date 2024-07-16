@@ -116,6 +116,7 @@
                         <button name="stand_by" type="object" string="Aplazar" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
                         <button name="set_draft" type="object" string="Borrador"  attrs="{'invisible': [('job_status','in',('to_do'))]}"/>
                         <button name="mark_as_done" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
+                        <button name="open_sale_order_wiz" type="object" string="Venta" class="oe_highlight" attrs="{'invisible': ['|',('res_model', '!=', 'crm.lead'),('job_status','not in',('done',))]}"/>
                     </header>
                     <sheet>
                     <group>
@@ -160,6 +161,10 @@
                     <group>
                         <field name="html_data_src_doc" readonly="True"/>
                     </group>
+                    <group>
+                        <button name="open_form_partner" type="object" string="Ver | Editar Datos Contacto Cliente"/>
+                    </group>
+
                     </sheet>
                 </form>
             </field>
@@ -209,6 +214,46 @@
             </field>
         </record>
 
+        <record id="technical_job_partner_form_view" model="ir.ui.view">
+            <field name="name">technical_job_partner_form_view</field>
+            <field name="model">crm.lead</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <form string="Datos de contacto Cliente" >
+                    <sheet>
+                    <div class="oe_title mb24">
+                        <div class="o_row">
+                            <field name="partner_id" readonly="1" widget="res_partner_many2one" placeholder="Company Name..."/>
+                        </div>
+                    </div>
+                    <group>
+                        <group>
+                            <span class="o_form_label o_td_label" name="address_name">
+                                <b>Dirección</b>
+                            </span>
+                            <div class="o_address_format">
+                                <field name="company_id" invisible="1"/>
+                                <field name="street" placeholder="Street..." class="o_address_street" />
+                                <field name="street2" placeholder="Street 2..." class="o_address_street" />
+                                <field name="city" placeholder="City" class="o_address_city" />
+                                <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}"  context="{'country_id': country_id, 'default_country_id': country_id, 'zip': zip}"/>
+                                <field name="zip" placeholder="ZIP" class="o_address_zip" />
+                                <field name="country_id" placeholder="Country" class="o_address_country" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}" />
+                            </div>
+                            <field name="partner_vat" string="NIF" readonly="False" force_save="1" placeholder="e.g. BE0477472701"/>
+                        </group>
+                        <group>
+                            <field name="phone" widget="phone"/>
+                            <field name="mobile" widget="phone"/>
+                            <field name="email_from" widget="email" context="{'gravatar_image': True}" />
+                        </group>
+                    </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
         <record id="technical_job_type_form_view" model="ir.ui.view">
             <field name="name">technical.job.type.form.view</field>
             <field name="model">technical.job.type</field>
@@ -250,6 +295,13 @@
     </record>
 
 
+    <record id="action_technical_job_partner_form" model="ir.actions.act_window">
+        <field name="name">Datos de Contacto Cliente</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="roc_custom.technical_job_partner_form_view"/>
+    </record>
 
     <record id="action_technical_job_form" model="ir.actions.act_window">
         <field name="name">Calendario de Trabajos</field>
@@ -316,8 +368,7 @@
         name="Etiquetas"
         sequence="12"
         parent="roc_custom.menu_crm_job_config"
-        action="roc_custom.action_technical_job_tag"
-        groups="base.group_no_one"/>
+        action="roc_custom.action_technical_job_tag"/>
     <menuitem
         id="menu_technical_job_type_config"
         name="Tipos de trabajo"

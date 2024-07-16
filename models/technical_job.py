@@ -2,7 +2,7 @@ from odoo import fields, models, api, SUPERUSER_ID
 from datetime import timedelta, datetime
 import pytz
 from random import randint
-
+import re
 
 class TechnicalJobTag(models.Model):
     _name = "technical.job.tag"
@@ -130,12 +130,6 @@ class TechnicalJobSchedule(models.Model):
 
     trigger_warning_full_calendar = fields.Boolean(compute=warning_full_calendar, store=True)
 
-
-    def open_form_view(self):
-        action = self.env.ref('roc_custom.action_technical_job_form').read()[0]
-        action["res_id"] = self.id
-        return action
-
     def open_in_calendar_view(self):
         action = self.env.ref('roc_custom.action_technical_job').read()[0]
         action['context'] = {
@@ -182,8 +176,6 @@ class TechnicalJobSchedule(models.Model):
     html_data_src_doc = fields.Html(compute=get_data_src_doc, string="Info")
 
 
-
-
     @api.depends('res_model', 'res_id')
     def get_html_link_to_src_doc(self):
         for record in self:
@@ -213,8 +205,6 @@ class TechnicalJobSchedule(models.Model):
     res_id = fields.Integer()
     job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita", domain=[('technical','=',True)])
     job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Vehículo")
-
-
     technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas")
     date_schedule = fields.Datetime(string="Fecha a visitar")
     user_id = fields.Many2one('res.users', store=True, string="Responsable")
@@ -282,6 +272,44 @@ class TechnicalJobSchedule(models.Model):
 
 class TechnicalJob(models.Model):
     _name = 'technical.job'
+
+    def open_form_partner(self):
+        action = self.env.ref('roc_custom.action_technical_job_partner_form').read()[0]
+        if self.res_model == 'crm.lead':
+            real_rec = self.env[self.res_model].browse(self.res_id)
+            if real_rec.partner_id:
+                action["res_id"] = real_rec.id
+            else:
+                UserWarning('No hay una cliente asociado al registro')
+        else:
+            UserWarning('No hay una configuración de Cliente Definida')
+        return action
+
+    def open_sale_order_wiz(self):
+        self.ensure_one()
+        if self.res_model == 'crm.lead':
+            opportunity = self.env[self.res_model].browse(self.res_id)
+            action = {
+                        'name': "Venta",
+                        'res_model': 'sale.order',
+                        'type': 'ir.actions.act_window',
+                        'views': [(self.env.ref('roc_custom.technical_job_sale_order').id, 'form')],
+                        'context': {'default_partner_id': opportunity.partner_id.id if opportunity.partner_id else False,
+                                    'default_journal_id': 26,
+                                    'default_opportunity_id': self.res_id},
+                        'mode': 'new'
+                    }
+            if opportunity.order_ids:
+                action['res_id'] = opportunity.order_ids[0].id
+                sale_order = opportunity.order_ids[0]
+                if sale_order.sale_order_template_id.technical_job_template and any(line.technical_job_duration for line in
+                                                                              sale_order.sale_order_template_id.sale_order_template_line_ids):
+                    time_prod = sale_order.sale_order_template_id.sale_order_template_line_ids.filtered(
+                        lambda x: x.technical_job_duration).mapped('product_id.id')
+                    lines_to_update = sale_order.order_line.filtered(lambda x: x.product_id.id in time_prod)
+                    if sale_order.opportunity_id and sale_order.opportunity_id.total_job_minutes:
+                        lines_to_update.product_uom_qty = sale_order.opportunity_id.total_job_minutes / 60
+            return action
 
     def menu_to_calendar(self):
         action = self.env.ref('roc_custom.action_technical_job').read()[0]
@@ -483,7 +511,7 @@ class TechnicalJob(models.Model):
     job_employee_ids = fields.Many2many(related='schedule_id.job_employee_ids', force_save=True, readonly=False )
     job_vehicle_ids = fields.Many2many(related='schedule_id.job_vehicle_ids', force_save=True, readonly=False)
 
-    minutes_in_job = fields.Float(related='schedule_id.minutes_in_job', force_save=True)
+    minutes_in_job = fields.Float(related='schedule_id.minutes_in_job', force_save=True, readonly=False)
     start_tracking_time = fields.Datetime(related='schedule_id.start_tracking_time', force_save=True)
 
     def stop_tracking(self):
@@ -680,13 +708,15 @@ class CrmLead(models.Model,TechnicalJobMixin):
         if self.mobile or self.mobile_partner or self.phone:
             phone_number = self.mobile or self.mobile_partner or self.phone
             data += f"""
-                <a href='tel:{phone_number}'><br/>
+                <a href='tel:{phone_number.replace(" ","")}'><br/>
                    📲 Llamar Cliente<br/><br/>
                 </a>
-                
+                <a href='https://wa.me/{phone_number.replace(" ","")}'><br/>
+                   💬 Enviar WhatsApp {phone_number.replace(" ","")}<br/><br/>
+                </a>
             """
         if self.address_label:
-            data += "Dirección: " + self.address_label + "<br/><br/>"
+            data += f"<a href='https://google.com/maps/search/{self.address_label}'><br/>📍 Dirección: {self.address_label}<br/><br/></a>"
         if self.customer_availability_info:
             data += self.customer_availability_info + "<br/><br/>"
         if self.visit_internal_notes:
@@ -701,7 +731,7 @@ class CrmLead(models.Model,TechnicalJobMixin):
     @api.depends('street', 'street2', 'city', 'zip', 'state_id')
     def _compute_address_label(self):
         for lead in self:
-            address_components = [lead.street, lead.street2, lead.city, lead.zip]
+            address_components = [lead.street,lead.street2, lead.city, lead.zip]
             if lead.state_id:
                 address_components.append(lead.state_id.name)
             address = ', '.join(filter(None, address_components))
