@@ -61,7 +61,7 @@ class TechnicalJobAssistant(models.Model):
     def _compute_week_action_group(self):
         """
             -->  Urgente (no coordinado y marcado como urgente por comercial/coordinador)
-            -->  Esperando coordinacion (no coordinado con info de disponibilidad cliente agregada por por comercial/coordinador)
+            -->  Esperando confirmacion (no coordinado con info de disponibilidad cliente agregada por por comercial/coordinador)
             -->  Recoordinar/Aplazado (coordinaciones de semanas anteriores y trabajos marcados por tecnico en stand-by)
             -->  Sin coordinar (sin data de disponibilidad del cliente y sin coordinar)
             -->  Coordinado esta semana (con trabajos que vencen en la semana en curso puede contener cosas que vencieron ayer siempre y cuando sean de la misma semana)
@@ -73,7 +73,7 @@ class TechnicalJobAssistant(models.Model):
                 if record.html_data_src_doc and "URGENT" in record.html_data_src_doc:
                     res = "1. Urgente"
                 elif record.job_status == "waiting_job":
-                    res = "2. Esperando coordinacion"
+                    res = "2. Esperando confirmación"
                 elif not record.next_active_job_id:
                     res = "4. Sin coordinar"
             else:
@@ -274,7 +274,7 @@ class TechnicalJobAssistant(models.Model):
 
 
     job_status = fields.Selection([('no_job','Sin planificaciones'),
-                                   ('waiting_job', 'Esperando coordinacion'),
+                                   ('waiting_job', 'Esperando confirmación'),
                                    ('to_do', 'Planificado'),
                                    ('confirmed', 'Confirmado'),
                                    ('stand_by', 'Aplazado'),

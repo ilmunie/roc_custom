@@ -708,11 +708,11 @@ class CrmLead(models.Model,TechnicalJobMixin):
         if self.mobile or self.mobile_partner or self.phone:
             phone_number = self.mobile or self.mobile_partner or self.phone
             data += f"""
-                <a href='tel:{phone_number.replace(" ","")}'><br/>
+                <a href='tel:{phone_number.replace(" ","").replace("-","")}'><br/>
                    📲 Llamar Cliente<br/><br/>
                 </a>
-                <a href='https://wa.me/{phone_number.replace(" ","")}'><br/>
-                   💬 Enviar WhatsApp {phone_number.replace(" ","")}<br/><br/>
+                <a href='https://wa.me/{phone_number.replace(" ","").replace("-","")}'><br/>
+                   💬 Enviar WhatsApp {phone_number.replace(" ","").replace("-","")}<br/><br/>
                 </a>
             """
         if self.address_label:

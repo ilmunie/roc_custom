@@ -162,9 +162,9 @@
                         <field name="html_data_src_doc" readonly="True"/>
                     </group>
                     <group>
-                        <button name="open_form_partner" type="object" string="Ver | Editar Datos Contacto Cliente"/>
+                        <button name="open_form_partner" attrs="{'invisible':[('res_model', '!=', 'crm.lead')]}"
+                                type="object" string="Ver | Editar Datos Contacto Cliente"/>
                     </group>
-
                     </sheet>
                 </form>
             </field>
@@ -217,7 +217,7 @@
         <record id="technical_job_partner_form_view" model="ir.ui.view">
             <field name="name">technical_job_partner_form_view</field>
             <field name="model">crm.lead</field>
-            <field name="priority" eval="2"/>
+            <field name="priority" eval="99"/>
             <field name="arch" type="xml">
                 <form string="Datos de contacto Cliente" >
                     <sheet>
