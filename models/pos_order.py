@@ -1,4 +1,4 @@
-from odoo import fields, models, api
+from odoo import fields, models, api, _
 import pytz
 
 class CrmLead(models.Model):
@@ -108,6 +108,50 @@ class PosOrder(models.Model):
             res['invoice_date'] = billing_date
         return res
 
+    def _generate_pos_order_simplified_invoice(self):
+        moves = self.env['account.move']
+        for order in self:
+            # Force company for all SUPERUSER_ID action
+            if order.account_move:
+                moves += order.account_move
+                continue
+            move_vals = order._prepare_invoice_vals()
+            journal = self.env['account.journal'].search([('name','=','Facturas simplificadas')])
+            if not journal:
+                UserWarning('Cree un diario de ventas Facturas simplificadas')
+            if order.opportunity_id and order.opportunity_id.partner_id:
+                move_vals['partner_id'] = order.opportunity_id.partner_id
+            move_vals['journal_id'] = journal[0].id
+            new_move = order._create_invoice(move_vals)
+            order.write({'account_move': new_move.id, 'state': 'invoiced'})
+            new_move.sudo().with_company(order.company_id)._post()
+            moves += new_move
+            order._apply_invoice_payments()
+
+        if not moves:
+            return {}
+
+        return {
+            'name': _('Customer Invoice'),
+            'view_mode': 'form',
+            'view_id': self.env.ref('account.view_move_form').id,
+            'res_model': 'account.move',
+            'context': "{'move_type':'out_invoice'}",
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'current',
+            'res_id': moves and moves.ids[0] or False,
+        }
+        return False
+
+    def _generate_pos_order_invoice(self):
+        res = False
+        for order in self:
+            if order.is_l10n_es_simplified_invoice:
+                res = self._generate_pos_order_simplified_invoice()
+            else:
+                res = super(order, PosOrder)._generate_pos_order_invoice()
+        return res
 
 
     def _apply_invoice_payments(self):
