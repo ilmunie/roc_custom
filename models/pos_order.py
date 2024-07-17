@@ -119,9 +119,14 @@ class PosOrder(models.Model):
             journal = self.env['account.journal'].search([('name','=','Facturas simplificadas')])
             if not journal:
                 UserWarning('Cree un diario de ventas Facturas simplificadas')
-            if order.opportunity_id and order.opportunity_id.partner_id:
-                move_vals['partner_id'] = order.opportunity_id.partner_id
             move_vals['journal_id'] = journal[0].id
+            if not order.partner_id:
+                if order.opportunity_id and order.opportunity_id.partner_id:
+                    move_vals['partner_id'] = order.opportunity_id.partner_id
+                else:
+                    generic_partnerts = self.env['res.partner'].search([('name','=','CLIENTE GENERICO')])
+                    if generic_partnerts:
+                        move_vals['partner_id'] = generic_partnerts[0].id
             new_move = order._create_invoice(move_vals)
             order.write({'account_move': new_move.id, 'state': 'invoiced'})
             new_move.sudo().with_company(order.company_id)._post()
