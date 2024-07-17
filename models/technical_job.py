@@ -316,7 +316,7 @@ class TechnicalJob(models.Model):
         user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
         if user_type == 'user':
             context = {
-                'search_default_myjobs': 1,
+                #'search_default_myjobs': 1,
                 'default_mode': "week" if self.env.user.has_group('roc_custom.technical_job_planner') else "day"}
             action['context'] = context
         return action
