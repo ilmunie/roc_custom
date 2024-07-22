@@ -81,16 +81,28 @@ class TechnicalJobAssistant(models.Model):
                     res = f"3. Recoordinar / Aplazado"
                 else:
                     date_to_use = record.next_active_job_date
+                    input_date = date_to_use
                     if date_to_use:
-                        week_diff = self.weeks_difference(date_to_use)
-                        if week_diff == 0:
-                            res = "5. Esta semana"
-                        elif week_diff <= -1:
+                        if isinstance(date_to_use, str):
+                            input_date = datetime.datetime.strptime(date_to_use, '%Y-%m-%d').date()
+                        elif isinstance(date_to_use, datetime.datetime):
+                            input_date = date_to_use.date()
+                        elif not isinstance(date_to_use, datetime.date):
+                            raise ValueError(
+                                "The input_date must be a date object, datetime object, or a string in 'YYYY-MM-DD' format")
+                        today = datetime.date.today()
+                        if input_date < today:
                             res = f"3. Recoordinar / Aplazado"
-                        elif week_diff < 2:
-                            res = f"6. En {week_diff} Semanas"
                         else:
-                            res = f"7. +1 Semanas"
+                            week_diff = self.weeks_difference(date_to_use)
+                            if week_diff == 0:
+                                res = "5. Esta semana"
+                            elif week_diff <= -1:
+                                res = f"3. Recoordinar / Aplazado"
+                            elif week_diff < 2:
+                                res = f"6. En {week_diff} Semanas"
+                            else:
+                                res = f"7. +1 Semanas"
             record.week_action_group = res
 
     week_action_group = fields.Char(string='Week Action Group', compute='_compute_week_action_group', store=True)

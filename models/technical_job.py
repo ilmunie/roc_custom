@@ -1,5 +1,6 @@
 from odoo import fields, models, api, SUPERUSER_ID
 from datetime import timedelta, datetime
+from odoo.exceptions import UserError, ValidationError
 import pytz
 from random import randint
 import re
@@ -39,6 +40,11 @@ class TechnicalJobSchedule(models.Model):
                 real_rec = self.env[self.res_model].browse(self.res_id)
                 if real_rec.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
                     real_rec.technical_job_tag_ids = vals.get('technical_job_tag_ids', [(5,)])
+        if self.res_model and self.res_id and 'internal_notes' in vals and vals['internal_notes']:
+            real_rec = self.env[self.res_model].browse(self.res_id)
+            body = "Ha modificado la nota interna de la proxima operacion<br/>"
+            body += vals['internal_notes']
+            real_rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment')
         return res
     def stop_tracking(self):
         self.ensure_one()
@@ -52,6 +58,8 @@ class TechnicalJobSchedule(models.Model):
 
     minutes_in_job = fields.Float(string="Minutos trabajados")
     start_tracking_time = fields.Datetime()
+    arrive_time = fields.Datetime(string="Horario Entrada")
+    out_time = fields.Datetime(string="Horario Salida")
 
     def get_job_time_str(self):
         """
@@ -316,7 +324,7 @@ class TechnicalJob(models.Model):
         user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
         if user_type == 'user':
             context = {
-                #'search_default_myjobs': 1,
+                'search_default_active': 1,
                 'default_mode': "week" if self.env.user.has_group('roc_custom.technical_job_planner') else "day"}
             action['context'] = context
         return action
@@ -362,6 +370,8 @@ class TechnicalJob(models.Model):
                 job.write({'job_status': 'confirmed'})
     def stand_by(self):
         for record in self:
+            if not record.internal_notes:
+                raise ValidationError("Debe ingresar una nota interna para aplazar la operacion")
             jobs_edit = []
             jobs_edit.append(record)
             if record.schedule_id:
@@ -369,6 +379,12 @@ class TechnicalJob(models.Model):
                     self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
             for job in jobs_edit:
                 job.write({'job_status': 'stand_by'})
+            if record.res_id and record.res_model:
+                rec = self.env[record.res_model].browse(record.res_id)
+                body = "Ha aplazado la operación " + record.job_type_id.name
+                rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment')
+
+
     def set_draft(self):
         for record in self:
             jobs_edit = []
@@ -381,6 +397,10 @@ class TechnicalJob(models.Model):
 
     def mark_as_done(self):
         for record in self:
+            if record.res_model=='crm.lead' and not record.attch_ids:
+                raise ValidationError('Cargue la documentación correspondiente')
+            if record.res_model=='crm.lead' and not record.minutes_in_job:
+                raise ValidationError('Debe registrar tiempo en la operacion')
             jobs_to_make_done = []
             jobs_to_make_done.append(record)
             if record.schedule_id:
@@ -388,12 +408,11 @@ class TechnicalJob(models.Model):
                     self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
             for job in jobs_to_make_done:
                 job.write({'job_status': 'done'})
-
             #generic implementation comment and attachments
             schedule_id = record.schedule_id
             if schedule_id.attch_ids or schedule_id.internal_notes and (record.res_id and record.res_model):
                 rec = self.env[record.res_model].browse(record.res_id)
-                body = schedule_id.internal_notes or ''
+                body = ''
                 if schedule_id.attch_ids:
                     if body:
                         body += "<br/>"
@@ -403,6 +422,7 @@ class TechnicalJob(models.Model):
                 body = "Ha finalizado la operación: " + record.job_type_id.name
                 if record.minutes_in_job:
                     body += f"<br/> TIEMPO TOTAL REGISTRADO: {round(record.minutes_in_job, 0)} min"
+                    body += f"<br/> LLEGADA: {record.arrive_time} | SALIDA: {record.out_time}"
                 rec = self.env[record.res_model].browse(record.res_id)
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment',
                                                                             partner_ids=rec.user_id.mapped(
@@ -512,15 +532,20 @@ class TechnicalJob(models.Model):
     job_vehicle_ids = fields.Many2many(related='schedule_id.job_vehicle_ids', force_save=True, readonly=False)
 
     minutes_in_job = fields.Float(related='schedule_id.minutes_in_job', force_save=True, readonly=False)
+    arrive_time = fields.Datetime(related='schedule_id.arrive_time', force_save=True, readonly=False)
+    out_time = fields.Datetime(related='schedule_id.out_time', force_save=True, readonly=False)
     start_tracking_time = fields.Datetime(related='schedule_id.start_tracking_time', force_save=True)
 
     def stop_tracking(self):
         if self.schedule_id:
             self.schedule_id.stop_tracking()
+            self.schedule_id.out_time = fields.Datetime.now()
 
     def start_tracking(self):
         if self.schedule_id:
             self.schedule_id.start_tracking()
+            if not self.schedule_id.arrive_time:
+                self.schedule_id.arrive_time = fields.Datetime.now()
     @api.depends('date_schedule', 'job_duration')
     def get_end_time(self):
         for record in self:
@@ -654,15 +679,19 @@ class TechnicalJobMixin(models.AbstractModel):
     def get_next_job(self):
         for record in self:
             res = False
+            next_active_job_date = False
             active_jobs = sorted(record.technical_schedule_job_ids.filtered(lambda x: x.date_schedule and x.job_status not in ('done', 'cancel')), key=lambda x: x.date_schedule)
             if active_jobs:
                 res = active_jobs[0].id
+                next_active_job_date = active_jobs[0].date_schedule
             record.next_active_job_id = res
+            record.next_active_job_date = next_active_job_date
             tjas = self.env['technical.job.assistant'].search([('create_uid','=',self.env.user.id), ('res_id','=',record.id), ('res_model','=',record._name)])
             for tja in tjas:
                 tja.related_rec_fields()
 
     next_active_job_id = fields.Many2one('technical.job.schedule', compute=get_next_job, store=True)
+    next_active_job_date = fields.Datetime(compute=get_next_job, store=True, tracking=True, string="Fecha Proxima operacion")
 
     def open_next_job_calendar_view(self):
         self.ensure_one()
@@ -687,6 +716,7 @@ class TechnicalJobMixin(models.AbstractModel):
             'default_schedule_id': self.technical_schedule_job_ids.filtered(lambda x: not x.date_schedule)[0].id,
             'default_res_id': self.id,
             'default_job_type_id': job_type_id,
+            'search_default_active': 1,
             'default_res_model': self._name,
             'default_user_id': self.env.user.id,
             'default_mode': "week" if self.env.user.has_group('roc_custom.technical_job_planner') else "day",

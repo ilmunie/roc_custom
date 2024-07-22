@@ -16,5 +16,15 @@
             </field>
 		</field>
     </record>
+    <record id="pos_session_form_view_inherit" model="ir.ui.view">
+		<field name="name">pos.session.form.view.inherit</field>
+		<field name="model">pos.session</field>
+		<field name="inherit_id" ref="point_of_sale.view_pos_session_form"/>
+		<field name="arch" type="xml">
+            <xpath expr="//header[last()]" position="inside">
+                 <button name="%(roc_custom.open_custom_close_pos_session)d" type="action" string="Cerrar sesion" state="opened,closing_control"/>
+            </xpath>
+		</field>
+    </record>
 
 </odoo>

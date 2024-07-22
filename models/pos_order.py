@@ -1,5 +1,53 @@
 from odoo import fields, models, api, _
 import pytz
+from odoo.exceptions import UserError, ValidationError
+
+
+class PosSession(models.Model):
+    _inherit = 'pos.session'
+
+    def custom_close_session(self):
+        self.ensure_one()
+        """
+        1. Hace factura simplificada de pedidos con valor > 0 con fecha correspondiente
+        2. Hace asientos contables de Registros de caja
+        3. Cambia estado de sesion
+        """
+        #1. Facturas simplificadas
+        min_close_date = self.env.context.get('min_close_date', False)
+        for order in self.order_ids.filtered(lambda x: x.amount_total and x.is_l10n_es_simplified_invoice and x.state not in ('draft', 'cancel', 'invoiced')):
+            date = order.date_order.date()
+            if date < min_close_date:
+                order.with_context(billing_date=min_close_date)._generate_pos_order_simplified_invoice()
+            else:
+                order.with_context(billing_date=False)._generate_pos_order_simplified_invoice()
+        #2. Asientos contables registros de caja: retiros - devoluciones clientes
+        cash_movement_lines = self.cash_register_id.move_line_ids.filtered(lambda x: x.account_id.code == '572001')
+        for cash_move_line in cash_movement_lines:
+            if 'RET' in (cash_move_line.name or '').upper():
+                #RETIRO DAVID
+                cash_move_line.account_id = self.env.ref('l10n_es.1_pgc_pyme_551').id
+            elif 'DEV' in (cash_move_line.name or '').upper():
+                False
+                #DEVOLUCION A CLIENTE
+                #cash_move_line.account_id = False
+            elif 'ING' in (cash_move_line.name or '').upper():
+                #INGRESO A CAJA
+                cash_move_line.account_id = False
+            elif 'OPENING' in (cash_move_line.name or '').upper():
+                # ASIENTO APERTURA
+                cash_move_line.account_id = self.env.ref('l10n_es.1_pgc_pyme_551').id
+            elif 'DIF' in (cash_move_line.name or '').upper():
+                # ASIENTO APERTURA
+                False
+                #cash_move_line.account_id = self.env.ref('l10n_es.1_pgc_pyme_551').id
+            else:
+                return UserError('Etiqueta de movimiento de efectivo no estandarizada. Comuniquese con el administrador del sistema')
+        #2.2. Valido asientos
+        self.cash_register_id.button_post()
+        #3. Cambia estado de sesion
+        self.state = 'closed'
+        return False
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
@@ -120,8 +168,8 @@ class PosOrder(models.Model):
             if not journal:
                 UserWarning('Cree un diario de ventas Facturas simplificadas')
             move_vals['journal_id'] = journal[0].id
-            if not order.partner_id:
-                if order.opportunity_id and order.opportunity_id.partner_id:
+            if not order.partner_id or not order.partner_id.vat:
+                if order.opportunity_id and order.opportunity_id.partner_id and order.opportunity_id.partner_id.vat:
                     move_vals['partner_id'] = order.opportunity_id.partner_id
                 else:
                     generic_partnerts = self.env['res.partner'].search([('name','=','CLIENTE GENERICO')])

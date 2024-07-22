@@ -24,6 +24,8 @@
                 <field name="res_id" invisible="1"/>
                 <field name="res_model" invisible="1"/>
                 <separator/>
+                <filter string="Activos" name="active" domain="[('job_status', 'not in', ('cancel', 'done', 'stand_by'))]"/>
+                <separator/>
                 <filter string="Primario" name="primary" domain="[('technical_job_tag_ids.name', 'ilike', 'Pri')]"/>
                 <filter string="Secundario" name="secondary" domain="[('technical_job_tag_ids.name', 'ilike', 'Sec')]"/>
                 <filter string="Comodín" name="joker" domain="[('technical_job_tag_ids.name', 'ilike', 'Com')]"/>
@@ -155,7 +157,15 @@
                                 <field name="start_tracking_time" invisible="1"/>
                             </div>
                         </group>
-                    <group>
+                     <group>
+                         <group>
+                             <field name="arrive_time" readonly="1" attrs="{'invisible':[('arrive_time','=',False)]}"/>
+                         </group>
+                         <group>
+                             <field name="out_time" readonly="1" attrs="{'invisible':[('out_time','=',False)]}"/>
+                         </group>
+                     </group>
+                    <group string="Info y Aclaraciones">
                         <field name="internal_notes" widget="text" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                     </group>
                     <group>

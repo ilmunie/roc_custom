@@ -46,6 +46,7 @@
         'wizards/mrp_alternative_product_assistant_views.xml',
         'wizards/crm_convert_opp_wizard.xml',
         'wizards/modify_tags_masive.xml',
+        'wizards/pos_close_session_view.xml',
         'wizards/payroll_account_import_view.xml',
         'wizards/sale_purchase_order_wizard_view.xml',
         'wizards/generate_sale_quotation_wizard.xml',

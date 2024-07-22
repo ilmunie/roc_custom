@@ -41,8 +41,9 @@
 
         <menuitem id="menu_supplierinfo_import"
             name="Supplierinfo Import"
-            action="action_supplierinfo_import"/>
-        
+            action="action_supplierinfo_import"
+			groups="base.group_no_one"/>
+
 
 
 <!--
