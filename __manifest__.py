@@ -49,6 +49,7 @@
         'wizards/pos_close_session_view.xml',
         'wizards/payroll_account_import_view.xml',
         'wizards/sale_purchase_order_wizard_view.xml',
+        'wizards/crm_lead_import_view.xml',
         'wizards/generate_sale_quotation_wizard.xml',
         'wizards/supplierinfo_import_view.xml',
         'views/ir_sequence.xml',

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+		<record id="crm_lead_import_import_view" model="ir.ui.view">
+			<field name="name">crm.lead.import.view</field>
+			<field name="model">crm.lead.import</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Importacion Oportunidades">
+					<header>
+						<field name="state" widget="statusbar"/>
+					</header>
+					<group>
+						<group attrs="{'invisible': [('state', 'not in', 'draft')]}">
+							<field name="file" filename="filename"/>
+							<field name="filename"/>
+							<field name="user_id"/>
+						</group>
+						<group attrs="{'invisible': [('state', 'not in', 'done')]}">
+							<field name="message" nolabel="1"/>
+						</group>
+					</group>
+					<footer>
+                        <button class="btn-default" special="cancel" string="Cancelar"
+                         attrs="{'invisible': [('state', 'not in', 'draft')]}"/>
+                        <button name="read_file" string="Procesar Archivo" type="object" class="btn-primary"
+                         attrs="{'invisible': [('state', 'not in', 'draft')]}"/>
+                        <button class="btn-default" special="cancel" string="Cerrar"
+                         attrs="{'invisible': [('state', 'not in', 'done')]}"/>
+					</footer>
+				</form>
+			</field>
+		</record>
+
+        <record id="action_crm_lead_import" model="ir.actions.act_window">
+            <field name="name">Importación Oportunidades</field>
+            <field name="res_model">crm.lead.import</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_crm_lead_import"
+            name="Importacion Oportunidades"
+			parent="crm.crm_menu_sales"
+			sequence="99"
+            action="action_crm_lead_import"/>
+  </data>
+</odoo>

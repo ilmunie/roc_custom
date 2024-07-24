@@ -14,3 +14,4 @@ from . import po_alternative_additional_product_assistant
 from . import technical_job_assistant_quick_create
 from . import massive_pos_billing
 from . import pos_close_session
+from . import crm_lead_import
