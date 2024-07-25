@@ -67,7 +67,6 @@ class CrmLeadImport(models.TransientModel):
         phone = self._read_cell(sheet, curr_row, 3) or ''
         if type(phone) == float:
             phone = str(int(phone))
-
         return {
             'row': curr_row,
             'partner_name': str(self._read_cell(sheet, curr_row, 0) or ''),
@@ -153,8 +152,10 @@ class CrmLeadImport(models.TransientModel):
             partner.professional = True
         if vals['sector']:
             tags = self.env['res.partner.category'].search([('name', '=', vals['sector'])])
+            if not tags:
+                tags = self.env['res.partner.category'].create({'name': vals['sector']})
             if tags and tags[0].id not in partner.category_id.mapped('id'):
-                partner.category_id = [(4, tags[0].mapped('id'))]
+                partner.category_id = [(4, tags[0].id)]
         return
 
     def get_final_opp_vals(self, vals, customer_id):
@@ -181,7 +182,7 @@ class CrmLeadImport(models.TransientModel):
             'tag_ids': False,
             'team_id': team[0].id,
             'user_id': self.user_id.id,
-            'description': vals['comments'],
+            'description': f"{vals['comments']}<br/>ULTIMO CONTACTO: {vals['last_contact']}" ,
             'contact_name': (vals['contact_name'] or '') or (vals['partner_name'] or '') or partner.name,
             'street': vals['address'] or partner.street or '',
             'city': vals['loc'] or partner.city,
@@ -212,7 +213,6 @@ class CrmLeadImport(models.TransientModel):
             if not error:
                 opp = self.env['crm.lead'].create(opp_to_create)
                 ok_mess = self._set_default_warn_msg(str(len(opp)) + " OPORTUNIDADES CREADAS")
-                #import pdb;pdb.set_trace()
                 ok_mess = ok_mess + '<br/>' + '<br/>'.join(message)
                 self.message = ok_mess
             self.state = 'done'
