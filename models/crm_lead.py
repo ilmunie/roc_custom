@@ -263,6 +263,12 @@ class CrmLead(models.Model):
         return stages.browse(stage_ids)
     lead_stage_id = fields.Many2one('crm.lead.stage', string='Etapa Lead', index=True, tracking=True,copy=False, ondelete='restrict', group_expand='_read_group_lead_stage_ids')
 
+    stage_id = fields.Many2one(
+        'crm.stage', string='Stage', index=True, tracking=True,
+        compute='_compute_stage_id', readonly=False, store=True,
+        copy=False, group_expand='_read_group_stage_ids', ondelete='restrict',
+        domain="[('excluded_team_ids', '!=', team_id),'|', ('team_id', '=', False), ('team_id', '=', team_id)]")
+
     @api.model
     def _read_group_stage_ids(self, stages, domain, order):
         # retrieve team_id from the context and write the domain
@@ -271,7 +277,7 @@ class CrmLead(models.Model):
         # - OR ('team_ids', '=', team_id), ('fold', '=', False) if team_id: add team columns that are not folded
         team_id = self._context.get('default_team_id')
         if team_id:
-            search_domain = [('active','=',True),'|', ('id', 'in', stages.ids), '|', ('team_id', '=', False), ('team_id', '=', team_id)]
+            search_domain = [('excluded_team_ids', '!=', team_id), ('active','=',True),'|', ('id', 'in', stages.ids), '|', ('team_id', '=', False), ('team_id', '=', team_id)]
         else:
             search_domain = [('active','=',True),'|', ('id', 'in', stages.ids), ('team_id', '=', False)]
 

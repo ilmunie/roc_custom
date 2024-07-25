@@ -7,7 +7,7 @@ class CrmStage(models.Model):
     _inherit = 'crm.stage'
 
     active = fields.Boolean(default=True)
-
+    excluded_team_ids = fields.Many2many('crm.team', string="Equipos Excluidos")
 class CrmTag(models.Model):
     _inherit = 'crm.tag'
     _order = 'sequence'
