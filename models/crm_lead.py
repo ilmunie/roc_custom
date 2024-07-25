@@ -269,6 +269,14 @@ class CrmLead(models.Model):
         copy=False, group_expand='_read_group_stage_ids', ondelete='restrict',
         domain="[('excluded_team_ids', '!=', team_id),'|', ('team_id', '=', False), ('team_id', '=', team_id)]")
 
+    def _stage_find(self, team_id=False, domain=None, order='sequence, id', limit=1):
+        if self.team_id:
+            if not domain:
+                domain = [('excluded_team_ids', '!=', self.team_id.id)]
+            else:
+                domain.append(('excluded_team_ids', '!=', self.team_id.id))
+        return super()._stage_find(team_id=team_id, domain=domain,order=order, limit=limit)
+
     @api.model
     def _read_group_stage_ids(self, stages, domain, order):
         # retrieve team_id from the context and write the domain

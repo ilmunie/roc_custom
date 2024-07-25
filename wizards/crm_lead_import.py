@@ -170,7 +170,7 @@ class CrmLeadImport(models.TransientModel):
         if not medium:
             raise ValidationError('Cree un medio de oportunidad con nombre Profesional Puerta Fria')
         vals = {
-            'name': 'PF: ' + partner.name,
+            'name': 'PF: ' + (vals['partner_name'] or partner.name),
             'partner_id': partner.id,
             'email_from': vals['mail'] or partner.email,
             'phone': vals['phone'] or partner.phone,
