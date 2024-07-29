@@ -29,10 +29,10 @@ class PosSession(models.Model):
                 cash_move_line.account_id = self.env.ref('l10n_es.1_pgc_pyme_551').id
             elif 'DEV' in (cash_move_line.name or '').upper():
                 False
-                #DEVOLUCION A CLIENTE
+                #DEVOLUCION A CLIENTE va contra iva e ingresos
                 #cash_move_line.account_id = False
             elif 'ING' in (cash_move_line.name or '').upper():
-                #INGRESO A CAJA
+                #INGRESO A CAJA no se ingresa dinero a caja
                 cash_move_line.account_id = False
             elif 'OPENING' in (cash_move_line.name or '').upper():
                 # ASIENTO APERTURA
@@ -203,7 +203,7 @@ class PosOrder(models.Model):
             if order.is_l10n_es_simplified_invoice:
                 res = self._generate_pos_order_simplified_invoice()
             else:
-                res = super(order, PosOrder)._generate_pos_order_invoice()
+                res = super()._generate_pos_order_invoice()
         return res
 
 
