@@ -86,6 +86,7 @@ class CrmLeadImport(models.TransientModel):
 
     def find_partner(self, vals):
         mess = []
+        vals_customer = {}
         customer = False
         domain = []
         if vals['partner_name']:
@@ -101,7 +102,7 @@ class CrmLeadImport(models.TransientModel):
                 domain.insert(0, '|')
             domain.append(('email', 'ilike', vals['mail']))
         if len(domain) == 0:
-            mess.append('<span> FILA ' + str(vals['row'] + 1) + ' | NO HAY DATOS DE CLIENTE<span/>')
+            mess.append('FILA ' + str(vals['row'] + 1) + ' | ERROR: NO HAY DATOS DE CLIENTE')
         else:
             partners = self.env['res.partner'].search(domain)
             if len(partners)==0:
@@ -114,7 +115,7 @@ class CrmLeadImport(models.TransientModel):
                     no_data = True
                 if not no_data:
                     mess.append('<span> FILA ' + str(vals['row'] + 1) + ' | NUEVO CLIENTE CREADO<span/>')
-                    customer = self.env['res.partner'].create({
+                    vals_customer = {
                         'name': vals['partner_name'] or vals['contact_name'],
                         'email': vals['mail'],
                         'phone': vals['phone'],
@@ -123,13 +124,12 @@ class CrmLeadImport(models.TransientModel):
                         'lang': 'es_ES',
                         'country_id': self.env.ref('base.es').id,
                         'mobile': vals['phone']}
-                    ).id
             elif len(partners)==1:
                 customer = partners[0].id
             elif len(partners)>1:
                 mess.append('<span> FILA ' + str(vals['row'] + 1) + ' | VARIAS COINCIDENCIAS DE CLIENTE<span/>')
                 customer = partners[0].id
-        return customer, mess
+        return customer, vals_customer, mess
 
     def get_workbook_sheet(self, book):
         """
@@ -171,10 +171,10 @@ class CrmLeadImport(models.TransientModel):
         if not medium:
             raise ValidationError('Cree un medio de oportunidad con nombre Profesional Puerta Fria')
         pr_dict = {
-            '': 0,
-            'Poco': 1,
-            'Normal': 2,
-            'Alto': 3,
+            '': '0',
+            'Poco': '1',
+            'Normal': '2',
+            'Alto': '3',
         }
         vals = {
             'name': 'PF: ' + (vals['partner_name'] or partner.name),
@@ -209,18 +209,26 @@ class CrmLeadImport(models.TransientModel):
             sheet = self.get_workbook_sheet(book)
             for curr_row in range(1, sheet.nrows):
                 vals = self.row_to_dict(sheet, curr_row)
-                customer_id, mess = self.find_partner(vals)
+                customer_id, customer_vals, mess = self.find_partner(vals)
                 message.extend(mess)
-                if customer_id:
-                    self.customer_update(customer_id, vals)
-                    opp_to_create.append(self.get_final_opp_vals(vals, customer_id))
+                opp_to_create.append({'row': curr_row, 'customer_id': customer_id,
+                                      'customer_vals': customer_vals, 'vals': vals})
             for mess in message:
                 if 'ERROR' in mess:
                     error = True
-                    raise UserError('  -  '.join([mess for mess in message if 'ERROR' in mess]))
-            if not error:
-                opp = self.env['crm.lead'].create(opp_to_create)
-                ok_mess = self._set_default_warn_msg(str(len(opp)) + " OPORTUNIDADES CREADAS")
+                    break
+            if error:
+                self.message = "<strong><span style='font-size:10.0pt;font-family:Arial;color:red'>IMPORTACION ABORTADA</span></strong><br/>" + ('<br/>'.join([mess for mess in message if 'ERROR' in mess]))
+            else:
+                #ITERO POR OPP TO CREATE: 1. ASIGNO/CREO CLIENTE 2.ACTUALIZO DATOS PARTNER 3. CREO OPORTUNIDAD 4. GUARDO MESSAGE
+                for create_data in opp_to_create:
+                    if create_data['customer_id']:
+                        customer_id = create_data['customer_id']
+                    else:
+                        customer_id = self.env['res.partner'].create(create_data['customer_vals'])[0].id
+                    self.customer_update(customer_id, create_data['vals'])
+                    self.env['crm.lead'].create(self.get_final_opp_vals(create_data['vals'], customer_id))
+                ok_mess = self._set_default_warn_msg(str(len(opp_to_create)) + " OPORTUNIDADES CREADAS")
                 ok_mess = ok_mess + '<br/>' + '<br/>'.join(message)
                 self.message = ok_mess
             self.state = 'done'
