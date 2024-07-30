@@ -698,6 +698,7 @@ class TechnicalJobMixin(models.AbstractModel):
         if self.next_active_job_id:
             action = self.next_active_job_id.open_in_calendar_view()
             return action
+
     def action_schedule_job(self):
         self.ensure_one()
         configs = self.env['technical.job.assistant.config'].search([('model_name','=',self._name)])

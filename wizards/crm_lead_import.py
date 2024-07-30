@@ -76,10 +76,12 @@ class CrmLeadImport(models.TransientModel):
             'mail': str(self._read_cell(sheet, curr_row, 4) or ''),
             'last_contact': self._read_cell(sheet, curr_row, 5),
             'partner_intrest': str(self._read_cell(sheet, curr_row, 6) or ''),
-            'address': str(self._read_cell(sheet, curr_row, 9) or ''),
-            'loc': str(self._read_cell(sheet, curr_row, 11) or ''),
-            'source': str(self._read_cell(sheet, curr_row, 10) or ''),
-            'comments': str(self._read_cell(sheet, curr_row, 15) or ''),
+            'address': str(self._read_cell(sheet, curr_row, 7) or ''),
+            'loc': str(self._read_cell(sheet, curr_row, 9) or ''),
+            'source': str(self._read_cell(sheet, curr_row, 8) or ''),
+            'web': str(self._read_cell(sheet, curr_row, 10) or ''),
+            'comments': str(self._read_cell(sheet, curr_row, 11) or ''),
+
         }
 
     def find_partner(self, vals):
@@ -157,26 +159,32 @@ class CrmLeadImport(models.TransientModel):
             if tags and tags[0].id not in partner.category_id.mapped('id'):
                 partner.category_id = [(4, tags[0].id)]
         return
-
     def get_final_opp_vals(self, vals, customer_id):
         partner = self.env['res.partner'].browse(customer_id)
         team = self.env['crm.team'].search([('name', '=', 'Puerta Fria')])
         if not team:
             raise ValidationError('Cree un equipo de ventas con nombre Puerta Fria')
-        source = self.env['utm.source'].search([('name', '=', 'Profesional Puerta Fria')])
-        if not source:
-            raise ValidationError('Cree un origen de oportunidad con nombre Profesional Puerta Fria')
+        source = self.env['utm.source'].search([('name', '=', vals['source'])])
+        if not source and vals['source']:
+            source = self.env['utm.source'].create({'name': vals['source']})
         medium = self.env['utm.medium'].search([('name', '=', 'Profesional Puerta Fria')])
         if not medium:
             raise ValidationError('Cree un medio de oportunidad con nombre Profesional Puerta Fria')
+        pr_dict = {
+            '': 0,
+            'Poco': 1,
+            'Normal': 2,
+            'Alto': 3,
+        }
         vals = {
             'name': 'PF: ' + (vals['partner_name'] or partner.name),
             'partner_id': partner.id,
+            'website': vals['web'],
+            'priority': pr_dict[vals['partner_intrest']],
             'email_from': vals['mail'] or partner.email,
             'phone': vals['phone'] or partner.phone,
             'mobile': vals['phone'] or partner.mobile,
             'type': 'opportunity',
-            'priority': False,
             'company_concern': False,
             'lang_id': self.env.ref('base.lang_es').id,
             'tag_ids': False,

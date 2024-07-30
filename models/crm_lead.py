@@ -6,6 +6,8 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
+    last_call_date = fields.Date(string='Fecha ultima llamada')
+    last_call_status = fields.Selection(selection=[('no_aswer', 'Sin respuesta'), ('aswer', 'Atendida')], string="Estado ultima llamada")
     partner_vat = fields.Char(related='partner_id.vat')
     def copy(self, default=None):
         copied = super(CrmLead, self).copy(default)
@@ -174,14 +176,14 @@ class CrmLead(models.Model):
     def compute_datetime_last_lead_stage(self):
         for record in self:
             if record.lead_stage_change_ids:
-                record.datetime_in_lead_stage = sorted(record.lead_stage_change_ids, key=lambda r: r.date, reverse=True)[0].date + timedelta(days=1)
+                record.datetime_in_lead_stage = sorted(record.lead_stage_change_ids, key=lambda r: r.date, reverse=True)[0].date #+ timedelta(days=1)
             else:
                 record.datetime_in_lead_stage = record.create_date
     @api.depends('stage_change_ids')
     def compute_datetime_last_stage(self):
         for record in self:
             if record.stage_change_ids:
-                record.datetime_in_stage = sorted(record.stage_change_ids, key=lambda r: r.date, reverse=True)[0].date + timedelta(days=1)
+                record.datetime_in_stage = sorted(record.stage_change_ids, key=lambda r: r.date, reverse=True)[0].date #+ timedelta(days=1)
             else:
                 record.datetime_in_stage = record.create_date
 

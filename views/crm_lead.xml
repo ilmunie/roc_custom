@@ -488,6 +488,9 @@
             </xpath>
             <xpath expr="//filter[@name='date_closed']" position="after">
                 <separator orientation="vertical"/>
+                    <filter string="Fecha ult llamada" name="last_call_date" context="{'group_by':'last_call_date'}"/>
+                    <filter string="Estado ult llamada" name="last_call_status" context="{'group_by':'last_call_status'}"/>
+                <separator orientation="vertical"/>
                     <filter string="Estado de procesamiento" name="won_status" context="{'group_by':'won_status'}"/>
                 <separator orientation="vertical"/>
                     <!--<filter string="Interés Cliente" name="customer_concern" context="{'group_by':'customer_concern'}"/>-->

@@ -1,6 +1,8 @@
 import datetime
 from odoo import fields, models, api, SUPERUSER_ID
 from dateutil.relativedelta import relativedelta
+from datetime import timedelta
+
 class TechnicalJobAssistantConfig(models.Model):
     _name = 'technical.job.assistant.config'
 
@@ -111,6 +113,8 @@ class TechnicalJobAssistant(models.Model):
     def _compute_week_group(self):
         for record in self:
             date_to_use = record.date_field_value or record.next_active_job_date
+            if date_to_use and record.date_field_value:
+                date_to_use = date_to_use + timedelta(days=1)
             if date_to_use:
                 week_diff = self.weeks_difference(date_to_use)
                 if week_diff == 0:
@@ -226,6 +230,8 @@ class TechnicalJobAssistant(models.Model):
                     technical_job_count = real_rec.technical_job_count
                     show_technical_schedule_job_ids = [(6,0,real_rec.show_technical_schedule_job_ids.mapped('id'))]
                     date_field_value = real_rec[record.config_id.date_field_id.name]
+                    if date_field_value:
+                        date_field_value = date_field_value + timedelta(days=1)
                     next_job = real_rec.next_active_job_id
                     html += "<table style='border-collapse: collapse; border: none;'>"
                     html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(

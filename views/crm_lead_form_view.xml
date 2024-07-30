@@ -281,6 +281,8 @@
                             </group>
                             <group name="processing" string="Procesamiento">
                                 <field name="date_deadline"/>
+                                <field name="last_call_date"/>
+                                <field name="last_call_status"/>
                                 <field name="lost_reason" attrs="{'invisible': [('active', '=', True)]}"/>
                             </group>
                         </group>
