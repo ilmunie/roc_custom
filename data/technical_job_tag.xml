@@ -26,7 +26,7 @@
         <field name="default_duration_hs">0.5</field>
     </record>
     <record id="technical_job_config_lead_med" model="technical.job.assistant.config">
-        <field name="name">Visita Medición</field>
+        <field name="name">Medición</field>
         <field name="model_id" eval="ref('crm.model_crm_lead')"/>
         <field name="technical_job_type_id" eval="ref('roc_custom.technical_job_type_1')"/>
         <field name="domain_condition" eval="[('stage_id.name','=','Visita'),('team_id.name','not ilike','Reparac')]"/>
@@ -34,11 +34,19 @@
         <field name="date_field_tag">Solicitud visita</field>
     </record>
     <record id="technical_job_config_lead_rep" model="technical.job.assistant.config">
-        <field name="name">Visita Reparacion</field>
+        <field name="name">Reparacion</field>
         <field name="model_id" eval="ref('crm.model_crm_lead')"/>
         <field name="technical_job_type_id" eval="ref('roc_custom.technical_job_type_2')"/>
         <field name="domain_condition" eval="[('stage_id.name','=','Visita'),('team_id.name','ilike','Reparac')]"/>
         <field name="date_field_id" eval="ref('roc_custom.field_crm_lead__datetime_in_stage')"/>
+        <field name="date_field_tag">Solicitud visita</field>
+    </record>
+    <record id="technical_job_config_lead_manual" model="technical.job.assistant.config">
+        <field name="name">Otras Actividades</field>
+        <field name="model_id" eval="ref('crm.model_crm_lead')"/>
+        <field name="technical_job_type_id" eval="ref('roc_custom.technical_job_type_3')"/>
+        <field name="domain_condition" eval="[('manual_technical_job','=',True)]"/>
+        <field name="date_field_id" eval="ref('roc_custom.field_crm_lead__manual_technical_job_request')"/>
         <field name="date_field_tag">Solicitud visita</field>
     </record>
 </data>

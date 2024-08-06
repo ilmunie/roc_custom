@@ -240,7 +240,7 @@ class TechnicalJobAssistant(models.Model):
                     html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
 
             record.technical_job_tag_ids = tag_ids
-            record.date_field_value = date_field_value.date()
+            record.date_field_value = date_field_value.date() if isinstance(date_field_value, datetime.datetime) else date_field_value
             record.technical_job_count = technical_job_count
             record.html_link_to_src_doc = html
             record.html_data_src_doc = html_data_src_doc

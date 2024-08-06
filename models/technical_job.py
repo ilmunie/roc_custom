@@ -436,6 +436,8 @@ class TechnicalJob(models.Model):
                         raise ValueError('No hay etapa de crm llamada Procesamiento Roconsa')
                     else:
                         rec.stage_id = stages[0].id
+                if rec.manual_technical_job:
+                    rec.manual_technical_job = False
                 assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])
                 assistant_to_delete.unlink()
                 if self.env.context.get("from_kanban", False):
@@ -556,12 +558,19 @@ class TechnicalJob(models.Model):
 class TechnicalJobMixin(models.AbstractModel):
     _name = 'technical.job.mixing'
 
+    manual_technical_job = fields.Boolean(string="Publicar Aviso", tracking=True)
+    manual_technical_job_request = fields.Date(string="Fecha solicitud")
+
+
     technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas")
 
     def write(self, vals):
         res = super().write(vals)
         if self.env.context.get("update_assistant_id", False):
             self.env['technical.job.assistant'].browse(self.env.context.get("update_assistant_id", False)).related_rec_fields()
+        if 'manual_technical_job' in vals:
+            if self.manual_technical_job:
+                self.manual_technical_job_request = fields.Date.context_today(self)
         if 'technical_job_tag_ids' in vals:
             if self.technical_schedule_job_ids:
                 for job in self.technical_schedule_job_ids:
