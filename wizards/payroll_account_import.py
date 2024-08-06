@@ -46,18 +46,19 @@ conversion_dict = {
     '(00008) 021 ANTICIPO': ['haber', '460000000'],
     'TOTAL LIQUIDO': ['haber', '465000000'],
     '(00008) 839 DTO.H.EXT': ['haber', '476000000'],
+    #'PRESTACIONES': ['debe', '476000000'],
     'TOTAL COSTE S.S.': ['haber', '476000000'],
     #'TOTAL COSTE S.S.': ['debe', '642000000'], #gasto con aaa
 }
 
 first_payment = {
-    'debe_concepts': ['TOTAL LIQUIDO', '(00008) 838 DTO.C.COM', '(00008) 840 DTO.ACC.'],
+    'debe_concepts': ['TOTAL LIQUIDO'],
     'haber_account': '572000001',
 }
 # total liquido (debe: 465000000) vs banco al haber
 
 ss_payement = {
-    'debe_concepts': ['TOTAL COSTE S.S.'],
+    'debe_concepts': ['TOTAL COSTE S.S.', '(00008) 840 DTO.ACC.', '(00008) 838 DTO.C.COM'],
     'haber_account': '572000005',
 }
 
