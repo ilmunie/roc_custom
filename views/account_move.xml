@@ -1,5 +1,21 @@
 <?xml version="1.0"?>
 <odoo>
+    <record id="view_account_move_line_filter_inherit" model="ir.ui.view">
+		<field name="name">view_account_move_line_filter_inherit</field>
+		<field name="model">account.move.line</field>
+		<field name="inherit_id" ref="account.view_account_move_line_filter"/>
+		<field name="arch" type="xml">
+            <xpath expr="//filter[@name='group_by_account']" position="before">
+                <filter string="Prefijo Cuenta" name="group_by_account_prefix" domain="[]" context="{'group_by': 'report_account_group'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="account.action_account_moves_ledger_general" model="ir.actions.act_window">
+        <field name="context" eval="{'journal_type': 'general', 'search_default_group_by_account': 1, 'search_default_posted': 1,'search_default_group_by_account_prefix': 1}"/>
+    </record>
+
     <record id="account_move_form_view_inherit" model="ir.ui.view">
 		<field name="name">account.move.form.view.inherit</field>
 		<field name="model">account.move</field>

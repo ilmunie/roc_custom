@@ -54,6 +54,15 @@ class PosPayment(models.Model):
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
+    @api.depends('account_id', 'account_id.code')
+    def compute_report_account_group(self):
+        for record in self:
+            res = False
+            if record.account_id and record.account_id.code:
+                res = record.account_id.code[:3]
+            record.report_account_group = res
+    report_account_group = fields.Char(compute=compute_report_account_group, store=True, string="Prefijo Cuenta")
+
 #    @api.model_create_multi
 #    def create(self, vals_list):
 #        #import pdb;pdb.set_trace()
