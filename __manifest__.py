@@ -9,6 +9,7 @@
     'website': '',
     'depends': [
         'crm',
+        'calendar',
         'web',
         'roc_sol',
         'account',

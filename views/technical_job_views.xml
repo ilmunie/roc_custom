@@ -1,5 +1,16 @@
 <?xml version="1.0"?>
 <odoo>
+        <record id="see_html_message_view" model="ir.ui.view">
+            <field name="name">see.full.html.message.view</field>
+            <field name="model">see.full.html.message</field>
+            <field name="arch" type="xml">
+            <form string="Search Jobs">
+                <field name="html_title" nolabel="1" widget="html"/>
+                <field name="html" nolabel="1" widget="html"/>
+            </form>
+            </field>
+        </record>
+
     <record id="action_delete_schedule_tree" model="ir.actions.server">
         <field name="name">Eliminar</field>
         <field name="model_id" ref="model_technical_job"/>
@@ -23,12 +34,20 @@
                 <field name="technical_job_tag_ids"/>
                 <field name="res_id" invisible="1"/>
                 <field name="res_model" invisible="1"/>
+                <field name="id" invisible="1"/>
                 <separator/>
                 <filter string="Activos" name="active" domain="[('job_status', 'not in', ('cancel', 'done', 'stand_by'))]"/>
                 <separator/>
                 <filter string="Primario" name="primary" domain="[('technical_job_tag_ids.name', 'ilike', 'Pri')]"/>
                 <filter string="Secundario" name="secondary" domain="[('technical_job_tag_ids.name', 'ilike', 'Sec')]"/>
                 <filter string="Comodín" name="joker" domain="[('technical_job_tag_ids.name', 'ilike', 'Com')]"/>
+                <separator/>
+                <filter string="Prioridad Baja" name="low_prio" domain="[('visit_priority', 'in', ('1', '0'))]"/>
+                <filter string="Prioridad Media" name="medium_prio" domain="[('visit_priority', '=', '2')]"/>
+                <filter string="Prioridad Alta" name="high_prio" domain="[('visit_priority', '=', '3')]"/>
+                <separator/>
+                <filter string="Con Cargo" name="to_bill" domain="[('visit_payment_type', '!=', 'free')]"/>
+                <filter string="Sin Cargo" name="free" domain="[('visit_payment_type', '=', 'free')]"/>
                 <separator/>
                 <filter string="Etiquetas" name="technical_job_tag" context="{'group_by':'technical_job_tag_ids'}"/>
                 <separator/>
@@ -91,16 +110,22 @@
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
                 <calendar delete="0" string="Calendario de trabajos" quick_add="False" event_open_popup="False"  date_delay="job_duration" create="1" mode="week" date_start="date_schedule"
-                          color="job_employee_id" >
+                          color="job_type_id" >
                     <field name="source_document_display_name" invisible="True"/>
                     <field name="html_link_to_src_doc"/>
                     <field name="technical_job_tag_ids" widget="many2many_tags"/>
                     <field name="job_status" filters="True"/>
+                    <field name="visit_priority" filters="True"/>
+                    <field name="job_categ_id" filters="True"/>
+                    <field name="visit_payment_type" filters="True"/>
+                    <field name="estimated_visit_revenue"/>
+                    <field name="internal_notes" string=" "/>
                     <field name="job_employee_id" avatar_field="avatar_128" filters="True"/>
                     <field name="job_vehicle_id" filters="True" />
                     <field name="job_type_id" filters="True"/>
                     <field name="user_id" avatar_field="avatar_128" filters="True"/>
                     <field name="html_data_src_doc"/>
+
                 </calendar>
             </field>
         </record>
@@ -128,8 +153,10 @@
                             <field name="res_model" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="res_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="job_type_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="job_categ_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="date_status" widget="remaining_days" readonly="1"/>
                             <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
+                            <field name="visit_priority" widget="priority"/>
                         </group>
                         <group>
                             <label class="o_form_label oe_inline" for="date_schedule"/>
@@ -141,6 +168,8 @@
                             <field name="job_employee_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="job_vehicle_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="user_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="visit_payment_type"/>
+                            <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type', '!=', 'to_bill')]}"/>
                             <field name="schedule_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                         </group>
                     </group>
@@ -197,9 +226,15 @@
                             <field name="res_model" invisible="True"/>
                             <field name="res_id" invisible="True"/>
                             <field name="job_type_id"/>
+                            <field name="job_categ_id"/>
                             <field name="date_status" widget="remaining_days"/>
                             <field name="technical_job_tag_ids" widget="many2many_tags"
                                    options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
+                            <field name="visit_priority" widget="priority"/>
+
+                            <field name="visit_payment_type"/>
+                            <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type', '!=', 'to_bill')]}"/>
+
                         </group>
                         <group>
                             <label class="o_form_label oe_inline" for="date_schedule"/>
@@ -273,12 +308,23 @@
                     <sheet>
                         <group>
                             <field name="name" />
+                            <field name="color" widget="color_picker" />
                             <field name="default_duration_hs"/>
                             <field name="default_job_employee_ids" widget="many2many_tags"/>
                             <field name="default_job_vehicle_ids" widget="many2many_tags"/>
                         </group>
                     </sheet>
                 </form>
+            </field>
+        </record>
+        <record id="technical_job_categ" model="ir.ui.view">
+            <field name="name">technical.job.categ</field>
+            <field name="model">technical.job.categ</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <tree string="Categorias" editable="bottom" sample="1">
+                    <field name="name"/>
+                </tree>
             </field>
         </record>
         <record id="technical_job_tag" model="ir.ui.view">
@@ -301,6 +347,12 @@
     <record id="action_technical_job_tag" model="ir.actions.act_window">
         <field name="name">Etiquetas de trabajo técnicos</field>
         <field name="res_model">technical.job.tag</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <record id="action_technical_job_categ" model="ir.actions.act_window">
+        <field name="name">Categorias Trabajos Tecnicos</field>
+        <field name="res_model">technical.job.categ</field>
         <field name="view_mode">tree</field>
     </record>
 
@@ -375,6 +427,12 @@
         action="roc_custom.technical_job_assistant_config_action"
         groups="base.group_no_one"/>
     <menuitem
+        id="menu_technical_job_categ"
+        name="Categorias"
+        sequence="12"
+        parent="roc_custom.menu_crm_job_config"
+        action="roc_custom.action_technical_job_categ"/>
+    <menuitem
         id="menu_technical_job_tag"
         name="Etiquetas"
         sequence="12"
@@ -386,8 +444,6 @@
         sequence="10"
         parent="roc_custom.menu_crm_job_config"
         action="roc_custom.action_technical_job_type"/>
-
-
         <record id="action_confirm_multiple_technical_jobs" model="ir.actions.server">
             <field name="name">Confirmar</field>
             <field name="model_id" ref="model_technical_job"/>
@@ -398,5 +454,4 @@
                     action = records.confirm()
             </field>
         </record>
-
 </odoo>

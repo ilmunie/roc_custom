@@ -292,16 +292,20 @@
                                 <group>
                                     <group>
                                         <field name="visit_payment_type" widget="radio" />
+                                        <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type','!=','to_bill')]}" />
                                     </group>
                                     <group>
+                                        <field name="visit_priority" widget="priority" />
                                         <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
+                                        <field name="job_categ_id"/>
+                                        <field name="job_duration"/>
                                     </group>
                                 </group>
                                 <group>
                                     <field name="visit_internal_notes"/>
                                     <field name="stage_name" invisible="1"/>
                                 </group>
-                                <group string="Disponibilidad cliente" name="customer_availability">
+                                <group string="Disponibilidad cliente" name="customer_availability" attrs="{'invisible': [('next_active_job_id', '!=', False)]}">
                                      <group>
                                         <field name="customer_availability_type"/>
                                      </group>
@@ -321,6 +325,14 @@
                                      </group>
                                     <field name="customer_availability_info" nolabel="1" attrs="{'invisible': [('customer_availability_type', '!=', 'week_availability')]}"
                                     />
+                                </group>
+                                <group string="Proximo trabajo activo" attrs="{'invisible': [('next_active_job_id', '=', False)]}">
+                                    <group>
+                                        <field name="next_active_job_id" nolabel="1" readonly="1" />
+                                    </group>
+                                    <group>
+                                        <field name="next_active_job_date" string="Fecha" readonly="1" />
+                                    </group>
                                 </group>
                             </page>
                             <page string="Internal Notes" name="internal_notes">
@@ -404,7 +416,7 @@
                             </page>
                         </notebook>
                     </sheet>
-                    <div class="oe_chatter">
+                    <div class="oe_chatter" style="display:block;">
                         <field name="message_follower_ids"/>
                         <field name="activity_ids"/>
                         <field name="message_ids" options="{'post_refresh': 'recipients'}"/>

@@ -5,6 +5,11 @@ import pytz
 from random import randint
 import re
 
+class TechnicalJobCateg(models.Model):
+    _name = "technical.job.categ"
+
+    name = fields.Char('Categoria', required=True)
+
 class TechnicalJobTag(models.Model):
     _name = "technical.job.tag"
     _description = "Technical Job Tag"
@@ -27,24 +32,53 @@ class TechnicalJobType(models.Model):
     default_job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita", domain=[('technical','=',True)])
     default_job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Vehículo")
 
+    def _get_default_color(self):
+        return randint(1, 11)
+    color = fields.Integer('Color', default=_get_default_color)
 
 
 class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
     order = 'date_schedule DESC'
 
+    def get_job_data(self):
+        return False
+
+    visit_internal_notes = fields.Text()
+    technical_job_count = fields.Integer()
+
     def write(self, vals):
         res = super().write(vals)
-        if 'technical_job_tag_ids' in vals:
-            if self.res_id and self.res_model:
-                real_rec = self.env[self.res_model].browse(self.res_id)
+        if self.res_id and self.res_model:
+            real_rec = self.env[self.res_model].browse(self.res_id)
+            if 'technical_job_tag_ids' in vals:
                 if real_rec.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
                     real_rec.technical_job_tag_ids = vals.get('technical_job_tag_ids', [(5,)])
-        if self.res_model and self.res_id and 'internal_notes' in vals and vals['internal_notes']:
-            real_rec = self.env[self.res_model].browse(self.res_id)
-            body = "Ha modificado la nota interna de la proxima operacion<br/>"
-            body += vals['internal_notes']
-            real_rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment')
+            if 'internal_notes' in vals:
+                if real_rec.visit_internal_notes != self.internal_notes:
+                    real_rec.visit_internal_notes = vals.get('internal_notes', '')
+            if 'estimated_visit_revenue' in vals:
+                if real_rec.estimated_visit_revenue != self.estimated_visit_revenue:
+                    real_rec.estimated_visit_revenue = vals.get('estimated_visit_revenue', 0)
+            if 'job_duration' in vals:
+                if real_rec.job_duration != self.job_duration:
+                    real_rec.job_duration = vals.get('job_duration', 0)
+            if 'visit_payment_type' in vals:
+                if real_rec.visit_payment_type != self.visit_payment_type:
+                    real_rec.visit_payment_type = vals.get('visit_payment_type', False)
+            if 'visit_priority' in vals:
+                if real_rec.visit_priority != self.visit_priority:
+                    real_rec.visit_priority = vals.get('visit_priority', 0)
+            if 'job_categ_id' in vals:
+                if real_rec.job_categ_id != self.job_categ_id:
+                    real_rec.job_categ_id = vals.get('job_categ_id', False)
+
+
+        #if self.res_model and self.res_id and :
+        #    real_rec = self.env[self.res_model].browse(self.res_id)
+        #    body = "Ha modificado la nota interna de la proxima operacion<br/>"
+        #    body += vals['internal_notes']
+        #    real_rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment')
         return res
     def stop_tracking(self):
         self.ensure_one()
@@ -207,7 +241,10 @@ class TechnicalJobSchedule(models.Model):
             record.source_document_display_name = name
     source_document_display_name = fields.Char(compute=get_source_doc_name, string="Documento origen", store=True)
 
-
+    estimated_visit_revenue = fields.Float(string="Estimado (EUR)")
+    visit_payment_type = fields.Selection(string="Política de cobro", selection=[('free','Sin cargo'), ('to_bill','Con cargo')])
+    visit_priority = fields.Selection(string="Prioridad Visita", selection=[('0', 'Sin definir'), ('1','Baja'), ('2','Media'), ('3','Alta')])
+    job_categ_id = fields.Many2one('technical.job.categ', string="Categoria")
     job_type_id = fields.Many2one('technical.job.type', string="Tipo trabajo")
     res_model = fields.Char()
     res_id = fields.Integer()
@@ -281,6 +318,13 @@ class TechnicalJobSchedule(models.Model):
 class TechnicalJob(models.Model):
     _name = 'technical.job'
 
+    def write(self, vals):
+        res = super().write(vals)
+        if self.env.context.get("update_assistant_id", False):
+            self.env['technical.job.assistant'].browse(self.env.context.get("update_assistant_id", False)).related_rec_fields()
+        return res
+
+    color = fields.Integer(related='job_type_id.color')
     def open_form_partner(self):
         action = self.env.ref('roc_custom.action_technical_job_partner_form').read()[0]
         if self.res_model == 'crm.lead':
@@ -337,6 +381,20 @@ class TechnicalJob(models.Model):
                 real_rec = self.env[self.res_model].browse(self.res_id)
                 if real_rec.technical_job_tag_ids:
                     record.technical_job_tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
+                if real_rec.job_duration:
+                    record.job_duration = real_rec.job_duration
+                if real_rec.visit_internal_notes:
+                    record.internal_notes = real_rec.visit_internal_notes
+                if real_rec.visit_payment_type:
+                    record.visit_payment_type = real_rec.visit_payment_type
+                if real_rec.visit_priority:
+                    record.visit_priority = real_rec.visit_priority
+                if real_rec.job_categ_id:
+                    record.job_categ_id = real_rec.job_categ_id
+                if real_rec.estimated_visit_revenue:
+                    record.estimated_visit_revenue = real_rec.estimated_visit_revenue
+
+
     @api.onchange('job_type_id')
     def _onchange_job_type_id(self):
         for record in self:
@@ -464,15 +522,37 @@ class TechnicalJob(models.Model):
                 else:
                     record.unlink()
 
+
     def delete_schedule(self):
         for record in self:
-            action = self.schedule_id.open_in_calendar_view()
-            action.pop('context')
-            if record.schedule_id:
-                record.schedule_id.unlink()
+            if self.env.context.get("update_assistant_id", False):
+                self.delete_schedule_tree()
+                assistant =  self.env['technical.job.assistant'].browse(
+                    self.env.context.get("update_assistant_id", False))
+                if assistant.res_model == 'technical.job.schedule':
+                    assistant.unlink()
+                else:
+                    assistant.related_rec_fields()
+                if self.env.context.get("from_kanban", False):
+                    ctx = self.env.context.copy()
+                    ctx.pop('from_kanban')
+                    return {
+                        'name': "Planificación de Operaciones",
+                        'res_model': 'technical.job.assistant',
+                        'type': 'ir.actions.act_window',
+                        'context': ctx,
+                        'domain': [('create_uid', '=', self.env.user.id)],
+                        'views': [(False, 'kanban'), (self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')],
+                    }
+
             else:
-                record.unlink()
-            return action
+                action = self.schedule_id.open_in_calendar_view()
+                action.pop('context')
+                if record.schedule_id:
+                    record.schedule_id.unlink()
+                else:
+                    record.unlink()
+                return action
 
     def clean_technical_job(self):
         self.env['technical.job'].search([('active','=',False)]).unlink()
@@ -514,6 +594,11 @@ class TechnicalJob(models.Model):
 
     attch_ids = fields.Many2many(related="schedule_id.attch_ids", readonly=False)
     technical_job_tag_ids = fields.Many2many(related="schedule_id.technical_job_tag_ids", readonly=False)
+    visit_priority = fields.Selection(related="schedule_id.visit_priority", readonly=False, store=True, force_save=True)
+    job_categ_id = fields.Many2one(related="schedule_id.job_categ_id", readonly=False, store=True, force_save=True)
+    visit_payment_type = fields.Selection(related="schedule_id.visit_payment_type", readonly=False, store=True, force_save=True)
+    estimated_visit_revenue = fields.Float(related="schedule_id.estimated_visit_revenue", readonly=False, store=True, force_save=True)
+
     internal_notes = fields.Text(related="schedule_id.internal_notes", store=True, readonly=False, force_save=True)
     html_data_src_doc = fields.Html(related='schedule_id.html_data_src_doc', readonly=False, force_save=True)
     html_link_to_src_doc = fields.Html(related='schedule_id.html_link_to_src_doc', readonly=False, force_save=True, store=True)
@@ -560,14 +645,17 @@ class TechnicalJobMixin(models.AbstractModel):
 
     manual_technical_job = fields.Boolean(string="Publicar Aviso", tracking=True)
     manual_technical_job_request = fields.Date(string="Fecha solicitud")
-
-
-    technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas")
+    technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas", tracking=True)
+    estimated_visit_revenue = fields.Float(string="Estimado (EUR)")
+    job_duration = fields.Float(string="Horas estimadas")
 
     def write(self, vals):
         res = super().write(vals)
         if self.env.context.get("update_assistant_id", False):
             self.env['technical.job.assistant'].browse(self.env.context.get("update_assistant_id", False)).related_rec_fields()
+        if 'estimated_visit_revenue' in vals:
+            if self.estimated_visit_revenue > 0 and self.visit_payment_type=='free':
+                self.visit_payment_type = 'to_bill'
         if 'manual_technical_job' in vals:
             if self.manual_technical_job:
                 self.manual_technical_job_request = fields.Date.context_today(self)
@@ -576,6 +664,35 @@ class TechnicalJobMixin(models.AbstractModel):
                 for job in self.technical_schedule_job_ids:
                     if job.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
                         job.technical_job_tag_ids = [(6, 0, self.technical_job_tag_ids.mapped('id'))]
+        if 'job_duration' in vals:
+            if self.technical_schedule_job_ids:
+                for job in self.technical_schedule_job_ids:
+                    if job.job_duration != self.job_duration:
+                        job.job_duration = self.job_duration
+        if 'estimated_visit_revenue' in vals:
+            if self.technical_schedule_job_ids:
+                for job in self.technical_schedule_job_ids:
+                    if job.estimated_visit_revenue != self.estimated_visit_revenue:
+                        job.estimated_visit_revenue = self.estimated_visit_revenue
+        if 'visit_payment_type' in vals:
+            if self.visit_payment_type:
+                for job in self.technical_schedule_job_ids:
+                    if job.visit_payment_type != self.visit_payment_type:
+                        job.visit_payment_type = self.visit_payment_type
+        if 'visit_priority' in vals:
+            if self.visit_priority:
+                for job in self.technical_schedule_job_ids:
+                    if job.visit_priority != self.visit_priority:
+                        job.visit_priority = self.visit_priority
+        if 'job_categ_id' in vals:
+                for job in self.technical_schedule_job_ids:
+                    if job.job_categ_id != self.job_categ_id:
+                        job.job_categ_id = self.job_categ_id.id if self.job_categ_id else False
+        if 'visit_internal_notes' in vals:
+            if self.visit_internal_notes:
+                for job in self.technical_schedule_job_ids:
+                    if job.internal_notes != self.visit_internal_notes:
+                        job.internal_notes = self.visit_internal_notes
         return res
 
     @api.depends('customer_availability_type', 'customer_visit_datetime')
@@ -591,13 +708,18 @@ class TechnicalJobMixin(models.AbstractModel):
                                                                       {'res_model': record._name,
                                                                        'job_status': 'confirmed',
                                                                        'res_id': record.id,
+                                                                       'visit_payment_type': record.visit_payment_type,
+                                                                       'visit_priority': record.visit_priority,
+                                                                       'job_categ_id': record.job_categ_id,
+                                                                       'estimated_visit_revenue': record.estimated_visit_revenue,
+                                                                       'internal_notes': record.visit_internal_notes,
                                                                        'job_employee_ids': [(6, 0, config[
                                                                            0].technical_job_type_id.default_job_employee_ids.mapped('id'))],
                                                                        'job_vehicle_ids': [(6, 0, config[
                                                                            0].technical_job_type_id.default_job_vehicle_ids.mapped('id'))],
                                                                        'job_type_id': config[
                                                                            0].technical_job_type_id.id,
-                                                                       'job_duration': config[
+                                                                       'job_duration': record.job_duration if record.job_duration>0 else config[
                                                                            0].technical_job_type_id.default_duration_hs,
                                                                        'user_id': config[
                                                                            0].responsible_user_id.id,
@@ -608,6 +730,8 @@ class TechnicalJobMixin(models.AbstractModel):
 
     trigger_visit_job_generation = fields.Boolean(store=True, compute=visit_job_generation)
     visit_payment_type = fields.Selection(string="Política de cobro", selection=[('free','Sin cargo'), ('to_bill','Con cargo')])
+    visit_priority = fields.Selection(string="Prioridad Visita", selection=[('0', 'Sin definir'), ('1','Baja'), ('2','Media'), ('3','Alta')])
+    job_categ_id = fields.Many2one('technical.job.categ', string="Categoria")
     customer_availability_type = fields.Selection(string="Tipo disponibilidad",
                                                   selection=[('no_data', 'Sin información'),
                                                              ('specific_date', 'Coordinación exacta'),
@@ -627,7 +751,7 @@ class TechnicalJobMixin(models.AbstractModel):
                                                          ('15', '15'), ('16', '16'), ('17', '17'), ('18', '18')], default="08")
     customer_av_min_end = fields.Selection(string="Min fin", selection=[('00', '00'), ('15', '15'), ('30', '30'), ('45', '45')], default="00")
     customer_availability_info = fields.Text(string="Disponibilidad cliente")
-    visit_internal_notes = fields.Text(string="Nota a técnico")
+    visit_internal_notes = fields.Text(string="Nota a técnico", tracking=True)
 
     @api.onchange('customer_availability_type', 'customer_visit_datetime', 'customer_av_visit_date',
                   'customer_av_hour_start', 'customer_av_min_start', 'customer_av_hour_end', 'customer_av_min_end')
@@ -739,10 +863,18 @@ class TechnicalJobMixin(models.AbstractModel):
 class CrmLead(models.Model,TechnicalJobMixin):
     _inherit = 'crm.lead'
 
+    @api.depends('expected_revenue')
+    def sync_exp_rev(self):
+        for record in self:
+            if record.expected_revenue and record.expected_revenue != record.estimated_visit_revenue:
+                record.estimated_visit_revenue = record.expected_revenue
+            record.trigger_sync_expected_revenue = False if record.trigger_sync_expected_revenue else True
+    trigger_sync_expected_revenue = fields.Boolean(compute=sync_exp_rev, store=True )
+
     def get_job_data(self):
         data = ''
-        if self.visit_payment_type:
-            data += "<strong>" + dict(self._fields['visit_payment_type']._description_selection(self.env)).get(self.visit_payment_type) + "<strong/><br/><br/>"
+        #if self.visit_payment_type:
+        #    data += "<strong>" + dict(self._fields['visit_payment_type']._description_selection(self.env)).get(self.visit_payment_type) + "<strong/><br/><br/>"
         if self.type_of_client:
             data += "Tipo de cliente: " + dict(self._fields['type_of_client']._description_selection(self.env)).get(self.type_of_client) + "<br/><br/>"
         if self.mobile or self.mobile_partner or self.phone:
@@ -759,8 +891,20 @@ class CrmLead(models.Model,TechnicalJobMixin):
             data += f"<a href='https://google.com/maps/search/{self.address_label}'><br/>📍 Dirección: {self.address_label}<br/><br/></a>"
         if self.customer_availability_info:
             data += self.customer_availability_info + "<br/><br/>"
-        if self.visit_internal_notes:
-            data += self.visit_internal_notes + "<br/><br/>"
+
+        if self.work_type_id:
+            data += f"Tipo de obra: {self.work_type_id.name}<br/><br/>"
+
+        if self.intrest_tag_ids:
+            data += f"Intereses: {' | '.join(self.intrest_tag_ids.mapped('name'))}<br/><br/>"
+
+        if self.description:
+            if "Se le informó / respondió:" in self.description:
+                position = self.description.find("Se le informó / respondió:")
+                # If the phrase is found, extract the content before it
+                data += f"{self.description[:position].strip()}<br/><br/>"
+            else:
+                data += f"{self.description}<br/><br/>"
         return data
 
     address_label = fields.Char(
@@ -857,3 +1001,7 @@ class SaleOrder(models.Model,TechnicalJobMixin):
 
 class MrpProduction(models.Model,TechnicalJobMixin):
     _inherit = 'mrp.production'
+
+
+
+

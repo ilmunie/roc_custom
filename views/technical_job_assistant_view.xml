@@ -29,10 +29,29 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
+                                <strong><field name="job_categ_id"/><span attrs="{'invisible': [('job_categ_id', '=', False)]}"> | </span><field name="visit_priority" widget="priority"/></strong>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
                                 <field name="technical_job_tag_ids" widget="many2many_tags"
                                        options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>
+                                    <field name="visit_payment_type"/>
+                                    <span attrs="{'invisible':[('visit_payment_type', '!=', 'to_bill')]}"> |
+                                    <field name="estimated_visit_revenue"/> EUR</span>
+                                </strong>
+                                <br/>
+                            <field name="internal_notes"/>
+                            </div>
+                        </div>
+
                         <!-- Second Row: Split into Left and Right sections -->
                         <div class="row">
                             <!-- Left Section: See Source Document Button -->
@@ -52,6 +71,7 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <field name="date_field_value" nolabel="1" widget="remaining_days"/>
+                                        <field name="next_active_job_id" invisible="1"/>
                                     </div>
                                 </div>
                             </div>
@@ -60,8 +80,8 @@
                         <!-- Third Row: Next Active Job Type ID -->
                         <div class="row">
                             <div class="col-12">
-                                <button name="edit_next_job" context="{'from_kanban': True}" attrs="{'invisible': [('next_active_job_id','=',False)]}" type="object" class="btn btn-outline-primary oe_inline oe_stat_button" icon="fa-play">
-                                    <strong><span><field name="next_active_job_type_id"/></span> 🛠️ </strong>
+                                <button name="edit_next_job" context="{'from_kanban': True}"  type="object" class="btn btn-outline-primary oe_inline oe_stat_button" icon="fa-play">
+                                    <strong><span><field name="config_id"/></span> 🛠️ (<field name="job_duration"/> hs.)</strong>
                                 </button>
                             </div>
                         </div>
@@ -77,7 +97,7 @@
                         <!-- Fourth Row: HTML Data from Source Document -->
                         <div class="row">
                             <div class="col-12">
-                                <field name="html_data_src_doc" widget="html"/>
+                                <field name="html_data_src_doc" widget="text_widget"/>
                             </div>
                         </div>
 
@@ -92,7 +112,7 @@
                         <div class="oe_kanban_footer">
                             <div class="o_kanban_record_bottom">
                                 <div class="oe_kanban_bottom_left">
-                                    <button name="action_schedule_job" type="object" class="btn btn-outline-primary  oe_inline oe_stat_button">
+                                    <button name="action_schedule_job" type="object" class="btn btn-outline-primary  oe_inline oe_stat_button" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}">
                                         <span>Nueva <br/>operación</span>
                                     </button>
                                 </div>
@@ -119,29 +139,37 @@
             <field name="model">technical.job.assistant</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <tree string="Trabajos" create="0" delete="0" expand="1" decoration-danger="dec_danger==True">
+                <tree string="Trabajos" create="0" delete="0" expand="1" decoration-danger="dec_danger==True" multi_edit="1" editable="top">
                     <field name="dec_danger" invisible="1"/>
                     <field name="res_model" invisible="1"/>
                     <field name="res_id" invisible="1"/>
-                    <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
-                    <field name="responsible_user_id" invisible="1"/>
-                    <field name="config_id"/>
+                    <field name="technical_job_tag_ids" readonly="False" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
+                    <field name="visit_priority" readonly="False" widget="priority"/>
+                    <field name="job_categ_id" readonly="False"/>
+                    <field name="responsible_user_id" optional="hide"/>
+                    <field name="config_id" readonly="1" string="Operación"/>
                     <field name="html_link_to_src_doc"/>
                     <button name="see_src_document" type="object" icon="fa-edit"/>
                     <button name="open_form_partner" type="object" icon="fa-user" attrs="{'invisible':[('res_model', '!=', 'crm.lead')]}"/>
-                    <field name="date_field_value" nolabel="1" widget="remaining_days" class="text-right"/>
-                    <field name="date_field_tag" nolabel="1"/>
+                    <field name="date_field_value" string="Solicitado" widget="remaining_days" class="text-right" readonly="1"/>
+                    <!--<field name="date_field_tag" nolabel="1"/>-->
                     <field name="job_status"/>
-                    <field name="technical_job_count"/>
+                    <field name="technical_job_count" optional="hide"/>
                     <field name="next_active_job_id" invisible="1"/>
-                    <field name="next_active_job_type_id"/>
-                    <button name="edit_next_job" type="object" icon="fa-edit" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
+                    <field name="next_active_job_type_id" optional="hide"/>
                     <field name="next_active_job_date" widget="remaining_days"/>
-                    <field name="next_job_vehicle_ids" widget="many2many_tags"/>
-                    <field name="next_job_employee_ids" widget="many2many_tags"/>
-                    <field name="html_data_src_doc" widget="text_widget"/>
+                    <field name="next_job_vehicle_ids" widget="many2many_tags" optional="hide"/>
+                    <field name="next_job_employee_ids" widget="many2many_tags" optional="show"/>
+                    <button name="edit_next_job" type="object" icon="fa-edit" attrs="{'invisible': ['|',('next_active_job_id','=',False),('res_model','=','technical.job.schedule')]}"/>
+                    <field name="visit_payment_type"/>
+                    <field name="estimated_visit_revenue"/>
+                    <field name="job_duration"/>
+                    <field name="internal_notes" readonly="0"/>
+
+                    <field name="html_data_src_doc" widget="text_widget" readonly="1"/>
+                    <button name="see_all_data" type="object" icon="fa-eye" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
                     <button name="see_job_in_calendar" type="object" string="Ver operación" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
-                    <button name="action_schedule_job" type="object" string="Nueva operación"/>
+                    <button name="action_schedule_job" type="object" string="Nueva operación" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
                 </tree>
             </field>
         </record>
@@ -152,35 +180,49 @@
             <field name="arch" type="xml">
                 <search string="Trabajos">
                     <field name="html_link_to_src_doc"/>
+                    <field name="config_id" string="Tipo de operacion"/>
+                    <field name="technical_job_tag_ids"/>
                     <field name="res_model"/>
                     <field name="responsible_user_id"/>
-                    <field name="next_active_job_type_id"/>
                     <field name="next_job_vehicle_ids"/>
                     <field name="next_job_employee_ids"/>
-                    <field name="technical_job_tag_ids"/>
-                    <field name="config_id"/>
                     <field name="show_technical_schedule_job_ids"/>
+                    <filter string="Mis planificaciones" name="assigned_to_me" domain="[('responsible_user_id', '=', uid)]"/>
+                    <separator/>
+                    <filter string="Mis trabajos" help="Mis trabajos: usted es el empleado" name="myjobs" domain="['|', ('next_job_employee_ids.user_id', 'in',  [uid]),('config_id.technical_job_type_id.default_job_employee_ids.user_id', 'in', [uid])]"/>
+                    <separator/>
                     <separator/>
                     <filter string="Primario" name="primary" domain="[('technical_job_tag_ids.name', 'ilike', 'Pri')]"/>
                     <filter string="Secundario" name="secondary" domain="[('technical_job_tag_ids.name', 'ilike', 'Sec')]"/>
                     <filter string="Comodín" name="joker" domain="[('technical_job_tag_ids.name', 'ilike', 'Com')]"/>
                     <separator/>
+                    <filter string="Prioridad Baja" name="low_prio" domain="[('visit_priority', 'in', ('1', '0'))]"/>
+                    <filter string="Prioridad Media" name="medium_prio" domain="[('visit_priority', '=', '2')]"/>
+                    <filter string="Prioridad Alta" name="high_prio" domain="[('visit_priority', '=', '3')]"/>
                     <separator/>
-                    <filter string="Mis planificaciones" name="assigned_to_me" domain="[('responsible_user_id', '=', uid)]"/>
+                    <filter string="Con Cargo" name="to_bill" domain="[('visit_payment_type', '!=', 'free')]"/>
+                    <filter string="Sin Cargo" name="free" domain="[('visit_payment_type', '=', 'free')]"/>
                     <separator/>
-                    <filter string="Mis trabajos" help="Mis trabajos: usted es el empleado" name="myjobs" domain="['|', ('next_job_employee_ids.user_id', 'in',  [uid]),('config_id.technical_job_type_id.default_job_employee_ids.user_id', 'in', [uid])]"/>
+                    <filter string="Con operaciones" name="with_active_job" domain="[('next_active_job_id', '!=', False)]"/>
+                    <filter string="Sin operaciones" name="without_active_job" domain="[('next_active_job_id', '=', False)]"/>
                     <separator/>
+                    <filter string="Fecha Solicitud" name="date_field_value_filter" date="date_field_value" />
+                    <filter string="Fecha Próx planificación" name="next_active_job_date_filter" date="next_active_job_date" />
                     <group expand="1" string="Group By">
                         <filter string="Semana solicitud" name="week_group" context="{'group_by':'week_group'}"/>
                         <filter string="Estado coordinacion" name="week_action_group" context="{'group_by':'week_action_group'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Etiquetas" name="technical_job_tag" context="{'group_by':'technical_job_tag_ids'}"/>
                         <separator orientation="vertical"/>
+                        <filter string="Categoria" name="job_categ_id" context="{'group_by':'job_categ_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Prioridad" name="priority" context="{'group_by':'visit_priority'}"/>
+                        <separator orientation="vertical"/>
                         <filter string="Responsable" name="responsible_user_id" context="{'group_by':'responsible_user_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Tipo de operacion" name="configuration" context="{'group_by':'config_id'}"/>
+                        <separator orientation="vertical"/>
                         <filter string="Fecha Próx planificación" name="next_active_job_date" context="{'group_by':'next_active_job_date'}"/>
-                        <filter string="Tipo Próx. planificación" name="next_active_job_type_id" context="{'group_by':'next_active_job_type_id'}"/>
                         <filter string="Vehículos Próx. planificación" name="next_job_vehicle_ids" context="{'group_by':'next_job_vehicle_ids'}"/>
                         <filter string="Empleados Próx. planificación" name="next_job_employee_ids" context="{'group_by':'next_job_employee_ids'}"/>
                         <separator orientation="vertical"/>
