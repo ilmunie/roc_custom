@@ -48,7 +48,7 @@
         <field name="inherit_id" ref="crm.crm_case_tree_view_leads"/>
         <field name="arch" type="xml">
             <xpath expr="//tree[last()]" position="replace">
-                <tree string="Leads" sample="1" multi_edit="1" default_order="datetime_in_lead_stage desc">
+                <tree string="Leads" sample="1" multi_edit="1" editable="top" default_order="datetime_in_lead_stage desc">
                     <field name="link_to_form" string="         " />
                      <field name="date_deadline" invisible="1"/>
                     <field name="create_date" optional="show"/>

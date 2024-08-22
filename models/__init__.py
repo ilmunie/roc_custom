@@ -20,3 +20,9 @@ from . import report_stock_forecasted
 from . import pos_order
 from . import product_template_attribute_value
 from . import sale_order_template
+from . import res_company
+from . import technical_job_time_register
+from . import technical_job_note_assistant
+from . import technical_job_complementary_models
+from . import technical_job_mixing
+from . import technical_job_schedule

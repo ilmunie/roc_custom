@@ -1,0 +1,69 @@
+<odoo>
+
+  <record id="res_config_settings_view_form_roc_custom" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.inherit.roc_custom</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form" />
+    <field name="model">res.config.settings</field>
+    <field name="priority" eval="100" />
+    <field name="arch" type="xml">
+        <xpath expr="//div[hasclass('settings')]" position="inside">
+            <div class="app_settings_block" data-string="operations" string="Operaciones" data-key="operations" >
+                <h2>Configuracion general</h2>
+                <br/>
+                <div class="col-12 col-lg-6 o_setting_box" id="operations">
+                    <div class="o_setting_right_pane" id="operation_settings">
+                        <label for="min_billing_time_hs"/>
+                        <div class="content-group" id="min_billing_time_hs">
+                            <field name="min_billing_time_hs"/>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <div class="col-12 col-lg-6 o_setting_box" id="operations_2">
+                    <div class="o_setting_right_pane" id="operations_settings_2">
+                        <label for="billing_time_product_id"/>
+                        <div class="content-group" id="billing_time_product_id">
+                            <field name="billing_time_product_id" options="{'no_quick_create':1}"/>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <div class="col-12 col-lg-6 o_setting_box" id="operations_3">
+                    <div class="o_setting_right_pane" id="operation_settings_3">
+                        <label for="displacement_product_ids"/>
+                        <div class="content-group" id="displacement_product_ids">
+                            <field name="displacement_product_ids" widget="many2many_tags"/>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <div class="col-12 col-lg-6 o_setting_box" id="operations_4">
+                    <div class="o_setting_right_pane" id="operations_settings_4">
+                        <label for="material_product_id"/>
+                        <div class="content-group" id="material_product_id">
+                            <field name="material_product_id" options="{'no_quick_create':1}"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 o_setting_box" id="operations_5">
+                    <div class="o_setting_right_pane" id="operations_settings_5">
+                        <label for="material_rentability_multiplier"/>
+                        <div class="content-group" id="material_rentability_multiplier">
+                            <field name="material_rentability_multiplier"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 o_setting_box" id="operations_6">
+                    <div class="o_setting_right_pane" id="operations_settings_6">
+                        <label for="job_billing_journal_id"/>
+                        <div class="content-group" id="default_job_billing_journal_id">
+                            <field name="job_billing_journal_id"/>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </xpath>
+    </field>
+  </record>
+</odoo>

@@ -1,5 +1,75 @@
 <?xml version="1.0"?>
 <odoo>
+
+
+        <record id="technical_job_note_assistant_view" model="ir.ui.view">
+            <field name="name">technical.job.note.assistant.view</field>
+            <field name="model">technical.job.note.assistant</field>
+            <field name="arch" type="xml">
+            <form string="Comentario">
+                <strong><field name="content_type" readonly="1" nolabel="1" /></strong>
+                <br/>
+                <field name="attch_ids" widget="many2many_binary"/>
+                <field name="currency_id" invisible="1"/>
+                <br/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿QUEDAN TAREAS PENDIENTES?</span></strong><br/>
+                <field name="pending_jobs" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
+                <br/>
+                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'no')]}">
+                    <span>Al continuar la operación quedará aplazada para ser recoordinada </span>
+                </div>
+                <div class="alert alert-info mb-0" role="info" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'yes')]}">
+                    <span>Al continuar se marcará la operación como terminada</span>
+                </div>
+                <field name="content" nolabel="1" />
+                <br/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿NECESITA FACTURACION?</span></strong><br/>
+                <field name="needs_billing" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
+                <br/>
+                <div attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('needs_billing', '!=', 'yes')]}">
+                <group string="Costo Materiales" >
+                    <group>
+                        <field name="material_cost" widget="monetary"/>
+                    </group>
+                    <group>
+                        <field name="material_final_price" widget="monetary"/>
+                    </group>
+                </group>
+                <group string="Desplazamiento">
+                    <field name="displacement_product_ids" nolabel="1" widget="many2many_checkboxes" domain="displacement_product_domain"/>
+                    <field name="displacement_product_domain" invisible="1"/>
+                </group>
+                <group string="Tiempo facturable">
+                    <field name="hs_bill"/>
+                </group>
+                <group>
+                    <group>
+                        <field name="hs_to_bill" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
+                    </group>
+                    <group>
+                        <field name="rounded_time_to_bill" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
+                    </group>
+                </group>
+                </div>
+                <br/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿POSIBILIDAD DE RENOVES O MEJORAS?</span></strong><br/>
+                <field name="new_opportunities" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
+                <br/>
+                <group>
+                <field name="opportunities_job_categ_id"  options="{'no_create': 1, 'no_open': 1}"
+                       attrs="{'invisible': [('new_opportunities', '!=', 'yes')], 'required': [('new_opportunities','=','yes')]}" />
+                </group>
+
+                <field name="opportunities_description" nolabel="1"
+                       attrs="{'invisible': [('new_opportunities', '!=', 'yes')], 'required': [('new_opportunities','=','yes')]}" />
+                <field name="technical_job_id" invisible="1"/>
+                <footer>
+                    <button name="action_done" string="Listo" type="object" class="btn-primary"/>
+                </footer>
+            </form>
+            </field>
+        </record>
+
         <record id="see_html_message_view" model="ir.ui.view">
             <field name="name">see.full.html.message.view</field>
             <field name="model">see.full.html.message</field>
@@ -36,7 +106,7 @@
                 <field name="res_model" invisible="1"/>
                 <field name="id" invisible="1"/>
                 <separator/>
-                <filter string="Activos" name="active" domain="[('job_status', 'not in', ('cancel', 'done', 'stand_by'))]"/>
+                <filter string="Activos" name="active" domain="[('job_status', 'not in', ('cancel', 'done'))]"/>
                 <separator/>
                 <filter string="Primario" name="primary" domain="[('technical_job_tag_ids.name', 'ilike', 'Pri')]"/>
                 <filter string="Secundario" name="secondary" domain="[('technical_job_tag_ids.name', 'ilike', 'Sec')]"/>
@@ -112,20 +182,21 @@
                 <calendar delete="0" string="Calendario de trabajos" quick_add="False" event_open_popup="False"  date_delay="job_duration" create="1" mode="week" date_start="date_schedule"
                           color="job_type_id" >
                     <field name="source_document_display_name" invisible="True"/>
-                    <field name="html_link_to_src_doc"/>
-                    <field name="technical_job_tag_ids" widget="many2many_tags"/>
-                    <field name="job_status" filters="True"/>
-                    <field name="visit_priority" filters="True"/>
-                    <field name="job_categ_id" filters="True"/>
-                    <field name="visit_payment_type" filters="True"/>
-                    <field name="estimated_visit_revenue"/>
-                    <field name="internal_notes" string=" "/>
-                    <field name="job_employee_id" avatar_field="avatar_128" filters="True"/>
-                    <field name="job_vehicle_id" filters="True" />
-                    <field name="job_type_id" filters="True"/>
-                    <field name="user_id" avatar_field="avatar_128" filters="True"/>
-                    <field name="html_data_src_doc"/>
-
+                    <field name="res_id" invisible="True"/>
+                    <field name="html_link_to_src_doc" attrs="{'invisible':[('res_id','=',False)]}"/>
+                    <field name="technical_job_tag_ids" attrs="{'invisible':[('technical_job_tag_ids','=',False)]}" widget="many2many_tags"/>
+                    <field name="job_status" attrs="{'invisible':[('job_status','=',False)]}" filters="True"/>
+                    <field name="visit_priority" attrs="{'invisible':[('visit_priority','=',False)]}" widget="priority" filters="True"/>
+                    <field name="job_categ_id" filters="True" attrs="{'invisible':[('job_categ_id','=',False)]}"/>
+                    <field name="visit_payment_type" attrs="{'invisible':[('visit_payment_type','=',False)]}" filters="True"/>
+                    <field name="estimated_visit_revenue" attrs="{'invisible':[('estimated_visit_revenue','=',False)]}"/>
+                    <field name="internal_notes"  attrs="{'invisible':[('internal_notes','=',False)]}" string=" "/>
+                    <field name="job_employee_id"  attrs="{'invisible':[('job_employee_id','=',False)]}" avatar_field="avatar_128" filters="True"/>
+                    <field name="job_vehicle_id"  attrs="{'invisible':[('job_vehicle_id','=',False)]}" filters="True" />
+                    <field name="job_type_id"  attrs="{'invisible':[('job_type_id','=',False)]}" filters="True"/>
+                    <field name="user_id"  attrs="{'invisible':[('user_id','=',False)]}" avatar_field="avatar_128" filters="True"/>
+                    <field name="sale_order_id"  attrs="{'invisible':[('sale_order_id','=',False)]}"/>
+                    <field name="html_data_src_doc" attrs="{'invisible':[('html_data_src_doc','=',False)]}" />
                 </calendar>
             </field>
         </record>
@@ -138,25 +209,49 @@
                 <form string="Trabajo Técnico" >
                     <header>
                         <field name="job_status" widget="statusbar" options="{'clickable':False}" readonly="1"/>
-                        <button name="delete_schedule" type="object" string="Eliminar" class="btn-danger"/>
+                        <button name="delete_schedule" type="object" confirm="¿Seguro desea eliminar la operacion?" string="Eliminar" class="btn-danger"/>
                         <button name="confirm" type="object" string="Confirmar" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','confirmed'))]}"/>
-                        <button name="stand_by" type="object" string="Aplazar" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
+                        <button name="call_checkout_wiz_standby" type="object" string="Aplazar" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
                         <button name="set_draft" type="object" string="Borrador"  attrs="{'invisible': [('job_status','in',('to_do'))]}"/>
-                        <button name="mark_as_done" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
-                        <button name="open_sale_order_wiz" type="object" string="Venta" class="oe_highlight" attrs="{'invisible': ['|',('res_model', '!=', 'crm.lead'),('job_status','not in',('done',))]}"/>
+                        <button name="call_checkout_wiz" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
                     </header>
                     <sheet>
-                    <group>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="see_sale_order" type="object" class="oe_stat_button" icon="fa-money"  attrs="{'invisible': [('sale_order_id', '=', False)]}">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text">Venta</span>
+                                </div>
+                            </button>
+                            <field name="sale_order_id" invisible="1"/>
+                        </div>
+                        <widget name="web_ribbon" title="Aplazado" bg_color="bg-danger" attrs="{'invisible': [('job_status','!=',('stand_by'))]}"/>
+                        <widget name="web_ribbon" title="En camino" bg_color="bg-warning" attrs="{'invisible': ['|', ('displacement_start_datetime', '=', False),('job_status','in',('done','cancel'))]}"/>
+                        <widget name="web_ribbon" title="En proceso" bg_color="bg-info" attrs="{'invisible':[('start_tracking_time', '=', False)]}" />
+                        <widget name="web_ribbon" title="Hecho"  attrs="{'invisible':[('job_status', '!=', 'done')]}" />
+
+
+
+                        <div class="oe_title" attrs="{'invisible': [('res_model', '=', False)]}">
+                            <label for="html_link_to_src_doc" string="Doc. Origen"/>
+                            <h1><field class="text-break" name="html_link_to_src_doc" readonly="True"/></h1>
+                        </div>
+                        <!-- inv fields-->
+                        <field name="displacement_start_datetime" invisible="True"/>
+                        <field name="start_tracking_time" invisible="True"/>
+                        <field name="source_document_display_name" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                        <field name="res_model" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                        <field name="res_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                        <field name="date_status" invisible="True" widget="remaining_days" readonly="1"/>
+                        <field name="schedule_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+
+                    <group string="Datos Operacion">
                         <group>
-                            <field name="html_link_to_src_doc" readonly="True"/>
-                            <field name="source_document_display_name" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="res_model" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="res_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="job_type_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="job_categ_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="date_status" widget="remaining_days" readonly="1"/>
-                            <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
-                            <field name="visit_priority" widget="priority"/>
+                            <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="visit_priority" widget="priority" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="visit_payment_type" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="estimated_visit_revenue" attrs="{'readonly':[('job_status','in',('done','cancel'))],'invisible':[('visit_payment_type', '!=', 'to_bill')]}"/>
                         </group>
                         <group>
                             <label class="o_form_label oe_inline" for="date_schedule"/>
@@ -168,24 +263,34 @@
                             <field name="job_employee_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="job_vehicle_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="user_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="visit_payment_type"/>
-                            <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type', '!=', 'to_bill')]}"/>
-                            <field name="schedule_id" invisible="True" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                         </group>
+                    </group>
+                    <group string="Registro de tiempo operación">
+                        <header attrs="{'invisible': [('job_status', 'in', ('cancel', 'done'))]}">
+                            <button name="start_displacement" type="object" string="Iniciar Desplazamiento" confirm="Seguro inicia el viaje?"
+                                class="oe_highlight" attrs="{'invisible': ['|', ('displacement_start_datetime', '!=', False),('job_status','in',('done','cancel'))]}"/>
+                            <button name="end_displacement" type="object" string="Fin Desplazamiento" confirm="Ya llego a destino?"
+                                class="oe_highlight" attrs="{'invisible': ['|', ('displacement_start_datetime', '=', False),('job_status','in',('done','cancel'))]}"/>
+                            <button name="start_tracking" type="object" string="COMIENZO TRABAJO" confirm="Al aceptar se iniciará el registro del tiempo en domicilio" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':['|', ('displacement_total_min', '=', 0), ('start_tracking_time', '!=', False)]}" class="oe_highlight"/>
+                            <button name="stop_tracking" type="object" string="FIN TRABAJO" confirm="Al aceptar se detiene el registro del tiempo en el domicilio " attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':[('start_tracking_time', '=', False)]}" class="oe_highlight"/>
+                        </header>
                     </group>
                     <group>
-                        <field name="attch_ids" widget="many2many_binary" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                    </group>
-                        <group string="Registro de tiempo operación">
-                            <div class="o_row oe_inline">
-                                <button name="start_tracking" groups="roc_custom.technical_job_user" type="object" string="COMIENZO TRABAJO" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':[('start_tracking_time', '!=', False)]}" class="oe_highlight"/>
-                                <button name="stop_tracking" groups="roc_custom.technical_job_user" type="object" string="FIN TRABAJO" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':[('start_tracking_time', '=', False)]}" class="oe_highlight"/>
-                                <field name="minutes_in_job" groups="roc_custom.technical_job_user" class="oe_inline" readonly="1" force_save="1" attrs="{'invisible':[('start_tracking_time', '!=', False)]}"/>
-                                <field name="minutes_in_job" class="oe_inline" groups="roc_custom.technical_job_planner" readonly="0" force_save="1" attrs="{'invisible':[('start_tracking_time', '!=', False)]}"/>
-                                <span class="o_duration_suffix" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':[('start_tracking_time', '!=', False)]}"> minutos registrados</span>
-                                <field name="start_tracking_time" invisible="1"/>
-                            </div>
+                        <group>
+                            <field name="displacement_total_min"/>
                         </group>
+                        <group>
+                            <field name="billable_total_min"/>
+                        </group>
+                        <field name="time_register_ids" nolabel="1">
+                            <tree editable="bottom" create="0" >
+                                <field name="start_time"/>
+                                <field name="end_time"/>
+                                <field name="total_min"/>
+                                <field name="displacement"/>
+                            </tree>
+                        </field>
+                    </group>
                      <group>
                          <group>
                              <field name="arrive_time" readonly="1" attrs="{'invisible':[('arrive_time','=',False)]}"/>
@@ -194,6 +299,9 @@
                              <field name="out_time" readonly="1" attrs="{'invisible':[('out_time','=',False)]}"/>
                          </group>
                      </group>
+                     <group string="Documentacion asociada">
+                        <field name="attch_ids" widget="many2many_binary" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                    </group>
                     <group string="Info y Aclaraciones">
                         <field name="internal_notes" widget="text" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                     </group>
@@ -216,13 +324,28 @@
             <field name="arch" type="xml">
                 <form string="Trabajo Técnico" >
                     <header>
-                        <field name="job_status" widget="statusbar" options="{'clickable':True}"/>
+                        <field name="job_status" widget="statusbar" options="{'clickable':False}"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="see_sale_order" type="object" class="oe_stat_button" icon="fa-money"  attrs="{'invisible': [('sale_order_id', '=', False)]}">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text">Venta</span>
+                                </div>
+                                <field name="sale_order_id" invisible="1"/>
+                            </button>
+                        </div>
+                        <widget name="web_ribbon" title="Aplazado" bg_color="bg-danger" attrs="{'invisible': [('job_status','!=',('stand_by'))]}"/>
+                        <widget name="web_ribbon" title="En camino" bg_color="bg-warning" attrs="{'invisible': ['|', ('displacement_start_datetime', '=', False),('job_status','in',('done','cancel'))]}"/>
+                        <widget name="web_ribbon" title="En proceso" bg_color="bg-info" attrs="{'invisible':[('start_tracking_time', '=', False)]}" />
+                        <widget name="web_ribbon" title="Hecho"  attrs="{'invisible':[('job_status', '!=', 'done')]}" />
+
                     <group>
                         <group>
                             <field name="html_link_to_src_doc" readonly="True"/>
                             <field name="source_document_display_name" invisible="True"/>
+                            <field name="displacement_start_datetime" invisible="True"/>
+                            <field name="start_tracking_time" invisible="True"/>
                             <field name="res_model" invisible="True"/>
                             <field name="res_id" invisible="True"/>
                             <field name="job_type_id"/>

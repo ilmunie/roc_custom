@@ -13,7 +13,7 @@ class TechnicalJobAssistantConfig(models.Model):
     _name = 'technical.job.assistant.config'
 
     name = fields.Char()
-    model_id = fields.Many2one('ir.model', domain=[('model', 'in', ('stock.picking', 'crm.lead','mrp.production','sale.order','purchase.order'))])
+    model_id = fields.Many2one('ir.model', domain=[('model', 'in', ('stock.picking','helpdesk.ticket', 'crm.lead','mrp.production','sale.order','purchase.order'))])
     model_name = fields.Char(related='model_id.model')
     domain_condition = fields.Char()
     technical_job_type_id = fields.Many2one('technical.job.type')
@@ -29,7 +29,12 @@ class TechnicalJobAssistant(models.Model):
         res = super().write(vals)
         if self.res_id and self.res_model:
             if self.res_model == 'technical.job.schedule':
-                real_rec = self.env['technical.job'].search([('schedule_id', '=', self.res_id)])[0]
+                matched_jobs = self.env['technical.job'].search([('schedule_id', '=', self.res_id)])
+                if matched_jobs:
+                    real_rec = matched_jobs[0]
+                else:
+                    real_rec = self.env[self.res_model].browse(self.res_id)
+
             else:
                 real_rec = self.env[self.res_model].browse(self.res_id)
             if real_rec:
@@ -104,7 +109,7 @@ class TechnicalJobAssistant(models.Model):
         for record in self:
             res = ''
             if record.res_model == 'technical.job.schedule':
-                date_to_use = record.next_active_job_id.date_schedule.date()
+                date_to_use = record.next_active_job_id.date_schedule.date() if record.next_active_job_id else datetime.date.today()
                 today = datetime.date.today()
                 if date_to_use < today:
                     res = f"7. Varios pasados ptes finalizar"
@@ -330,9 +335,14 @@ class TechnicalJobAssistant(models.Model):
                     else:
                         job_categ_id = next_job.job_categ_id.id if next_job.job_categ_id else False
                     html += "<table style='border-collapse: collapse; border: none;'>"
-                    html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(
-                        record.res_id if record.res_model != 'technical.job.schedule' else self.env['technical.job'].search([('schedule_id', '=', record.res_id)])[0].id,
-                        record.res_model if record.res_model != 'technical.job.schedule' else 'technical.job')
+                    if record.res_model == 'technical.job.schedule':
+                        jobs_found = self.env['technical.job'].search([('schedule_id', '=', record.res_id)])
+                        html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(
+                        jobs_found[0].id if jobs_found else record.res_id,
+                          'technical.job' if jobs_found else record.res_model)
+                    else:
+                        html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(
+                        record.res_id, record.res_model)
                     html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
 
             record.estimated_visit_revenue = estimated_visit_revenue

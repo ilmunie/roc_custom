@@ -67,6 +67,10 @@
         <field name="name">Ayudas</field>
         <field name="default_duration_hs">2</field>
     </record>
+    <record id="technical_job_type_10" model="technical.job.type">
+        <field name="name">Desplazamiento</field>
+        <field name="default_duration_hs">2</field>
+    </record>
     <record id="technical_job_config_lead_med" model="technical.job.assistant.config">
         <field name="name">Medición</field>
         <field name="model_id" eval="ref('crm.model_crm_lead')"/>

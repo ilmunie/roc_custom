@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<odoo>
+<data noupdate="1">
+    <record id="helpdesk_team_1" model="helpdesk.team">
+        <field name="name">Garantias</field>
+    </record>
+    <record id="helpdesk_team_2" model="helpdesk.team">
+        <field name="name">Mantenimiento</field>
+    </record>
+    <record id="helpdesk_team_3" model="helpdesk.team">
+        <field name="name">Incidencias Internas</field>
+    </record>
+    <record id="helpdesk_stage_1" model="helpdesk.stage">
+        <field name="name">Visita</field>
+        <field name="team_ids" eval="[(4, ref('roc_custom.helpdesk_team_3')),(4, ref('roc_custom.helpdesk_team_2')),(4, ref('roc_custom.helpdesk_team_1'))]"/>
+    </record>
+
+    <record id="helpdesk.stage_new" model="helpdesk.stage">
+        <field name="team_ids" eval="[(4, ref('roc_custom.helpdesk_team_3')),(4, ref('roc_custom.helpdesk_team_2')),(4, ref('roc_custom.helpdesk_team_1'))]"/>
+    </record>
+</data>
+</odoo>
