@@ -6,7 +6,10 @@
 		<field name="inherit_id" ref="hr.view_employee_form"/>
 		<field name="arch" type="xml">
             <xpath expr="//field[@name='coach_id']" position="after">
-                <field name="technical"/>
+                <field name="technical" string="Tecnico de operaciones"/>
+            </xpath>
+            <xpath expr="//field[@name='mobility_card']" position="before">
+                <field name="technical_time_sale_line_description" string="Descripción Linea de Venta"/>
             </xpath>
 		</field>
     </record>

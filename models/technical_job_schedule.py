@@ -8,6 +8,8 @@ class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
     order = 'date_schedule DESC'
 
+    checklist_line_ids = fields.One2many('technical.job.checklist.assistant.line', 'technical_schedule_id')
+
     def see_sale_order(self):
         return {
             'name': "Ordenes de venta",
@@ -62,9 +64,9 @@ class TechnicalJobSchedule(models.Model):
             if 'visit_priority' in vals:
                 if real_rec.visit_priority != self.visit_priority:
                     real_rec.visit_priority = vals.get('visit_priority', 0)
-            if 'job_categ_id' in vals:
-                if real_rec.job_categ_id != self.job_categ_id:
-                    real_rec.job_categ_id = vals.get('job_categ_id', False)
+            if 'job_categ_ids' in vals:
+                if real_rec.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
+                    real_rec.job_categ_ids = vals.get('job_categ_ids', [(5,)])
             if 'attch_ids' in vals:
                     body = ''
                     if self.attch_ids:
@@ -253,7 +255,7 @@ class TechnicalJobSchedule(models.Model):
     estimated_visit_revenue = fields.Float(string="Estimado (EUR)")
     visit_payment_type = fields.Selection(string="Política de cobro", selection=[('free','Sin cargo'), ('to_bill','Con cargo')])
     visit_priority = fields.Selection(string="Prioridad Visita", selection=[('0', 'Sin definir'), ('1','Baja'), ('2','Media'), ('3','Alta')])
-    job_categ_id = fields.Many2one('technical.job.categ', string="Categoria")
+    job_categ_ids = fields.Many2many('technical.job.categ', string="Categoria")
     job_type_id = fields.Many2one('technical.job.type', string="Tipo trabajo")
     res_model = fields.Char()
     res_id = fields.Integer()

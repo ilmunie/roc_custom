@@ -29,7 +29,7 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <strong><field name="job_categ_id"/><span attrs="{'invisible': [('job_categ_id', '=', False)]}"> | </span><field name="visit_priority" widget="priority"/></strong>
+                                <strong><field name="job_categ_ids" widget="many2many_tags"/><span attrs="{'invisible': [('job_categ_ids', '=', False)]}"> | </span><field name="visit_priority" widget="priority"/></strong>
                             </div>
                         </div>
 
@@ -145,7 +145,7 @@
                     <field name="res_id" invisible="1"/>
                     <field name="technical_job_tag_ids" readonly="False" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
                     <field name="visit_priority" readonly="False" widget="priority"/>
-                    <field name="job_categ_id" readonly="False"/>
+                    <field name="job_categ_ids" widget="many2many_tags" readonly="False"/>
                     <field name="responsible_user_id" optional="hide"/>
                     <field name="config_id" readonly="1" string="Operación"/>
                     <field name="html_link_to_src_doc"/>
@@ -214,7 +214,7 @@
                         <separator orientation="vertical"/>
                         <filter string="Etiquetas" name="technical_job_tag" context="{'group_by':'technical_job_tag_ids'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Categoria" name="job_categ_id" context="{'group_by':'job_categ_id'}"/>
+                        <filter string="Categoria" name="job_categ_ids" context="{'group_by':'job_categ_ids'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Prioridad" name="priority" context="{'group_by':'visit_priority'}"/>
                         <separator orientation="vertical"/>

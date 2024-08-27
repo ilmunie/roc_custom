@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="technical_job_checklist_wiz" model="ir.ui.view">
+        <field name="name">technical.job.checklist.wiz</field>
+        <field name="model">technical.job.checklist.assistant</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <form string="Checklist Operaciones">
+                <sheet>
+                    <group>
+                            <field name="checklist_id" widget="statusbar" nolabel="1" options="{'clickable':1}"/>
+                        <group>
+                            <field name="technical_job_id" readonly="1" invisible="1"/>
+                        </group>
+                        <header>
+                        </header>
+                    </group>
+                    <field name="filtered_line_ids" mode="tree">
+                        <!--
+                        <kanban class="o_kanban_mobile">
+                                    <field name="question"/>
+                                    <field name="answer_type"/>
+                                    <field name="yes_no_answer"/>
+                                    <field name="text_answer"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div t-attf-class="oe_kanban_card">
+                                                <t>
+                                                    <div class="row no-gutters">
+                                                        <div class="col-10">
+                                                            <div class="row">
+                                                                <div class="col">
+                                                                    <strong t-esc="record.question.value"/>
+                                                                </div>
+
+                                                                <div class="col-auto">
+                                                                    <t t-set="line_price" t-value="record.price_subtotal.value" groups="account.group_show_line_subtotals_tax_excluded"/>
+                                                                    <t t-set="line_price" t-value="record.price_total.value" groups="account.group_show_line_subtotals_tax_included"/>
+                                                                    <strong class="float-right text-right" t-esc="line_price"/>
+                                                                </div>
+                                                            </div>
+                                                            <div class="oe_kanban_footer_left">
+                                                                <field name="yes_no_answer" data-field="color" readonly="False" widget="radio" force_save="True"/>
+                                                            </div>
+                                                            <div class="row">
+                                                                <field name="text_answer" readonly="False"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </t>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>-->
+
+                        <tree editable="bottom" create='0' delete = '0'>
+                            <field name="question"/>
+                            <field name="answer_type" invisible='1'/>
+                            <field name="yes_no_answer"/>
+                            <field name="text_answer"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="technical_job_checklist_config_form" model="ir.ui.view">
+        <field name="name">technical.job.checklist.config.form</field>
+        <field name="model">technical.job.checklist.config</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <form string="Checklist Operaciones">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="matching_domain" widget="domain" options="{'model': 'technical.job', 'in_dialog': true}"/>
+                        </group>
+                    </group>
+                    <field name="line_ids" mode="tree">
+                        <tree  create = '1' delete = '1' editable="bottom">
+                            <field name="sequence" widget="handle" />
+                            <field name="question"/>
+                            <field name="answer_type"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="technical_job_checklist_config_tree" model="ir.ui.view">
+        <field name="name">technical.job.checklist.config.tree</field>
+        <field name="model">technical.job.checklist.config</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <tree string="Checklist Operaciones">
+                <field name="name"/>
+                <field name="matching_domain" widget="domain" options="{'model': 'technical.job', 'in_dialog': true}"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_technical_job_checklist_config" model="ir.actions.act_window">
+        <field name="name">Configuracion Checklist Operaciones</field>
+        <field name="res_model">technical.job.checklist.config</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="roc_custom.technical_job_checklist_config_tree"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+           No se encontraron configuraciones de checklist de operaciones.
+          </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_technical_job_checklist_config"
+        name="Configuracion Checklist"
+        sequence="88"
+        parent="roc_custom.menu_crm_job_config"
+        action="roc_custom.action_technical_job_checklist_config"/>
+</odoo>

@@ -26,3 +26,4 @@ from . import technical_job_note_assistant
 from . import technical_job_complementary_models
 from . import technical_job_mixing
 from . import technical_job_schedule
+from . import technical_job_checklist

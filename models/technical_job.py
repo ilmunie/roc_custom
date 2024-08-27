@@ -9,6 +9,19 @@ class TechnicalJob(models.Model):
 
     time_register_ids = fields.One2many(related='schedule_id.time_register_ids')
 
+    def open_checklist_wiz(self):
+        ctx = {'technical_job': self.id}
+        return {
+            'name': "Checklist Operaciones",
+            'res_model': 'technical.job.checklist.assistant',
+            'type': 'ir.actions.act_window',
+            'context': ctx,
+            'target': 'new',
+            "view_type": "form",
+            "view_mode": "form",
+        }
+    checklist_line_ids = fields.One2many(related='schedule_id.checklist_line_ids')
+
 
     def write(self, vals):
         res = super().write(vals)
@@ -81,8 +94,8 @@ class TechnicalJob(models.Model):
                     record.visit_payment_type = real_rec.visit_payment_type
                 if real_rec.visit_priority:
                     record.visit_priority = real_rec.visit_priority
-                if real_rec.job_categ_id:
-                    record.job_categ_id = real_rec.job_categ_id
+                if real_rec.job_categ_ids:
+                    record.job_categ_ids = [(6, 0, real_rec.job_categ_ids.mapped('id'))]
                 if real_rec.estimated_visit_revenue:
                     record.estimated_visit_revenue = real_rec.estimated_visit_revenue
 
@@ -275,7 +288,7 @@ class TechnicalJob(models.Model):
     attch_ids = fields.Many2many(related="schedule_id.attch_ids", readonly=False)
     technical_job_tag_ids = fields.Many2many(related="schedule_id.technical_job_tag_ids", readonly=False)
     visit_priority = fields.Selection(related="schedule_id.visit_priority", readonly=False, store=True, force_save=True)
-    job_categ_id = fields.Many2one(related="schedule_id.job_categ_id", readonly=False, store=True, force_save=True)
+    job_categ_ids = fields.Many2many(related="schedule_id.job_categ_ids", readonly=False)
 
     def see_sale_order(self):
         return {
@@ -365,7 +378,7 @@ class TechnicalJob(models.Model):
             self.schedule_id.out_time = fields.Datetime.now()
             ctx = {'note_assistant_type': 'Finalizacion trabajo', 'technical_job': self.id}
             return {
-                'name': "Registro de información operación",
+                'name': "Descripción trabajo realizado",
                 'res_model': 'technical.job.note.assistant',
                 'type': 'ir.actions.act_window',
                 'view_mode': 'form',
@@ -380,7 +393,7 @@ class TechnicalJob(models.Model):
                 self.schedule_id.arrive_time = fields.Datetime.now()
         ctx = {'note_assistant_type': 'Descripcion Inicial', 'technical_job': self.id}
         return {
-            'name': "Registro de información operación",
+            'name': "Descripción antes de realizar el trabajo",
             'res_model': 'technical.job.note.assistant',
             'type': 'ir.actions.act_window',
             'view_mode': 'form',

@@ -7,11 +7,11 @@
             <field name="model">technical.job.note.assistant</field>
             <field name="arch" type="xml">
             <form string="Comentario">
-                <strong><field name="content_type" readonly="1" nolabel="1" /></strong>
-                <br/>
-                <field name="attch_ids" widget="many2many_binary"/>
+                <group string="Fotos y Documentos">
+                    <field name="attch_ids" nolabel="1" widget="many2many_binary"/>
+                </group>
+                <strong><field name="content_type" readonly="1" nolabel="1" /></strong><br attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"/>
                 <field name="currency_id" invisible="1"/>
-                <br/>
                 <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿QUEDAN TAREAS PENDIENTES?</span></strong><br/>
                 <field name="pending_jobs" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
                 <br/>
@@ -22,6 +22,10 @@
                     <span>Al continuar se marcará la operación como terminada</span>
                 </div>
                 <field name="content" nolabel="1" />
+                <br/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')]}"><span>A realizar</span></strong><br/><br/>
+
+                <field name="todo_description" string="A realizar" nolabel="1" attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')], 'required': [('content_type', '=', 'Descripcion Inicial')] }"/>
                 <br/>
                 <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿NECESITA FACTURACION?</span></strong><br/>
                 <field name="needs_billing" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
@@ -40,14 +44,16 @@
                     <field name="displacement_product_domain" invisible="1"/>
                 </group>
                 <group string="Tiempo facturable">
-                    <field name="hs_bill"/>
+                        <field name="hs_bill"/>
                 </group>
                 <group>
                     <group>
                         <field name="hs_to_bill" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
+                        <field name="rounded_time_to_bill" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
                     </group>
                     <group>
-                        <field name="rounded_time_to_bill" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
+                        <field name="job_employee_ids" widget="many2many_tags"/>
+                        <field name="amount_hs_to_bill" widget="monetary" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
                     </group>
                 </group>
                 </div>
@@ -187,7 +193,7 @@
                     <field name="technical_job_tag_ids" attrs="{'invisible':[('technical_job_tag_ids','=',False)]}" widget="many2many_tags"/>
                     <field name="job_status" attrs="{'invisible':[('job_status','=',False)]}" filters="True"/>
                     <field name="visit_priority" attrs="{'invisible':[('visit_priority','=',False)]}" widget="priority" filters="True"/>
-                    <field name="job_categ_id" filters="True" attrs="{'invisible':[('job_categ_id','=',False)]}"/>
+                    <field name="job_categ_ids" widget="many2many_tags" attrs="{'invisible':[('job_categ_ids','=',False)]}"/>
                     <field name="visit_payment_type" attrs="{'invisible':[('visit_payment_type','=',False)]}" filters="True"/>
                     <field name="estimated_visit_revenue" attrs="{'invisible':[('estimated_visit_revenue','=',False)]}"/>
                     <field name="internal_notes"  attrs="{'invisible':[('internal_notes','=',False)]}" string=" "/>
@@ -214,6 +220,7 @@
                         <button name="call_checkout_wiz_standby" type="object" string="Aplazar" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
                         <button name="set_draft" type="object" string="Borrador"  attrs="{'invisible': [('job_status','in',('to_do'))]}"/>
                         <button name="call_checkout_wiz" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
+                        <button name="open_checklist_wiz" type="object" string="CHECKLIST" class="oe_highlight"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
@@ -247,7 +254,7 @@
                     <group string="Datos Operacion">
                         <group>
                             <field name="job_type_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="job_categ_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="job_categ_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="visit_priority" widget="priority" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="visit_payment_type" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
@@ -349,7 +356,7 @@
                             <field name="res_model" invisible="True"/>
                             <field name="res_id" invisible="True"/>
                             <field name="job_type_id"/>
-                            <field name="job_categ_id"/>
+                            <field name="job_categ_ids" widget="many2many_tags"/>
                             <field name="date_status" widget="remaining_days"/>
                             <field name="technical_job_tag_ids" widget="many2many_tags"
                                    options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>

@@ -51,9 +51,9 @@ class TechnicalJobAssistant(models.Model):
                 if 'visit_priority' in vals:
                     if real_rec.visit_priority != self.visit_priority:
                         real_rec.visit_priority = vals.get('visit_priority', False)
-                if 'job_categ_id' in vals:
-                    if real_rec.job_categ_id != self.job_categ_id:
-                        real_rec.job_categ_id = vals.get('job_categ_id', False)
+                if 'job_categ_ids' in vals:
+                    if real_rec.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
+                        real_rec.job_categ_ids = vals.get('job_categ_ids', [(5,)])
         return res
 
     def open_form_partner(self):
@@ -309,7 +309,7 @@ class TechnicalJobAssistant(models.Model):
             job_duration = 0
             visit_payment_type = False
             visit_priority = False
-            job_categ_id = False
+            job_categ_ids = [(5,)]
             if record.res_model and record.res_id:
                 real_rec = self.env[record.res_model].browse(record.res_id)
                 if real_rec:
@@ -331,9 +331,9 @@ class TechnicalJobAssistant(models.Model):
                     visit_payment_type = real_rec.visit_payment_type if record.res_model != 'technical.job.schedule' else next_job.visit_payment_type
                     visit_priority = real_rec.visit_priority if record.res_model != 'technical.job.schedule' else next_job.visit_priority
                     if record.res_model != 'technical.job.schedule':
-                        job_categ_id = real_rec.job_categ_id.id if real_rec.job_categ_id else False
+                        job_categ_ids = [(6, 0, real_rec.job_categ_ids.mapped('id'))]
                     else:
-                        job_categ_id = next_job.job_categ_id.id if next_job.job_categ_id else False
+                        job_categ_ids = [(6, 0, next_job.job_categ_ids.mapped('id'))]
                     html += "<table style='border-collapse: collapse; border: none;'>"
                     if record.res_model == 'technical.job.schedule':
                         jobs_found = self.env['technical.job'].search([('schedule_id', '=', record.res_id)])
@@ -350,7 +350,7 @@ class TechnicalJobAssistant(models.Model):
             record.job_duration = job_duration if not next_job else next_job.job_duration
             record.visit_payment_type = visit_payment_type
             record.visit_priority = visit_priority
-            record.job_categ_id = job_categ_id
+            record.job_categ_ids = job_categ_ids
             record.technical_job_tag_ids = tag_ids
             record.date_field_value = date_field_value.date() if isinstance(date_field_value, datetime.datetime) else date_field_value
             record.technical_job_count = technical_job_count
@@ -366,7 +366,7 @@ class TechnicalJobAssistant(models.Model):
     internal_notes = fields.Text(compute=related_rec_fields, store=True, string="Notas internas")
     visit_payment_type = fields.Selection(compute=related_rec_fields, store=True, string="Política de cobro", selection=[('free','Sin cargo'), ('to_bill','Con cargo')])
     visit_priority = fields.Selection(compute=related_rec_fields, store=True, string="Prioridad Visita",  selection=[('0', 'Sin definir'), ('1','Baja'), ('2','Media'), ('3','Alta')])
-    job_categ_id = fields.Many2one('technical.job.categ',compute=related_rec_fields, store=True, string="Categoria")
+    job_categ_ids = fields.Many2many('technical.job.categ',compute=related_rec_fields, store=True, string="Categoria")
     next_active_job_id = fields.Many2one('technical.job.schedule', compute=related_rec_fields, store=True, string= "Próx. Planificación", ondelete='SET NULL')
     next_active_job_date = fields.Datetime(string="Fecha próx. planificación", related='next_active_job_id.date_schedule', store=True)
     date_field_value = fields.Datetime(string="Fecha interés")

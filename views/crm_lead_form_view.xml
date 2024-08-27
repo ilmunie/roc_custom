@@ -297,7 +297,7 @@
                                     <group>
                                         <field name="visit_priority" widget="priority" />
                                         <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
-                                        <field name="job_categ_id"/>
+                                        <field name="job_categ_ids" widget="many2many_tags"/>
                                         <field name="job_duration"/>
                                     </group>
                                 </group>

@@ -9,7 +9,6 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     new_opportunities = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], default="no", string="Potencial otros trabajos")
     opportunities_description = fields.Text(string="Descripción oportunidad")
     opportunities_job_categ_id = fields.Many2one('technical.job.categ', string="Tipo oportunidad")
-
     currency_id = fields.Many2one('res.currency')
     content_type = fields.Char()
     pending_jobs = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], default="no", string="Trabajos pendientes")
@@ -49,6 +48,17 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     hs_bill = fields.Boolean(string="Facturar tiempo en domicilio")
     hs_to_bill = fields.Float(string="Hs invertidas", compute=compute_time_to_bill)
     rounded_time_to_bill = fields.Float(string="Tiempo a facturar", compute=compute_time_to_bill)
+    job_employee_ids = fields.Many2many(related='technical_job_id.job_employee_ids', readonly=False)
+
+    @api.depends('job_employee_ids', 'hs_bill', 'rounded_time_to_bill')
+    def compute_amount_hs_to_bill(self):
+        self.ensure_one()
+        res = 0
+        if self.hs_bill and self.job_employee_ids and self.rounded_time_to_bill:
+            for employee in self.job_employee_ids:
+                res += self.rounded_time_to_bill*employee.timesheet_cost
+        self.amount_hs_to_bill = res
+    amount_hs_to_bill = fields.Float(compute=compute_amount_hs_to_bill, string="Total M.O.")
 
     @api.onchange('displacement_product_ids')
     def onchange_displacement_product_ids(self):
@@ -67,6 +77,8 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     displacement_product_domain = fields.Char(compute=get_displacement_domain)
 
     content = fields.Text(required=True, string="Comentarios")
+    todo_description = fields.Text(string="A realizar")
+
     technical_job_id = fields.Many2one('technical.job')
     attch_ids = fields.Many2many('ir.attachment', string="Adjuntos")
 
@@ -97,10 +109,16 @@ class TechnicalJobNoteAssistant(models.TransientModel):
             content_label = self.content_type
 
         if self.technical_job_id.internal_notes:
-            content = f"\n\n→ {content_label} | {fields.Datetime.now().strftime('%d-%m-%Y %H:%M')}\n{self.content}"
+            if self.content_type == 'Descripcion Inicial':
+                content = f"\n\n→ {content_label} | {fields.Datetime.now().strftime('%d-%m-%Y %H:%M')}\n{self.content}\n\n→A realizar\n{self.todo_description}"
+            else:
+                content = f"\n\n→ {content_label} | {fields.Datetime.now().strftime('%d-%m-%Y %H:%M')}\n{self.content}\n\n→A realizar\n{self.todo_description}"
             self.technical_job_id.internal_notes += content
         else:
-            content = f"→ {content_label} | {fields.Datetime.now().strftime('%d-%m-%Y %H:%M')}\n{self.content}"
+            if self.content_type == 'Descripcion Inicial':
+                content = f"→ {content_label} | {fields.Datetime.now().strftime('%d-%m-%Y %H:%M')}\n{self.content}\n\n→A realizar\n{self.todo_description}"
+            else:
+                content = f"→ {content_label} | {fields.Datetime.now().strftime('%d-%m-%Y %H:%M')}\n{self.content}\n\n→A realizar\n{self.todo_description}"
             self.technical_job_id.internal_notes = content
         if self.content_type == 'Finalizacion trabajo':
             if self.pending_jobs == 'yes':
@@ -110,7 +128,6 @@ class TechnicalJobNoteAssistant(models.TransientModel):
         if self.needs_billing=='yes':
             real_rec = False
             existing_po = False
-
             if self.technical_job_id and self.technical_job_id.res_id and self.technical_job_id.res_model:
                 real_rec = self.env[self.technical_job_id.res_model].browse(self.technical_job_id.res_id)
                 if real_rec:
@@ -127,7 +144,8 @@ class TechnicalJobNoteAssistant(models.TransientModel):
                 if self.displacement_product_ids:
                     lines.append((0, 0, self.prepare_displacement_line()))
                 if self.rounded_time_to_bill and self.hs_bill:
-                    lines.append((0, 0, self.prepare_billing_time_line()))
+                    for line in self.prepare_billing_time_lines():
+                        lines.append((0, 0, line))
                 if lines:
                     so_vals = {
                         'order_line': lines,
@@ -197,13 +215,26 @@ class TechnicalJobNoteAssistant(models.TransientModel):
         }
         return vals
 
-    def prepare_billing_time_line(self):
+    def prepare_billing_time_lines(self):
         company = self.env.user.company_id
-        vals = {
-            'product_id': company.billing_time_product_id.id,
-            'name': f'{company.billing_time_product_id.name} | Visita {fields.Datetime.now().strftime("%d-%m-%Y")}',
-            'product_uom_qty': self.rounded_time_to_bill,
-        }
+        lines_dict = {}
+        for employee in self.job_employee_ids:
+            if employee.technical_time_sale_line_description not in lines_dict.keys():
+                lines_dict[employee.technical_time_sale_line_description] = f'1|{employee.timesheet_cost*self.rounded_time_to_bill}'
+            else:
+                existing_value = lines_dict[employee.technical_time_sale_line_description]
+                qty = int(existing_value.split('|')[0]) + 1
+                amount = float(existing_value.split('|')[1]) + employee.timesheet_cost*self.rounded_time_to_bill
+                lines_dict[employee.technical_time_sale_line_description] = f'{qty}|{amount}'
+        vals = []
+        for key, value in lines_dict.values():
+            qty = int(value.split('|')[0])
+            amount = float(value.split('|')[1])
+            vals.append({
+                'product_id': company.billing_time_product_id.id,
+                'name': f'{company.billing_time_product_id.name} | Visita {fields.Datetime.now().strftime("%d-%m-%Y")}',
+                'product_uom_qty': self.rounded_time_to_bill,
+            })
         return vals
 
 

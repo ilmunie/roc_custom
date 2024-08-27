@@ -50,10 +50,11 @@ class TechnicalJobMixin(models.AbstractModel):
                 for job in self.technical_schedule_job_ids:
                     if job.visit_priority != self.visit_priority:
                         job.visit_priority = self.visit_priority
-        if 'job_categ_id' in vals:
+        if 'job_categ_ids' in vals:
+            if self.technical_schedule_job_ids:
                 for job in self.technical_schedule_job_ids:
-                    if job.job_categ_id != self.job_categ_id:
-                        job.job_categ_id = self.job_categ_id.id if self.job_categ_id else False
+                    if job.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
+                        job.job_categ_ids = [(6, 0, self.job_categ_ids.mapped('id'))]
         if 'visit_internal_notes' in vals:
             if self.visit_internal_notes:
                 for job in self.technical_schedule_job_ids:
@@ -76,7 +77,7 @@ class TechnicalJobMixin(models.AbstractModel):
                                                                        'res_id': record.id,
                                                                        'visit_payment_type': record.visit_payment_type,
                                                                        'visit_priority': record.visit_priority,
-                                                                       'job_categ_id': record.job_categ_id,
+                                                                       'job_categ_ids': [(6, 0, record.job_categ_ids.mapped('id'))],
                                                                        'estimated_visit_revenue': record.estimated_visit_revenue,
                                                                        'internal_notes': record.visit_internal_notes,
                                                                        'job_employee_ids': [(6, 0, config[
@@ -97,7 +98,7 @@ class TechnicalJobMixin(models.AbstractModel):
     trigger_visit_job_generation = fields.Boolean(store=True, compute=visit_job_generation)
     visit_payment_type = fields.Selection(string="Política de cobro", selection=[('free','Sin cargo'), ('to_bill','Con cargo')])
     visit_priority = fields.Selection(string="Prioridad Visita", selection=[('0', 'Sin definir'), ('1','Baja'), ('2','Media'), ('3','Alta')])
-    job_categ_id = fields.Many2one('technical.job.categ', string="Categoria")
+    job_categ_ids = fields.Many2many('technical.job.categ', string="Categoria")
     customer_availability_type = fields.Selection(string="Tipo disponibilidad",
                                                   selection=[('no_data', 'Sin información'),
                                                              ('specific_date', 'Coordinación exacta'),
