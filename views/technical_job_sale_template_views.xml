@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="technical_job_sale_template_tag_tree" model="ir.ui.view">
+        <field name="name">technical.job.sale.template.tag.tree</field>
+        <field name="model">technical.job.sale.template.tag</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <tree string="Etiquetas Plantilla de Presupuesto Operaciones" editable="top">
+                <field name="sequence" widget="handle"/>
+                <field name="categ_id" required="True"/>
+                <field name="name"/>
+                <field name="first_selection"/>
+                <field name="parent_tag_id" widget="many2many_tags"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_technical_job_sale_template_tag" model="ir.actions.act_window">
+        <field name="name">Etiquetas Plantilla Presupuesto</field>
+        <field name="res_model">technical.job.sale.template.tag</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="roc_custom.technical_job_sale_template_tag_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+           No se encontraron etiquetas de plantillas de presupuesto de operaciones.
+          </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_technical_job_sale_template_tag"
+        name="Etiquetas Plantillas Presupuesto"
+        sequence="90"
+        parent="roc_custom.menu_crm_job_config"
+        action="roc_custom.action_technical_job_sale_template_tag"/>
+
+
+    <record id="technical_job_sale_template_form" model="ir.ui.view">
+        <field name="name">technical.job.sale.template.form</field>
+        <field name="model">technical.job.sale.template</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <form string="Plantilla de Presupuesto Operaciones">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="tag_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="bill_work_time"/>
+                            <field name="limit_work_time" attrs="{'invisible': [('bill_work_time','=',False)]}"/>
+                        </group>
+                        <group>
+                            <field name="min_hs_to_bill" attrs="{'invisible': [('limit_work_time','=',False)]}"/>
+                            <field name="max_hs_to_bill" attrs="{'invisible': [('limit_work_time','=',False)]}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="materials_to_bill"/>
+                    </group>
+                    <field name="line_ids" mode="tree">
+                        <tree  create = '1' delete = '1' editable="bottom">
+                            <field name="product_tmpl_id"/>
+                            <field name="attr_value_domain" invisible="1"/>
+                            <field name="default_attr_value_ids" options="{'no_create': 1}" domain="attr_value_domain" widget="many2many_tags"/>
+                            <field name="product_id"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="technical_job_sale_template_tree" model="ir.ui.view">
+        <field name="name">technical.job.sale.template.tree</field>
+        <field name="model">technical.job.sale.template</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <tree string="Plantilla de Presupuesto Operaciones">
+                <field name="name"/>
+                <field name="tag_ids" widget="many2many_tags"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_technical_job_sale_template" model="ir.actions.act_window">
+        <field name="name">Plantillas Presupuesto Operaciones</field>
+        <field name="res_model">technical.job.sale.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="roc_custom.technical_job_sale_template_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+           No se encontraron plantillas de presupuesto de operaciones.
+          </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_technical_job_sale_template"
+        name="Plantillas Presupuesto"
+        sequence="89"
+        parent="roc_custom.menu_crm_job_config"
+        action="roc_custom.action_technical_job_sale_template"/>
+</odoo>

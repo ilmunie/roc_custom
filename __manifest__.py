@@ -89,6 +89,7 @@
         'data/intrest_tag.xml',
         'views/res_config_settings.xml',
         'views/technical_job_checklist_views.xml',
+        'views/technical_job_sale_template_views.xml',
         'security/ir.model.access.csv',
     ],
     "assets": {

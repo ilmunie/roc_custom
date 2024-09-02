@@ -11,6 +11,17 @@ class ProductProduct(models.Model):
         if len(sellers) > 1 and sellers.filtered(lambda s: s.price > 0):
             sellers = sellers.filtered(lambda s: s.price > 0)
         return sellers
+
+    def _compute_product_lst_price(self):
+        rentability_multiplier = self.env.user.company_id.material_rentability_multiplier
+        normal_recs = []
+        for record in self:
+            if record.purchase_ok and record.seller_ids and record.standard_price:
+                record.lst_price = record.standard_price*rentability_multiplier
+            else:
+                normal_recs.append(record.id)
+        return super(ProductProduct, self.filtered(lambda x: x.id in normal_recs))._compute_product_lst_price()
+
     def set_cost_from_pricelist(self):
         product_to_compute = self.env['product.product'].browse(self._context.get('active_ids', []))
         for prod in product_to_compute:

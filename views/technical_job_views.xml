@@ -30,30 +30,94 @@
                 <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿NECESITA FACTURACION?</span></strong><br/>
                 <field name="needs_billing" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
                 <br/>
-                <div attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('needs_billing', '!=', 'yes')]}">
-                <group string="Costo Materiales" >
+                <group string="SELECCION DE PLANTILLA DE PRESUPUESTO" attrs="{'invisible': ['|', ('needs_billing', '=', 'no'), ('content_type', '!=', 'Finalizacion trabajo')]}">
+                </group>
+                <field name="select_tag_id" nolabel="1" widget="statusbar" options="{'clickable': 1}" domain="template_tag_domain"
+                       attrs="{'invisible': ['|', ('needs_billing', '=', 'no'), ('content_type', '!=', 'Finalizacion trabajo')]}"/>
+                <div class="o_row" attrs="{'invisible': ['|','|',('selected_tags_name', '=', ''),('needs_billing', '=', 'no'), ('content_type', '!=', 'Finalizacion trabajo')]}">
+                    <field name="selected_tags_name" widget="badge"/>
+                    <field name="clean_selected_tags" widget="boolean_toggle"/>
+                </div>
+                <group attrs="{'invisible': ['|', ('needs_billing', '=', 'no'), ('content_type', '!=', 'Finalizacion trabajo')]}">
                     <group>
-                        <field name="material_cost" widget="monetary"/>
+                        <field name="technical_job_template_domain" invisible="1"/>
+                        <field name="template_tag_domain" invisible="1"/>
+                        <field name="technical_job_template_tag_ids" invisible="1"/>
+                        <field name="technical_job_template_id" domain="technical_job_template_domain"
+                                options="{'no_create':1, 'no_open': 1}"/>
                     </group>
+                    <group>
+                        <field name="materials_to_bill"/>
+                    </group>
+                </group>
+                <br/>
+                <div attrs="{'invisible': ['|','|',('content_type', '!=', 'Finalizacion trabajo'), ('needs_billing', '!=', 'yes'), ('materials_to_bill', '=', False)]}">
+                <group string="MATERIALES A FACTURAR" attrs="{'invisible': [('materials_to_bill', '=', False)]}">
+                    <field name="line_ids" nolabel="1" attrs="{'invisible': [('technical_job_template_id', '=', False)]}">
+                        <tree editable="top" create="0" delete="0">
+                            <field name="product_template_id" readonly="1" force_save="1"/>
+                            <field name="attr_value_domain" invisible="1"/>
+                            <field name="attr_readonly" invisible="1"/>
+                            <field name="attr_value_ids" widget="many2many_tags" domain="attr_value_domain"
+                                  options="{'no_create': True}" attrs="{'readonly': [('attr_readonly', '=', True)]}"/>
+                            <field name="product_id" domain="product_domain" invisible="1"/>
+                            <field name="product_domain" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="product_price" widget="monetary"/>
+                        </tree>
+                    </field>
+                    <group>
+                        <field name="add_generic_material"/>
+                        <field name="generic_material_cost" attrs="{'invisible': [('add_generic_material','!=', True)]}" widget="monetary"/>
+                    </group>
+                    <group attrs="{'invisible': [('add_generic_material','!=', True)]}">
+                        <field name="generic_material_description"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('materials_to_bill', '=', False)]}">
+                    <group>
+                        <field name="material_displacement"/>
+                    </group>
+                        <field name="material_displacement_product_ids" nolabel="1" attrs="{'invisible': [('material_displacement', '=', False)]}"
+                               widget="many2many_checkboxes" domain="displacement_product_domain"/>
+                </group>
+
+                <group attrs="{'invisible': [('materials_to_bill', '=', False)]}">
                     <group>
                         <field name="material_final_price" widget="monetary"/>
                     </group>
+                    <group>
+                        <field name="materials_purchased"/>
+                    </group>
                 </group>
-                <group string="Desplazamiento">
+                </div>
+                <div attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('needs_billing', '!=', 'yes')]}">
+                <group string="EXTRAS POR DESPLAZAMIENTO">
                     <field name="displacement_product_ids" nolabel="1" widget="many2many_checkboxes" domain="displacement_product_domain"/>
                     <field name="displacement_product_domain" invisible="1"/>
                 </group>
-                <group string="Tiempo facturable">
+                <group string="MANO DE OBRA A FACTURAR">
                         <field name="hs_bill"/>
                 </group>
-                <group>
+                <group attrs="{'invisible': [('hs_bill', '=', False)]}">
                     <group>
-                        <field name="hs_to_bill" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
-                        <field name="rounded_time_to_bill" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
+                        <label for="hs_to_bill"/>
+                        <div name="hs_to_bill">
+                            <field name="hs_to_bill" class="oe_inline"/> hs.
+                        </div>
+                        <label for="rounded_time_to_bill" attrs="{'invisible': [('time_exception', '=', True)]}"/>
+                        <div name="rounded_time_to_bill" attrs="{'invisible': [('time_exception', '=', True)]}">
+                            <field name="rounded_time_to_bill" class="oe_inline"/> hs.
+                        </div>
+                        <field name="time_exception"/>
+                        <label for="manual_hs" attrs="{'invisible': [('time_exception','=',False)]}"/>
+                        <div name="manual_hs" attrs="{'invisible': [('time_exception','=',False)]}">
+                            <field name="manual_hs" class="oe_inline"/> hs.
+                        </div>
                     </group>
-                    <group>
+                    <group >
                         <field name="job_employee_ids" widget="many2many_tags"/>
-                        <field name="amount_hs_to_bill" widget="monetary" attrs="{'invisible': [('hs_bill', '=', False)]}"/>
+                        <field name="amount_hs_to_bill" widget="monetary"/>
                     </group>
                 </group>
                 </div>

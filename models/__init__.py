@@ -27,3 +27,4 @@ from . import technical_job_complementary_models
 from . import technical_job_mixing
 from . import technical_job_schedule
 from . import technical_job_checklist
+from . import technical_job_sale_template
