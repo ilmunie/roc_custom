@@ -81,7 +81,7 @@ class TechnicalJobNoteAssistant(models.TransientModel):
             if self.opp_attch_ids:
                 new_lead.with_context(mail_create_nosubscribe=True).message_post(body="Ha agregado archivos adjuntos", message_type='comment',
                                                                                  attachment_ids=self.opp_attch_ids.mapped('id'))
-        if self.needs_billing:
+        if self.needs_billing == 'yes' and self.content_type == 'Finalizacion trabajo':
             ctx = {'technical_job': self.technical_job_id.id}
             return {
                 'name': "Facturacion trabajo",
