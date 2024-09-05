@@ -10,3 +10,4 @@ class HrEmployePublic(models.Model):
     _inherit = 'hr.employee.public'
 
     technical = fields.Boolean()
+    technical_time_sale_line_product_id = fields.Many2one('product.product', string="Linea venta MO trabajo tecnico")
