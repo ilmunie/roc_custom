@@ -163,8 +163,8 @@ class TechnicalJob(models.Model):
             #import pdb;pdb.set_trace()
             if record.res_model=='crm.lead' and record.res_id and not record.attch_ids:
                 raise ValidationError('Cargue la documentación correspondiente')
-            if record.res_model=='crm.lead' and not record.minutes_in_job:
-                raise ValidationError('Debe registrar tiempo en la operacion')
+            #if record.res_model=='crm.lead' and not record.minutes_in_job:
+            #    raise ValidationError('Debe registrar tiempo en la operacion')
             jobs_to_make_done = []
             jobs_to_make_done.append(record)
             if record.schedule_id:
@@ -291,15 +291,24 @@ class TechnicalJob(models.Model):
     job_categ_ids = fields.Many2many(related="schedule_id.job_categ_ids", readonly=False)
 
     def see_sale_order(self):
-        return {
-            'name': "Ordenes de venta",
-            'res_model': 'sale.order',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_id': self.sale_order_id.id,
-        }
+        if len(self.sale_order_ids.mapped('id')) == 1:
+            return {
+                'name': "Orden de venta",
+                'res_model': 'sale.order',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_id': self.sale_order_ids[0].id,
+            }
+        else:
+            return {
+                'name': "Ordenes de venta",
+                'res_model': 'sale.order',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'tree,kanban,form',
+                'domain': [('id', 'in', self.sale_order_ids.mapped('id'))],
+            }
 
-    sale_order_id = fields.Many2one(related="schedule_id.sale_order_id")
+    sale_order_ids = fields.Many2many(related="schedule_id.sale_order_ids")
     visit_payment_type = fields.Selection(related="schedule_id.visit_payment_type", readonly=False, store=True, force_save=True)
     estimated_visit_revenue = fields.Float(related="schedule_id.estimated_visit_revenue", readonly=False, store=True, force_save=True)
     displacement_total_min = fields.Float(related="schedule_id.displacement_total_min")
@@ -346,6 +355,17 @@ class TechnicalJob(models.Model):
         if schedule_id:
             schedule_id.time_register_ids.filtered(lambda x: x.displacement and not x.end_time)[0].end_time = fields.Datetime.now()
             schedule_id.displacement_start_datetime = False
+
+    def call_billing_wiz(self):
+        ctx = {'technical_job': self.id}
+        return {
+            'name': "Facturacion trabajo",
+            'res_model': 'technical.job.billing.assistant',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'context': ctx,
+            'target': 'new',
+        }
 
 
     def call_checkout_wiz(self):

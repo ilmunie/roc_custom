@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="technical_job_note_assistant_view" model="ir.ui.view">
+            <field name="name">technical.job.note.assistant.view</field>
+            <field name="model">technical.job.note.assistant</field>
+            <field name="arch" type="xml">
+            <form string="Comentario">
+                <group string="Fotos y Documentos">
+                    <field name="attch_ids" nolabel="1" widget="many2many_binary"/>
+                </group>
+                <strong><field name="content_type" readonly="1" nolabel="1" /></strong>
+                <br attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"/>
+                <field name="currency_id" invisible="1"/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿QUEDAN TAREAS PENDIENTES?</span></strong>
+                <br/>
+                <field name="pending_jobs" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
+                <br/>
+                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'no')]}">
+                    <span>Al continuar la operación quedará aplazada para ser recoordinada </span>
+                </div>
+                <div class="alert alert-info mb-0" role="info" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'yes')]}">
+                    <span>Al continuar se marcará la operación como terminada</span>
+                </div>
+                <field name="content" nolabel="1" />
+                <br/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')]}"><span>A realizar</span></strong>
+                <br/><br/>
+                <field name="todo_description" string="A realizar" nolabel="1" attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')], 'required': [('content_type', '=', 'Descripcion Inicial')] }"/>
+                <br/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿NECESITA FACTURACION?</span></strong><br/>
+                <field name="needs_billing" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
+                <br/>
+                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('needs_billing', '=', 'no')]}">
+                    <span>Al continuar se abrirá el asistente de facturación</span>
+                </div>
+                <br/>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿POSIBILIDAD DE RENOVES O MEJORAS?</span></strong><br/>
+                <field name="new_opportunities" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
+                <br/>
+                <group>
+                <field name="opportunities_job_categ_ids" widget="many2many_tags"  options="{'no_create': 1, 'no_open': 1}"
+                       attrs="{'invisible': [('new_opportunities', '!=', 'yes')], 'required': [('new_opportunities','=','yes')]}" />
+                    <field name="opp_attch_ids" widget="many2many_binary" attrs="{'invisible': [('new_opportunities', '!=', 'yes')]}"/>
+                </group>
+                <field name="opportunities_description" nolabel="1"
+                       attrs="{'invisible': [('new_opportunities', '!=', 'yes')], 'required': [('new_opportunities','=','yes')]}" />
+                <field name="technical_job_id" invisible="1"/>
+                <footer>
+                    <button name="action_done" string="Listo" type="object" class="btn-primary"/>
+                </footer>
+            </form>
+            </field>
+        </record>
+</odoo>

@@ -11,14 +11,23 @@ class TechnicalJobSchedule(models.Model):
     checklist_line_ids = fields.One2many('technical.job.checklist.assistant.line', 'technical_schedule_id')
 
     def see_sale_order(self):
-        return {
-            'name': "Ordenes de venta",
-            'res_model': 'sale.order',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_id': self.sale_order_id.id,
-        }
-    sale_order_id = fields.Many2one('sale.order')
+        if len(self.sale_order_ids.mapped('id')) == 1:
+            return {
+                'name': "Orden de venta",
+                'res_model': 'sale.order',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_id': self.sale_order_ids[0].id,
+            }
+        else:
+            return {
+                'name': "Ordenes de venta",
+                'res_model': 'sale.order',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'tree,kanban,form',
+                'domain': [('id', 'in', self.sale_order_ids.mapped('id'))],
+            }
+    sale_order_ids = fields.Many2many('sale.order')
 
 
     def get_job_data(self):

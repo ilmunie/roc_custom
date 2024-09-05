@@ -233,9 +233,9 @@ class CrmLead(models.Model,TechnicalJobMixin):
 
 
     def get_sale_order(self):
-        sales = self.order_ids.filtered(lambda x: x.state not in ('cancel') and x.invoice_status != 'invoiced')
-        return sales[0] if sales else False
-
+        #sales = self.order_ids.filtered(lambda x: x.state not in ('cancel') and x.invoice_status != 'invoiced')
+        #return sales[0] if sales else False
+        return False
     @api.depends('expected_revenue')
     def sync_exp_rev(self):
         for record in self:
@@ -350,7 +350,7 @@ class PurchaseOrder(models.Model,TechnicalJobMixin):
 class SaleOrder(models.Model,TechnicalJobMixin):
     _inherit = 'sale.order'
 
-    technical_job_schedule_ids = fields.One2many('technical.job.schedule', 'sale_order_id')
+    #technical_job_schedule_ids = fields.One2many('technical.job.schedule', 'sale_order_id')
 
     def get_job_data(self):
         return self.address_label

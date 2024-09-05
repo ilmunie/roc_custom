@@ -288,7 +288,7 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="Visita" attrs="{'invisible':[('stage_name','!=','Visita'),('manual_technical_job', '=', False)]}">
+                            <page string="Visita" attrs="{'invisible':[('type','!=','opportunity')]}">
                                 <group>
                                     <group>
                                         <field name="visit_payment_type" widget="radio" />

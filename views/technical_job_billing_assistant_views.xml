@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="technical_job_billing_assistant_view" model="ir.ui.view">
+        <field name="name">technical.job.billing.assistant.view</field>
+        <field name="model">technical.job.billing.assistant</field>
+        <field name="arch" type="xml">
+            <form string="Facturador">
+                <field name="currency_id" invisible="1"/>
+                <field name="technical_job_template_domain" invisible="1"/>
+                <field name="template_tag_domain" invisible="1"/>
+                <field name="technical_job_template_tag_ids" invisible="1"/>
+                <field name="displacement_product_domain" invisible="1"/>
+                <field name="technical_job_id" invisible="1"/>
+                <group string="SELECCION DE PLANTILLA DE PRESUPUESTO">
+                </group>
+                <field name="select_tag_id" nolabel="1" widget="statusbar" options="{'clickable': 1}" domain="template_tag_domain"/>
+                <div class="o_row" attrs="{'invisible': [('selected_tags_name', '=', '')]}">
+                    <field name="selected_tags_name" widget="badge"/>
+                    <field name="clean_selected_tags" widget="boolean_toggle"/>
+                </div>
+                <group>
+                    <group>
+                        <field name="technical_job_template_id" domain="technical_job_template_domain" options="{'no_create':1, 'no_open': 1}"/>
+                    </group>
+                    <group>
+                        <field name="general_discount" widget="percentage"/>
+                    </group>
+                </group>
+                <br/>
+                <group string="MATERIALES A FACTURAR">
+                    <group>
+                        <field name="materials_to_bill"/>
+                    </group>
+                    <group>
+                        <field name="materials_discount" widget="percentage" attrs="{'invisible': ['|',('general_discount', '>', 0), ('materials_to_bill', '=', False)]}"/>
+                    </group>
+                    <field name="line_ids" nolabel="1" attrs="{'invisible': ['|',('materials_to_bill', '=', False),('technical_job_template_id', '=', False)]}">
+                        <tree editable="top" create="0" delete="0">
+                            <field name="product_template_id" readonly="1" force_save="1"/>
+                            <field name="attr_value_domain" invisible="1"/>
+                            <field name="attr_readonly" invisible="1"/>
+                            <field name="attr_value_ids" widget="many2many_tags" domain="attr_value_domain"
+                                   options="{'no_create': True}" attrs="{'readonly': [('attr_readonly', '=', True)]}"/>
+                            <field name="product_id" domain="product_domain" invisible="1"/>
+                            <field name="product_domain" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="product_price" widget="monetary"/>
+                            <field name="product_uom_qty"/>
+                            <field name="discount" widget="percentage" attrs="{'column_invisible': ['|',('parent.materials_discount','>',0), ('parent.general_discount', '>', 0)]}"/>
+                        </tree>
+                    </field>
+                    <group attrs="{'invisible': [('materials_to_bill', '=', False)]}">
+                        <field name="add_generic_material"/>
+                        <field name="generic_materials_discount" widget="percentage"
+                               attrs="{'invisible': ['|','|',('materials_discount','>',0), ('general_discount', '>', 0),('add_generic_material','!=', True)]}" />
+                        <field name="generic_material_cost" attrs="{'invisible': [('add_generic_material','!=', True)]}" widget="monetary"/>
+                    </group>
+                    <group attrs="{'invisible': ['|',('materials_to_bill', '=', False),('add_generic_material','!=', True)]}">
+                        <field name="generic_material_description"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('materials_to_bill', '=', False)]}">
+                    <group>
+                        <field name="material_displacement"/>
+                    </group>
+                        <field name="material_displacement_product_ids" nolabel="1" attrs="{'invisible': [('material_displacement', '=', False)]}"
+                               widget="many2many_checkboxes" domain="displacement_product_domain"/>
+                </group>
+                <group attrs="{'invisible': [('materials_to_bill', '=', False)]}">
+                    <group>
+                        <field name="material_final_price" widget="monetary"/>
+                    </group>
+                    <group>
+                        <field name="materials_purchased"/>
+                    </group>
+                </group>
+                <group string="EXTRAS POR DESPLAZAMIENTO">
+                    <group>
+                        <field name="displacement_discount" widget="percentage" attrs="{'invisible': [('general_discount', '>', 0)]}"/>
+                    </group>
+                    <field name="displacement_product_ids" nolabel="1" widget="many2many_checkboxes" domain="displacement_product_domain"/>
+                </group>
+                <group string="MANO DE OBRA A FACTURAR">
+                    <group>
+                        <field name="hs_bill"/>
+                    </group>
+                    <group>
+                        <field name="mo_discount" widget="percentage"
+                               attrs="{'invisible': ['|',('general_discount', '>', 0),('hs_bill', '=', False)]}"/>
+                    </group>
+                </group>
+                <group attrs="{'invisible': [('hs_bill', '=', False)]}">
+                    <group>
+                        <label for="hs_to_bill"/>
+                        <div name="hs_to_bill">
+                            <field name="hs_to_bill" class="oe_inline"/> hs.
+                        </div>
+                        <label for="rounded_time_to_bill" attrs="{'invisible': [('time_exception', '=', True)]}"/>
+                        <div name="rounded_time_to_bill" attrs="{'invisible': [('time_exception', '=', True)]}">
+                            <field name="rounded_time_to_bill" class="oe_inline"/> hs.
+                        </div>
+                        <field name="time_exception"/>
+                        <label for="manual_hs" attrs="{'invisible': [('time_exception','=',False)]}"/>
+                        <div name="manual_hs" attrs="{'invisible': [('time_exception','=',False)]}">
+                            <field name="manual_hs" class="oe_inline"/> hs.
+                        </div>
+                    </group>
+                    <group >
+                        <field name="job_employee_ids" widget="many2many_tags"/>
+                        <field name="amount_hs_to_bill" widget="monetary"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_done" string="Listo" type="object" class="btn-primary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

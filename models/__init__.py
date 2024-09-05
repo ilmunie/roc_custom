@@ -28,3 +28,4 @@ from . import technical_job_mixing
 from . import technical_job_schedule
 from . import technical_job_checklist
 from . import technical_job_sale_template
+from . import technical_job_billing_assistant

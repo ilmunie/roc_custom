@@ -47,27 +47,47 @@
                         </group>
                         <group>
                             <field name="tag_ids" widget="many2many_tags"/>
+                            <field name="default_general_discount" widget="percentage" />
                         </group>
                     </group>
-                    <group>
+                    <group string="Mano de Obra">
                         <group>
                             <field name="bill_work_time"/>
-                            <field name="limit_work_time" attrs="{'invisible': [('bill_work_time','=',False)]}"/>
+                            <field name="default_mo_discount" widget="percentage" attrs="{'invisible': [('bill_work_time','=',False)]}"/>
                         </group>
                         <group>
+                            <field name="limit_work_time" attrs="{'invisible': [('bill_work_time','=',False)]}"/>
                             <field name="min_hs_to_bill" attrs="{'invisible': [('limit_work_time','=',False)]}"/>
                             <field name="max_hs_to_bill" attrs="{'invisible': [('limit_work_time','=',False)]}"/>
                         </group>
                     </group>
-                    <group>
+                    <group string="Desplazamiento">
+                            <field name="default_displacement_discount" widget="percentage"/>
+                    </group>
+
+
+                    <group string="Notas Presupuesto">
+                    </group>
+                    <field name="note_ids" mode="tree">
+                        <tree  create = '1' delete = '1' editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                        </tree>
+                    </field>
+
+                    <group string="Materiales">
                         <field name="materials_to_bill"/>
+                        <field name="default_materials_discount" widget="percentage"/>
                     </group>
                     <field name="line_ids" mode="tree">
                         <tree  create = '1' delete = '1' editable="bottom">
+                            <field name="sequence" widget="handle"/>
                             <field name="product_tmpl_id"/>
+                            <field name="product_uom_qty"/>
                             <field name="attr_value_domain" invisible="1"/>
                             <field name="default_attr_value_ids" options="{'no_create': 1}" domain="attr_value_domain" widget="many2many_tags"/>
                             <field name="product_id"/>
+                            <field name="default_discount" widget="percentage"/>
                         </tree>
                     </field>
                 </sheet>

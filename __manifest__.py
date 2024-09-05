@@ -85,6 +85,8 @@
         'views/sale_order_template_views.xml',
         'views/technical_job_views.xml',
         'views/technical_job_assistant_view.xml',
+        'views/technical_job_note_assistant_views.xml',
+        'views/technical_job_billing_assistant_views.xml',
         'views/technical_job_time_register_views.xml',
         'data/intrest_tag.xml',
         'views/res_config_settings.xml',
