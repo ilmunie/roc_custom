@@ -36,13 +36,14 @@
                     </group>
                     <field name="line_ids" nolabel="1" attrs="{'invisible': ['|',('materials_to_bill', '=', False),('technical_job_template_id', '=', False)]}">
                         <tree editable="top" create="0" delete="0">
-                            <field name="product_template_id" readonly="1" force_save="1"/>
+                            <field name="product_template_id" domain="product_tmpl_domain" force_save="1" options="{'no_create':1}"/>
                             <field name="attr_value_domain" invisible="1"/>
                             <field name="attr_readonly" invisible="1"/>
                             <field name="attr_value_ids" widget="many2many_tags" domain="attr_value_domain"
                                    options="{'no_create': True}" attrs="{'readonly': [('attr_readonly', '=', True)]}"/>
                             <field name="product_id" domain="product_domain" invisible="1"/>
                             <field name="product_domain" invisible="1"/>
+                            <field name="product_tmpl_domain" invisible="1"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="product_price" widget="monetary"/>
                             <field name="product_uom_qty"/>

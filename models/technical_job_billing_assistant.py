@@ -7,6 +7,7 @@ from odoo.exceptions import UserError, ValidationError
 class TechnicalJobBillingAssistantLine(models.TransientModel):
     _name = "technical.job.billing.assistant.line"
 
+    product_tmpl_domain = fields.Char()
     wiz_id = fields.Many2one('technical.job.billing.assistant')
     product_template_id = fields.Many2one('product.template', string="Producto")
     attr_readonly = fields.Boolean()
@@ -80,7 +81,7 @@ class TechnicalJobBillingAssistant(models.TransientModel):
     mo_discount = fields.Float(string="Dcto MO")
     displacement_discount = fields.Float(string="Dcto Desplazamiento")
 
-    @api.onchange('technical_job_template_id')
+    @api.onchange('technical_job_template_id', 'technical_job_template_tag_ids')
     def onchange_technical_job_template_id(self):
         self.ensure_one()
         vals = [(5,)]
@@ -90,20 +91,36 @@ class TechnicalJobBillingAssistant(models.TransientModel):
         elif self.mo_discount:
             mo_discount = self.mo_discount
         for line in self.technical_job_template_id.line_ids:
-            if len(line.product_tmpl_id.mapped('product_variant_ids')) <= 1:
+            product_tmpl = line.product_tmpl_id
+            if product_tmpl:
+                tmpl_domain = [('id', '=', line.product_tmpl_id.id)]
+            else:
+                tmpl_domain = json.loads(line.product_tmpl_domain)
+                name_tags = self.technical_job_template_tag_ids.filtered(
+                    lambda x: x.appears_in_template_name)
+                for name_tag in name_tags:
+                    tmpl_domain.insert(0, json.loads(name_tag.search_domain_term)[0])
+                available_tmpls = self.env['product.template'].search(tmpl_domain)
+                product_tmpl = available_tmpls[0] if available_tmpls else False
+            available_attrs_values = product_tmpl.mapped('product_variant_ids').mapped(
+                'product_template_variant_value_ids.product_attribute_value_id')
+            attr_value_ids = available_attrs_values.filtered(lambda x: x.display_name in line.default_attr_value_ids.mapped('display_name')).mapped('id')
+            if len(product_tmpl.mapped('product_variant_ids')) <= 1:
                 vals.append((0, 0,
-                             {'product_template_id': line.product_tmpl_id.id,
+                             {'product_template_id': product_tmpl.id,
                               'attr_readonly': True,
+                              'product_tmpl_domain': json.dumps(tmpl_domain),
                               'product_uom_qty': line.product_uom_qty,
                               'discount': line.default_discount if not mo_discount else self.general_discount,
-                              'attr_value_ids': [(6, 0, line.default_attr_value_ids.mapped('id'))],
-                              'product_id': line.product_tmpl_id.product_variant_ids[0].id}))
+                              'attr_value_ids': [(6, 0, attr_value_ids) ],
+                              'product_id': product_tmpl.product_variant_ids[0].id}))
             else:
                 vals.append((0, 0,
-                             {'product_template_id': line.product_tmpl_id.id,
+                             {'product_template_id': product_tmpl.id,
                               'product_uom_qty': line.product_uom_qty,
+                              'product_tmpl_domain': json.dumps(tmpl_domain),
                               'discount': line.default_discount if not mo_discount else self.general_discount,
-                              'attr_value_ids': [(6, 0, line.default_attr_value_ids.mapped('id'))]}))
+                              'attr_value_ids': [(6, 0, attr_value_ids)]}))
         self.line_ids = vals
         for line in self.line_ids:
             line.onchange_attr_values()

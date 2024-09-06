@@ -10,6 +10,10 @@
                 <field name="categ_id" required="True"/>
                 <field name="name"/>
                 <field name="first_selection"/>
+                <field name="appears_in_template_name"/>
+                <field name="search_text"/>
+                <field name="search_type"/>
+                <field name="search_domain_term"/>
                 <field name="parent_tag_id" widget="many2many_tags"/>
             </tree>
         </field>
@@ -82,6 +86,7 @@
                     <field name="line_ids" mode="tree">
                         <tree  create = '1' delete = '1' editable="bottom">
                             <field name="sequence" widget="handle"/>
+                            <field name="product_tmpl_domain" widget="domain" options="{'model': 'product.template', 'in_dialog': true}"/>
                             <field name="product_tmpl_id"/>
                             <field name="product_uom_qty"/>
                             <field name="attr_value_domain" invisible="1"/>
