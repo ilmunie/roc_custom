@@ -293,6 +293,8 @@
                                     <group>
                                         <field name="visit_payment_type" widget="radio" />
                                         <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type','!=','to_bill')]}" />
+                                        <field name="job_employee_ids" widget="many2many_tags" options="{'no_create': 1}" domain="[('technical','=', True)]"/>
+                                        <field name="job_vehicle_ids" widget="many2many_tags" options="{'no_create': 1}" />
                                     </group>
                                     <group>
                                         <field name="visit_priority" widget="priority" />

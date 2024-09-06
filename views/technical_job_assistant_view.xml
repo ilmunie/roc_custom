@@ -112,7 +112,7 @@
                         <div class="oe_kanban_footer">
                             <div class="o_kanban_record_bottom">
                                 <div class="oe_kanban_bottom_left">
-                                    <button name="action_schedule_job" type="object" class="btn btn-outline-primary  oe_inline oe_stat_button" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}">
+                                    <button name="action_schedule_job" type="object" class="btn btn-outline-primary  oe_inline oe_stat_button" attrs="{'invisible': ['|',('next_active_job_id','!=',False),('res_model','=','technical.job.schedule')]}">
                                         <span>Nueva <br/>operación</span>
                                     </button>
                                 </div>
@@ -169,7 +169,7 @@
                     <field name="html_data_src_doc" widget="text_widget" readonly="1"/>
                     <button name="see_all_data" type="object" icon="fa-eye" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
                     <button name="see_job_in_calendar" type="object" string="Ver operación" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
-                    <button name="action_schedule_job" type="object" string="Nueva operación" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
+                    <button name="action_schedule_job" type="object" string="Nueva operación" attrs="{'invisible': ['|',('next_active_job_id','!=',False),('res_model','=','technical.job.schedule')]}"/>
                 </tree>
             </field>
         </record>

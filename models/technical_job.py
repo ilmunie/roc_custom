@@ -84,6 +84,10 @@ class TechnicalJob(models.Model):
         for record in self:
             if record.res_id and record.res_model:
                 real_rec = self.env[self.res_model].browse(self.res_id)
+                if real_rec.job_employee_ids:
+                    record.job_employee_ids = [(6, 0, real_rec.job_employee_ids.mapped('id'))]
+                if real_rec.job_vehicle_ids:
+                    record.job_vehicle_ids = [(6, 0, real_rec.job_vehicle_ids.mapped('id'))]
                 if real_rec.technical_job_tag_ids:
                     record.technical_job_tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
                 if real_rec.job_duration:

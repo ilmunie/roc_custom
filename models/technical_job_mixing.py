@@ -12,6 +12,9 @@ class TechnicalJobMixin(models.AbstractModel):
     manual_technical_job = fields.Boolean(string="Publicar Aviso", tracking=True)
     manual_technical_job_request = fields.Date(string="Fecha solicitud")
     technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas", tracking=True)
+    job_employee_ids = fields.Many2many('hr.employee', string="Personal Visita", tracking=True)
+    job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Personal Visita", tracking=True)
+
     estimated_visit_revenue = fields.Float(string="Estimado (EUR)")
     job_duration = fields.Float(string="Horas estimadas")
 
@@ -30,6 +33,18 @@ class TechnicalJobMixin(models.AbstractModel):
                 for job in self.technical_schedule_job_ids:
                     if job.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
                         job.technical_job_tag_ids = [(6, 0, self.technical_job_tag_ids.mapped('id'))]
+        if 'job_employee_ids' in vals:
+            if self.job_employee_ids:
+                for job in self.technical_schedule_job_ids:
+                    if job.job_employee_ids.mapped('id') != self.job_employee_ids.mapped(
+                            'id'):
+                        job.job_employee_ids = [(6, 0, self.job_employee_ids.mapped('id'))]
+        if 'job_vehicle_ids' in vals:
+            if self.job_vehicle_ids:
+                for job in self.technical_schedule_job_ids:
+                    if job.job_vehicle_ids.mapped('id') != self.job_vehicle_ids.mapped(
+                            'id'):
+                        job.job_vehicle_ids = [(6, 0, self.job_vehicle_ids.mapped('id'))]
         if 'job_duration' in vals:
             if self.technical_schedule_job_ids:
                 for job in self.technical_schedule_job_ids:
@@ -80,10 +95,11 @@ class TechnicalJobMixin(models.AbstractModel):
                                                                        'job_categ_ids': [(6, 0, record.job_categ_ids.mapped('id'))],
                                                                        'estimated_visit_revenue': record.estimated_visit_revenue,
                                                                        'internal_notes': record.visit_internal_notes,
+                                                                       'technical_job_tag_ids': [(6, 0, record.technical_job_tag_ids.mapped('id'))],
                                                                        'job_employee_ids': [(6, 0, config[
-                                                                           0].technical_job_type_id.default_job_employee_ids.mapped('id'))],
+                                                                           0].technical_job_type_id.default_job_employee_ids.mapped('id'))] if not record.job_employee_ids else [(6,0,record.job_employee_ids.mapped('id'))],
                                                                        'job_vehicle_ids': [(6, 0, config[
-                                                                           0].technical_job_type_id.default_job_vehicle_ids.mapped('id'))],
+                                                                           0].technical_job_type_id.default_job_vehicle_ids.mapped('id'))] if not record.job_vehicle_ids else [(6,0,record.job_vehicle_ids.mapped('id'))],
                                                                        'job_type_id': config[
                                                                            0].technical_job_type_id.id,
                                                                        'job_duration': record.job_duration if record.job_duration>0 else config[

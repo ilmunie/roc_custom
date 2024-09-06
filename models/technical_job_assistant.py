@@ -45,6 +45,12 @@ class TechnicalJobAssistant(models.Model):
                     else:
                         if real_rec.visit_internal_notes != self.internal_notes:
                             real_rec.visit_internal_notes = self.internal_notes
+                if 'job_employee_ids' in vals:
+                    if real_rec.job_employee_ids.mapped('id') != self.job_employee_ids.mapped('id'):
+                        real_rec.job_employee_ids = vals.get('job_employee_ids', [(5,)])
+                if 'job_vehicle_ids' in vals:
+                    if real_rec.job_vehicle_ids.mapped('id') != self.job_vehicle_ids.mapped('id'):
+                        real_rec.job_vehicle_ids = vals.get('job_vehicle_ids', [(5,)])
                 if 'technical_job_tag_ids' in vals:
                     if real_rec.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
                         real_rec.technical_job_tag_ids = vals.get('technical_job_tag_ids', [(5,)])
