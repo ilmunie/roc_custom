@@ -69,10 +69,10 @@ class TechnicalJobSaleTemplateLine(models.Model):
     @api.depends('product_tmpl_domain','product_tmpl_id', 'default_attr_value_ids')
     def compute_attr_value_domain(self):
         for record in self:
+            res = []
             if record.product_tmpl_id:
                 res = [('id', 'in', record.product_tmpl_id.mapped('product_variant_ids').mapped('product_template_variant_value_ids.product_attribute_value_id.id'))]
-            else:
-                res = []
+            elif record.product_tmpl_domain:
                 for prod_tmp in self.env['product.template'].search(json.loads(record.product_tmpl_domain)):
                     if len(res) > 0:
                         res.insert(0, '|')
