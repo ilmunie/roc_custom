@@ -73,7 +73,7 @@ class TechnicalJobSaleTemplateLine(models.Model):
             if record.product_tmpl_id:
                 res = [('id', 'in', record.product_tmpl_id.mapped('product_variant_ids').mapped('product_template_variant_value_ids.product_attribute_value_id.id'))]
             elif record.product_tmpl_domain:
-                for prod_tmp in self.env['product.template'].search(json.loads(record.product_tmpl_domain)):
+                for prod_tmp in self.env['product.template'].search(json.loads(record.product_tmpl_domain.replace('True', 'true').replace('False', 'false'))):
                     if len(res) > 0:
                         res.insert(0, '|')
                     res.append(('id', 'in', prod_tmp.mapped('product_variant_ids').mapped('product_template_variant_value_ids.product_attribute_value_id.id')))
