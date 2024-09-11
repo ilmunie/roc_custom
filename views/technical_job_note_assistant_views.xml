@@ -15,10 +15,10 @@
                 <br/>
                 <field name="pending_jobs" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
                 <br/>
-                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'no')]}">
+                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '!=', 'yes')]}">
                     <span>Al continuar la operación quedará aplazada para ser recoordinada </span>
                 </div>
-                <div class="alert alert-info mb-0" role="info" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'yes')]}">
+                <div class="alert alert-info mb-0" role="info" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '!=', 'no')]}">
                     <span>Al continuar se marcará la operación como terminada</span>
                 </div>
                 <field name="content" nolabel="1" />
@@ -30,7 +30,7 @@
                 <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿NECESITA FACTURACION?</span></strong><br/>
                 <field name="needs_billing" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
                 <br/>
-                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('needs_billing', '=', 'no')]}">
+                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('needs_billing', '!=', 'yes')]}">
                     <span>Al continuar se abrirá el asistente de facturación</span>
                 </div>
                 <br/>

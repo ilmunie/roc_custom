@@ -6,15 +6,15 @@ from odoo.exceptions import UserError, ValidationError
 class TechnicalJobNoteAssistant(models.TransientModel):
     _name = "technical.job.note.assistant"
 
-    new_opportunities = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], default="no", string="Potencial otros trabajos")
+    new_opportunities = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Potencial otros trabajos")
     opportunities_description = fields.Text(string="Descripción oportunidad")
     opportunities_job_categ_ids = fields.Many2many('technical.job.categ', string="Tipo oportunidad")
     opp_attch_ids = fields.Many2many('ir.attachment','technical_job_opp_creation_att_rel', 'wiz_id', 'attach_id', string="Adjuntos")
 
     currency_id = fields.Many2one('res.currency')
     content_type = fields.Char()
-    pending_jobs = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], default="no", string="Trabajos pendientes")
-    needs_billing = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], default="no", string="Necesita facturacion adicional?")
+    pending_jobs = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Trabajos pendientes")
+    needs_billing = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Necesita facturacion adicional?")
     content = fields.Text(required=True, string="Comentarios")
     todo_description = fields.Text(string="A realizar")
     technical_job_id = fields.Many2one('technical.job')
@@ -27,7 +27,7 @@ class TechnicalJobNoteAssistant(models.TransientModel):
         result = super(TechnicalJobNoteAssistant, self).default_get(fields)
         result['content_type'] = self.env.context.get("note_assistant_type", False)
         result['technical_job_id'] = self.env.context.get("technical_job", False)
-        result['pending_jobs'] = 'yes' if self.env.context.get("stand_by", False) else 'no'
+        #result['pending_jobs'] = 'yes' if self.env.context.get("stand_by", False) else 'no'
         result['currency_id'] = self.env.user.company_id.currency_id.id
         return result
 
