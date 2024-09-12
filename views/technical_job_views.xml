@@ -465,6 +465,25 @@
         parent="roc_custom.menu_job"
         action="roc_custom.action_technical_job_python"/>
     <menuitem
+        id="menu_job_products"
+        name="Productos"
+        sequence="35"
+        parent="roc_custom.menu_job"
+        action="roc_custom.action_technical_job_python"/>
+    <menuitem
+        id="menu_job_product_variant"
+        name="Variantes de producto"
+        sequence="10"
+        parent="roc_custom.menu_job_products"
+        action="stock.stock_product_normal_action"/>
+    <menuitem
+        id="menu_job_product"
+        name="Plantillas de producto"
+        sequence="8"
+        parent="roc_custom.menu_job_products"
+        action="sale.product_template_action"/>
+
+    <menuitem
         id="menu_crm_job_config"
         name="Configuracion"
         sequence="90"

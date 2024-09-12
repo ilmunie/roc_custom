@@ -368,7 +368,7 @@ class TechnicalJob(models.Model):
             'type': 'ir.actions.act_window',
             'view_mode': 'form',
             'context': ctx,
-            'target': 'new',
+            'target': 'current',
         }
 
 

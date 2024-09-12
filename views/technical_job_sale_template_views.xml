@@ -92,6 +92,8 @@
                             <field name="attr_value_domain" invisible="1"/>
                             <field name="default_attr_value_ids" options="{'no_create': 1}" domain="attr_value_domain" widget="many2many_tags"/>
                             <field name="product_id"/>
+                            <field name="product_name_tag_domain" invisible="1"/>
+                            <field name="product_name_tag_ids" domain="product_name_tag_domain" widget="many2many_tags"/>
                             <field name="default_discount" widget="percentage"/>
                         </tree>
                     </field>

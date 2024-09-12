@@ -118,6 +118,7 @@
         </field>
     </record>
 
+
     <menuitem
         id="menu_technical_job_checklist_config"
         name="Configuracion Checklist"

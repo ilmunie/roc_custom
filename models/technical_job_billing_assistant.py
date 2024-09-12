@@ -1,15 +1,38 @@
+import pdb
+
 from odoo import fields, models, api
 import json
 from odoo.exceptions import UserError, ValidationError
 
-
-
 class TechnicalJobBillingAssistantLine(models.TransientModel):
     _name = "technical.job.billing.assistant.line"
 
+
+
+    @api.onchange('product_id')
+    def onchange_product_id(self):
+        if self.product_id and self.product_id.product_template_variant_value_ids:
+            if self.product_id.product_template_variant_value_ids.mapped('product_attribute_value_id.id') != self.attr_value_ids.mapped('id'):
+                self.attr_value_ids = [(6, 0, self.product_id.product_template_variant_value_ids.mapped('product_attribute_value_id.id'))]
+        return False
+
+
+    product_template_id = fields.Many2one(
+        'product.template', string='Product Template',
+        related="product_id.product_tmpl_id", readonly=False, force_save=True)
+
+    product_updatable = fields.Boolean(compute='_compute_product_updatable', string='Can Edit Product', default=True)
+    @api.depends('product_id')
+    def _compute_product_updatable(self):
+        for line in self:
+                line.product_updatable = True
+    product_custom_attribute_value_ids = fields.One2many('product.attribute.custom.value', 'wiz_line_creator_id', string="Custom Values WIZ", copy=True)
+    product_no_variant_attribute_value_ids = fields.Many2many('product.template.attribute.value', 'variant_creator_wiz_rel', 'wiz_id', 'attr_tmp_value_id', string="Extra Values", ondelete='restrict')
+    is_configurable_product = fields.Boolean('Is the product configurable?', related="product_template_id.has_configurable_attributes")
+    product_template_attribute_value_ids = fields.Many2many(related='product_id.product_template_attribute_value_ids', readonly=True)
     product_tmpl_domain = fields.Char()
     wiz_id = fields.Many2one('technical.job.billing.assistant')
-    product_template_id = fields.Many2one('product.template', string="Producto")
+    #product_template_id = fields.Many2one('product.template', string="Producto")
     attr_readonly = fields.Boolean()
     product_price = fields.Float(string="Precio unitario", related='product_id.lst_price')
     @api.depends('product_price', 'product_uom_qty')
@@ -22,25 +45,7 @@ class TechnicalJobBillingAssistantLine(models.TransientModel):
     currency_id = fields.Many2one(related='wiz_id.currency_id')
     discount = fields.Float()
 
-    @api.depends('product_template_id', 'attr_value_ids')
-    def compute_attr_value_domain(self):
-        for record in self:
-            res = [('id', 'in', record.product_template_id.mapped('product_variant_ids').mapped('product_template_variant_value_ids.product_attribute_value_id.id'))]
-            if record.attr_value_ids:
-                res.append(('attribute_id.id', 'not in', record.attr_value_ids.mapped('attribute_id.id')))
-            if not res:
-                res = [('id', '=', 1)]
-            record.attr_value_domain = json.dumps(res)
-
-    attr_value_domain = fields.Char(compute=compute_attr_value_domain)
     attr_value_ids = fields.Many2many('product.attribute.value', 'billing_assist_attr_value_rel', 'wiz_id', 'attr_value_id', string="Personalizaciones")
-
-    @api.onchange('product_domain')
-    def onchange_attr_values(self):
-        if not self.product_id:
-            matching_products = self.env['product.product'].search(json.loads(self.product_domain))
-            if len(matching_products) == 1:
-                self.product_id = matching_products[0].id
 
     product_id = fields.Many2one('product.product')
     @api.depends('attr_value_ids', 'product_template_id')
@@ -52,6 +57,7 @@ class TechnicalJobBillingAssistantLine(models.TransientModel):
                     res.append(('product_template_variant_value_ids.product_attribute_value_id.name', '=', att_value.name))
             record.product_domain = json.dumps(res)
     product_domain = fields.Char(compute=get_product_domain)
+    line_id = fields.Many2one('technical.job.sale.template.line')
 
 class TechnicalJobBillingAssistant(models.TransientModel):
     _name = "technical.job.billing.assistant"
@@ -95,35 +101,37 @@ class TechnicalJobBillingAssistant(models.TransientModel):
             if product_tmpl:
                 tmpl_domain = [('id', '=', line.product_tmpl_id.id)]
             else:
-                tmpl_domain = json.loads(line.product_tmpl_domain)
+                tmpl_domain = json.loads(line.product_tmpl_domain.replace('True', 'true').replace('False', 'false'))
                 name_tags = self.technical_job_template_tag_ids.filtered(
                     lambda x: x.appears_in_template_name)
+                if line.product_name_tag_ids:
+                    name_tags = name_tags.filtered(lambda x: x.name in line.product_name_tag_ids.mapped('name'))
                 for name_tag in name_tags:
-                    tmpl_domain.insert(0, json.loads(name_tag.search_domain_term)[0])
+                    tmpl_domain.insert(0, json.loads(name_tag.search_domain_term.replace('True', 'true').replace('False', 'false'))[0])
                 available_tmpls = self.env['product.template'].search(tmpl_domain)
                 product_tmpl = available_tmpls[0] if available_tmpls else False
-            available_attrs_values = product_tmpl.mapped('product_variant_ids').mapped(
-                'product_template_variant_value_ids.product_attribute_value_id')
-            attr_value_ids = available_attrs_values.filtered(lambda x: x.display_name in line.default_attr_value_ids.mapped('display_name')).mapped('id')
-            if len(product_tmpl.mapped('product_variant_ids')) <= 1:
-                vals.append((0, 0,
-                             {'product_template_id': product_tmpl.id,
-                              'attr_readonly': True,
-                              'product_tmpl_domain': json.dumps(tmpl_domain),
-                              'product_uom_qty': line.product_uom_qty,
-                              'discount': line.default_discount if not mo_discount else self.general_discount,
-                              'attr_value_ids': [(6, 0, attr_value_ids) ],
-                              'product_id': product_tmpl.product_variant_ids[0].id}))
-            else:
-                vals.append((0, 0,
-                             {'product_template_id': product_tmpl.id,
-                              'product_uom_qty': line.product_uom_qty,
-                              'product_tmpl_domain': json.dumps(tmpl_domain),
-                              'discount': line.default_discount if not mo_discount else self.general_discount,
-                              'attr_value_ids': [(6, 0, attr_value_ids)]}))
+            available_products = product_tmpl.product_variant_ids
+            select_product = False
+            attr_val = False
+            for product in available_products:
+                matching_attr_values = line.default_attr_value_ids.filtered(lambda r: r.attribute_id.display_name in product.product_template_attribute_value_ids.mapped('attribute_id.display_name'))
+                if all( mat_attr_name in product.product_template_variant_value_ids.mapped('product_attribute_value_id.display_name') for mat_attr_name in matching_attr_values.mapped('display_name')):
+                    select_product = product
+                    break
+            if not select_product:
+                select_product = product_tmpl.product_variant_ids[0]
+            vals.append((0, 0,
+                         {'product_template_id': product_tmpl.id,
+                          'line_id': line.id,
+                          'attr_readonly': True,
+                          'product_tmpl_domain': json.dumps(tmpl_domain),
+                          'product_uom_qty': line.product_uom_qty,
+                          'discount': line.default_discount if not mo_discount else self.general_discount,
+                          'product_id': select_product.id}))
+
         self.line_ids = vals
         for line in self.line_ids:
-            line.onchange_attr_values()
+            line.onchange_product_id()
         self.materials_to_bill = self.technical_job_template_id.materials_to_bill if self.technical_job_template_id else False
         self.general_discount = self.technical_job_template_id.default_general_discount if self.technical_job_template_id else 0
         self.materials_discount = self.technical_job_template_id.default_materials_discount if self.technical_job_template_id else 0
@@ -189,6 +197,14 @@ class TechnicalJobBillingAssistant(models.TransientModel):
     materials_to_bill = fields.Boolean(string="Materiales a facturar")
     generic_material_cost = fields.Float(string="Gasto materiales")
     materials_purchased = fields.Boolean(string="¿Se compraron materiales?")
+
+    @api.model
+    def name_get(self):
+        res = []
+        for rec in self:
+            name = 'FACTURACIÓN OPERACIONES'
+            res.append((rec.id, name))
+        return res
 
 
     @api.depends('generic_material_cost','displacement_discount','generic_materials_discount','line_ids.discount', 'line_ids', 'add_generic_material', 'generic_material_cost', 'material_displacement', 'material_displacement_product_ids')

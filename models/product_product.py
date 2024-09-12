@@ -1,3 +1,5 @@
+import pdb
+
 from odoo import fields, models, api
 
 
@@ -5,6 +7,7 @@ class ProductProduct(models.Model):
     _inherit = "product.product"
 
     pos_force_ship_later = fields.Boolean(related="product_tmpl_id.pos_force_ship_later")
+
 
     def _prepare_sellers(self, params=False):
         sellers = super(ProductProduct, self)._prepare_sellers(params=params)
@@ -16,7 +19,7 @@ class ProductProduct(models.Model):
         rentability_multiplier = self.env.user.company_id.material_rentability_multiplier
         normal_recs = []
         for record in self:
-            if record.purchase_ok and record.seller_ids and record.standard_price:
+            if record.standard_price:
                 record.lst_price = record.standard_price*rentability_multiplier
             else:
                 normal_recs.append(record.id)
@@ -24,6 +27,7 @@ class ProductProduct(models.Model):
 
     def set_cost_from_pricelist(self):
         product_to_compute = self.env['product.product'].browse(self._context.get('active_ids', []))
+        #import pdb;pdb.set_trace()
         for prod in product_to_compute:
             cost = 0
             discount_amount = 0
@@ -53,6 +57,15 @@ class ProductProduct(models.Model):
                 cost = price_unit
             prod.standard_price = cost - discount_amount
         return False
+
+    @api.depends('product_tmpl_id.seller_ids', 'product_tmpl_id.seller_ids.price', 'product_tmpl_id.seller_ids.variant_extra_ids', 'product_tmpl_id.seller_ids.variant_extra_ids.extra_amount', 'product_tmpl_id.seller_ids.discount')
+    def compute_trigger_cost_from_seller(self):
+        for record in self:
+            record.with_context(active_ids=record.mapped('id')).set_cost_from_pricelist()
+            record.trigger_cost_from_seller = False if record.trigger_cost_from_seller else True
+
+
+    trigger_cost_from_seller = fields.Boolean(compute=compute_trigger_cost_from_seller, store=True)
 
     def set_cost_from_last_purchase(self):
         return False

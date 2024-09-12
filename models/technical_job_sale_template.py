@@ -61,6 +61,18 @@ class TechnicalJobSaleTemplateLine(models.Model):
 
     template_id = fields.Many2one('technical.job.sale.template')
 
+    @api.depends('template_id.tag_ids')
+    def get_product_name_tag_domain(self):
+        for record in self:
+            res = []
+            tags = record.template_id.tag_ids.filtered(lambda x: x.appears_in_template_name)
+            if tags:
+                res = [('name', 'in', tags.mapped('name'))]
+
+            record.product_name_tag_domain = json.dumps(res)
+
+    product_name_tag_domain = fields.Char(compute=get_product_name_tag_domain)
+    product_name_tag_ids = fields.Many2many('technical.job.sale.template.tag', 'job_sale_line_template_tag_rel', 'line_id', 'tag_id',)
     product_tmpl_domain = fields.Char()
     product_tmpl_id = fields.Many2one('product.template', string="Plantilla Producto")
     product_uom_qty = fields.Float(string="Cant")

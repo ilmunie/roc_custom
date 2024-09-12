@@ -7,6 +7,7 @@ class ProductSupplierinfo(models.Model):
 
     additional_pricelist = fields.Boolean(string="Tarifas adicionales")
     additional_pricelist_ids = fields.One2many('additional.supplierinfo', 'supplierinfo_id', copy=True)
+
     @api.depends('product_tmpl_id', 'product_tmpl_id.additional_product_ids', 'product_tmpl_id.additional_product_ids.domain')
     def get_additional_product_domain(self):
         product_model = self.env['product.product']
@@ -202,6 +203,34 @@ class ProductTemplate(models.Model):
 
     additional_product_ids = fields.Many2many('purchase.additional.product')
     pos_force_ship_later = fields.Boolean(string="Punto Venta: forzar enviar más tarde")
+
+    price_from_seller = fields.Boolean(string="Precio de venta según costo")
+
+    #METHOD THAT WRITES STANDARD COST AND (IF CONFIGURED IN PRODUCT) THE SALE PRICE AND EXTRA OF ATTRS
+    @api.depends('price_from_seller', 'seller_ids', 'seller_ids.price', 'seller_ids.variant_extra_ids', 'seller_ids.variant_extra_ids.extra_amount', 'seller_ids.discount', 'price_from_seller')
+    def compute_list_price_from_sellers(self):
+        rentability_multiplier = self.env.user.company_id.material_rentability_multiplier
+        for record in self:
+            sellers = self.seller_ids.filtered(lambda x: x.price > 0)
+            sorted_sellers = sorted(sellers, key=lambda r: r.price*(1 - r.discount/100), reverse=True)
+            seller = sorted_sellers[0] if sellers else False
+            if seller:
+                final_cost = seller.price*(1 - seller.discount/100)
+                record.standard_price = final_cost
+                if record.price_from_seller:
+                    record.list_price = final_cost*rentability_multiplier
+                    if seller.has_extras or seller.variant_extra_ids:
+                        for attr_value in record.attribute_line_ids.mapped('product_template_value_ids'):
+                            extra_line = seller.variant_extra_ids.filtered(
+                                lambda x: attr_value.product_attribute_value_id.id in x.attribute_ids.mapped(
+                                    'id'))
+                            if extra_line:
+                                price_extra = extra_line[0].extra_amount
+                                attr_value.price_extra = rentability_multiplier*price_extra*(1 - seller.discount/100)
+            record.trigger_list_price = False if record.trigger_list_price else True
+
+
+    trigger_list_price = fields.Boolean(compute=compute_list_price_from_sellers, store=True)
 
 class PurchaseAdditionalProduct(models.Model):
     _name = "purchase.additional.product"

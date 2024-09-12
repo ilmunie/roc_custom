@@ -1,9 +1,6 @@
 from odoo import fields, models, api
 
 
-class TechnicalJobMovementWizard(models.TransientModel):
-    _name = "technical.job.movement.wizard"
-
 class TechnicalJobTimeRegister(models.Model):
     _name = "technical.job.time.register"
 
