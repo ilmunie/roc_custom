@@ -30,3 +30,4 @@ from . import technical_job_checklist
 from . import technical_job_sale_template
 from . import technical_job_billing_assistant
 from . import variant_creator_assistant
+from . import product_variant_combo_config

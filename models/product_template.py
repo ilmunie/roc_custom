@@ -222,8 +222,8 @@ class ProductTemplate(models.Model):
                     if seller.has_extras or seller.variant_extra_ids:
                         for attr_value in record.attribute_line_ids.mapped('product_template_value_ids'):
                             extra_line = seller.variant_extra_ids.filtered(
-                                lambda x: attr_value.product_attribute_value_id.id in x.attribute_ids.mapped(
-                                    'id'))
+                                lambda x: attr_value.product_attribute_value_id.display_name in x.attribute_ids.mapped(
+                                    'display_name'))
                             if extra_line:
                                 price_extra = extra_line[0].extra_amount
                                 attr_value.price_extra = rentability_multiplier*price_extra*(1 - seller.discount/100)

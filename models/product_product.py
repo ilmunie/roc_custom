@@ -40,25 +40,25 @@ class ProductProduct(models.Model):
                 else:
                     cost = seller.price
                     discount_amount = seller.discount * cost / 100
-            if not seller and prod.product_tmpl_id.is_combo:
+            if not seller and prod.product_tmpl_id.is_variant_combo:
                 price_unit = 0
                 discount_amount = 0
-                for combo_line in prod.product_tmpl_id.combo_product_id:
+                for combo_line in prod.combo_variant_line_ids:
                     seller = combo_line.product_id.with_company(prod.company_id)._select_seller()
                     if seller:
                         if seller.variant_extra_ids:
-                            aux_var = seller.get_final_price(combo_line.product_id) * combo_line.product_quantity
+                            aux_var = seller.get_final_price(combo_line.product_id) * combo_line.product_uom_qty
                             discount_amount += seller.discount * aux_var / 100
                             price_unit += aux_var
                         else:
-                            aux_var = seller.price * combo_line.product_quantity
+                            aux_var = seller.price * combo_line.product_uom_qty
                             discount_amount += seller.discount * aux_var / 100
                             price_unit += aux_var
                 cost = price_unit
             prod.standard_price = cost - discount_amount
         return False
 
-    @api.depends('product_tmpl_id.seller_ids', 'product_tmpl_id.seller_ids.price', 'product_tmpl_id.seller_ids.variant_extra_ids', 'product_tmpl_id.seller_ids.variant_extra_ids.extra_amount', 'product_tmpl_id.seller_ids.discount')
+    @api.depends('product_tmpl_id.is_variant_combo','product_tmpl_id.seller_ids', 'product_tmpl_id.seller_ids.price', 'product_tmpl_id.seller_ids.variant_extra_ids', 'product_tmpl_id.seller_ids.variant_extra_ids.extra_amount', 'product_tmpl_id.seller_ids.discount')
     def compute_trigger_cost_from_seller(self):
         for record in self:
             record.with_context(active_ids=record.mapped('id')).set_cost_from_pricelist()
