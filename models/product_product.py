@@ -19,7 +19,7 @@ class ProductProduct(models.Model):
         rentability_multiplier = self.env.user.company_id.material_rentability_multiplier
         normal_recs = []
         for record in self:
-            if record.standard_price:
+            if record.product_tmpl_id.record.price_from_seller and record.standard_price:
                 record.lst_price = record.standard_price*rentability_multiplier
             else:
                 normal_recs.append(record.id)

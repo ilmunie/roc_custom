@@ -211,13 +211,13 @@ class ProductTemplate(models.Model):
     def compute_list_price_from_sellers(self):
         rentability_multiplier = self.env.user.company_id.material_rentability_multiplier
         for record in self:
-            sellers = self.seller_ids.filtered(lambda x: x.price > 0)
-            sorted_sellers = sorted(sellers, key=lambda r: r.price*(1 - r.discount/100), reverse=True)
-            seller = sorted_sellers[0] if sellers else False
-            if seller:
-                final_cost = seller.price*(1 - seller.discount/100)
-                record.standard_price = final_cost
-                if record.price_from_seller:
+            if record.price_from_seller:
+                sellers = self.seller_ids.filtered(lambda x: x.price > 0)
+                sorted_sellers = sorted(sellers, key=lambda r: r.price*(1 - r.discount/100), reverse=True)
+                seller = sorted_sellers[0] if sellers else False
+                if seller:
+                    final_cost = seller.price*(1 - seller.discount/100)
+                    record.standard_price = final_cost
                     record.list_price = final_cost*rentability_multiplier
                     if seller.has_extras or seller.variant_extra_ids:
                         for attr_value in record.attribute_line_ids.mapped('product_template_value_ids'):
