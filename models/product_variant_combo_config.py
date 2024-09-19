@@ -127,7 +127,7 @@ class PurchaseOrderLine(models.Model):
                     partner_id=self.partner_id,
                     quantity=self.product_qty*combo_line.product_uom_qty,
                     date=self.order_id.date_order and self.order_id.date_order.date(),
-                    uom_id=combo_line.uom_id)
+                    uom_id=combo_line.product_id.uom_id)
                     if seller:
                         if seller.variant_extra_ids:
                             aux_var = seller.get_final_price(combo_line.product_id) * combo_line.product_uom_qty
@@ -145,7 +145,7 @@ class PurchaseOrderLine(models.Model):
     def _prepare_purchase_order_line(self, product_id, product_qty, product_uom, company_id, supplier, po):
         res = super(PurchaseOrderLine, self)._prepare_purchase_order_line(product_id=product_id, product_qty=product_qty, product_uom=product_uom, company_id=company_id, supplier=supplier, po=po)
         prod = product_id
-        uom_po_qty = product_uom._compute_quantity(product_qty, product_id.uom_po_id)
+        #uom_po_qty = product_uom._compute_quantity(product_qty, product_id.uom_po_id)
         if prod.product_tmpl_id.is_variant_combo and prod.product_tmpl_id.seller_price_from_combo:
             price_unit = 0
             discount_amount = 0
@@ -154,7 +154,7 @@ class PurchaseOrderLine(models.Model):
                     partner_id=supplier,
                     quantity=product_qty * combo_line.product_uom_qty,
                     date=po.date_order and po.date_order.date(),
-                    uom_id=uom_po_qty)
+                    uom_id=combo_line.product_id.uom_id)
                 if seller:
                     if seller.variant_extra_ids:
                         aux_var = seller.get_final_price(combo_line.product_id) * combo_line.product_uom_qty
