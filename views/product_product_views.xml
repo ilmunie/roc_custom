@@ -74,11 +74,13 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='taxes_id']" position="before">
                 <field name="price_from_seller"/>
+                <field name="seller_price_from_combo" attrs="{'invisible': [('is_variant_combo','=',False)]}"/>
             </xpath>
 
             <xpath expr="//field[@name='pos_categ_id']" position="after">
                 <field name="pos_force_ship_later"/>
             </xpath>
+
             <xpath expr="//field[@name='variant_seller_ids']" position="after">
                 <group string="Productos Adicionales">
                     <field name="additional_product_ids" widget="one2many" nolabel="1" mode="tree">

@@ -40,7 +40,7 @@ class ProductProduct(models.Model):
                 else:
                     cost = seller.price
                     discount_amount = seller.discount * cost / 100
-            if not seller and prod.product_tmpl_id.is_variant_combo:
+            if prod.product_tmpl_id.is_variant_combo and prod.product_tmpl_id.seller_price_from_combo:
                 price_unit = 0
                 discount_amount = 0
                 for combo_line in prod.combo_variant_line_ids:

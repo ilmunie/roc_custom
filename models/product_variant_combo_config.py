@@ -6,6 +6,8 @@ class ProductTemplate(models.Model):
 
     variant_combo_config_ids = fields.One2many('product.variant.combo.config', 'product_template_id', copy=True)
     is_variant_combo = fields.Boolean(string="Es Combo?")
+    seller_price_from_combo = fields.Boolean(string="Precio Compra tarifa componentes combo")
+
 
 
 class ProductVariantComboConfig(models.Model):
@@ -108,3 +110,61 @@ class ProductProduct(models.Model):
             record.trigger_combo_product_assigment = False if record.trigger_combo_product_assigment else True
 
     trigger_combo_product_assigment = fields.Boolean(compute=combo_product_assigment, store=True)
+
+class PurchaseOrderLine(models.Model):
+    _inherit = "purchase.order.line"
+
+    @api.onchange('product_qty', 'product_uom')
+    def _onchange_quantity(self):
+        res = super(PurchaseOrderLine, self)._onchange_quantity()
+        prod = self.product_id
+        if prod:
+            if prod.product_tmpl_id.is_variant_combo and prod.product_tmpl_id.seller_price_from_combo:
+                price_unit = 0
+                discount_amount = 0
+                for combo_line in prod.combo_variant_line_ids:
+                    seller = combo_line.product_id.with_company(prod.company_id)._select_seller(
+                    partner_id=self.partner_id,
+                    quantity=self.product_qty*combo_line.product_uom_qty,
+                    date=self.order_id.date_order and self.order_id.date_order.date(),
+                    uom_id=combo_line.uom_id)
+                    if seller:
+                        if seller.variant_extra_ids:
+                            aux_var = seller.get_final_price(combo_line.product_id) * combo_line.product_uom_qty
+                            discount_amount += seller.discount * aux_var / 100
+                            price_unit += aux_var
+                        else:
+                            aux_var = seller.price * combo_line.product_uom_qty
+                            discount_amount += seller.discount * aux_var / 100
+                            price_unit += aux_var
+                self.price_unit = price_unit
+                if discount_amount:
+                    self.discount = 100 * discount_amount / price_unit
+        return res
+
+    def _prepare_purchase_order_line(self, product_id, product_qty, product_uom, company_id, supplier, po):
+        res = super(PurchaseOrderLine, self)._prepare_purchase_order_line(product_id=product_id, product_qty=product_qty, product_uom=product_uom, company_id=company_id, supplier=supplier, po=po)
+        prod = product_id
+        uom_po_qty = product_uom._compute_quantity(product_qty, product_id.uom_po_id)
+        if prod.product_tmpl_id.is_variant_combo and prod.product_tmpl_id.seller_price_from_combo:
+            price_unit = 0
+            discount_amount = 0
+            for combo_line in prod.combo_variant_line_ids:
+                seller = combo_line.product_id.with_company(prod.company_id)._select_seller(
+                    partner_id=supplier,
+                    quantity=product_qty * combo_line.product_uom_qty,
+                    date=po.date_order and po.date_order.date(),
+                    uom_id=uom_po_qty)
+                if seller:
+                    if seller.variant_extra_ids:
+                        aux_var = seller.get_final_price(combo_line.product_id) * combo_line.product_uom_qty
+                        discount_amount += seller.discount * aux_var / 100
+                        price_unit += aux_var
+                    else:
+                        aux_var = seller.price * combo_line.product_uom_qty
+                        discount_amount += seller.discount * aux_var / 100
+                        price_unit += aux_var
+            res['price_unit'] = price_unit
+            if discount_amount:
+                res['discount'] = 100 * discount_amount / price_unit
+        return res
