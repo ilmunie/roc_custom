@@ -6,6 +6,12 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
+    partner_child_ids = fields.One2many(related='partner_id.child_ids')
+
+    def _prepare_address_values_from_partner(self, partner):
+        # Sync all address fields from partner, or none, to avoid mixing them.
+        return {}
+
     last_call_date = fields.Date(string='Fecha ultima llamada')
     last_call_status = fields.Selection(selection=[('no_aswer', 'Sin respuesta'), ('aswer', 'Atendida')], string="Estado ultima llamada")
     partner_vat = fields.Char(related='partner_id.vat')

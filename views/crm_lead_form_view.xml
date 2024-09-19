@@ -288,7 +288,116 @@
                             </group>
                         </group>
                         <notebook>
-                            <page string="Visita" attrs="{'invisible':[('type','!=','opportunity')]}">
+
+                            <page string="Notas internas" name="internal_notes">
+                                <group name="other_info_lead" string="Otra información del Lead" attrs="{'invisible':[('type','!=','lead')]}">
+                                    <group name="other_info_lead_left">
+                                        <field name="function"/>
+                                        <field name="website" widget="url" placeholder="e.g. https://www.odoo.com"/>
+                                    </group>
+                                    <group name="other_info_lead_right">
+                                        <field name="lang_id" options="{'no_open':True, 'no_create':True}"/>
+                                        <field name="email_cc"/>
+                                    </group>
+                                </group>
+                                <separator attrs="{'invisible':[('type','!=','lead')]}"/>
+                                <label for="description" string="Notas internas"/>
+                                <field name="description" placeholder="Añada una descripción..."/>
+                            </page>
+                            <page string="Contactos y direcciones" name="contact_addresses" autofocus="autofocus">
+                                <field name="partner_child_ids" mode="kanban" context="{'default_parent_id': partner_id, 'default_street': street, 'default_street2': street2, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang_id, 'default_user_id': user_id, 'default_type': 'other'}">
+                                    <kanban>
+                                        <field name="id"/>
+                                        <field name="color"/>
+                                        <field name="name"/>
+                                        <field name="title"/>
+                                        <field name="type"/>
+                                        <field name="email"/>
+                                        <field name="parent_id"/>
+                                        <field name="is_company"/>
+                                        <field name="function"/>
+                                        <field name="phone"/>
+                                        <field name="street"/>
+                                        <field name="street2"/>
+                                        <field name="zip"/>
+                                        <field name="city"/>
+                                        <field name="country_id"/>
+                                        <field name="mobile"/>
+                                        <field name="state_id"/>
+                                        <field name="image_128"/>
+                                        <field name="avatar_128"/>
+                                        <field name="lang"/>
+                                        <!-- fields in form x2many view to diminish requests -->
+                                        <field name="comment"/>
+                                        <field name="display_name"/>
+                                        <templates>
+                                            <t t-name="kanban-box">
+                                                <t t-set="color" t-value="kanban_color(record.color.raw_value)"/>
+                                                <div t-att-class="color + (record.title.raw_value == 1 ? ' oe_kanban_color_alert' : '') + ' oe_kanban_global_click'">
+                                                    <div class="o_kanban_image">
+                                                        <img alt="Contact image" t-att-src="kanban_image('res.partner', 'avatar_128', record.id.raw_value)"/>
+                                                    </div>
+                                                    <div class="oe_kanban_details">
+                                                        <field name="name"/>
+                                                        <div t-if="record.function.raw_value"><field name="function"/></div>
+                                                        <div t-if="record.email.raw_value"><field name="email" widget="email"/></div>
+                                                        <div t-if="record.type.raw_value != 'contact'">
+                                                            <div>
+                                                                <field name="zip"/>
+                                                                <field name="city"/>
+                                                            </div>
+                                                            <field t-if="record.state_id.raw_value" name="state_id"/>
+                                                            <field name="country_id"/>
+                                                        </div>
+                                                        <div t-if="record.phone.raw_value">Phone: <t t-esc="record.phone.value"/></div>
+                                                        <div t-if="record.mobile.raw_value">Mobile: <t t-esc="record.mobile.value"/></div>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </templates>
+                                    </kanban>
+                                    <form string="Contact / Address">
+                                        <sheet>
+                                            <!-- parent_id and type fields needed in attrs in base_address_city module which overwrites
+                                            _fields_view_get() of partner. It would be better to put those fields there but the web client
+                                            dosen't support when a field is displayed several times in the same view.-->
+                                            <field name="type" required="1" widget="radio" options="{'horizontal': true}"/>
+                                            <field name="parent_id" invisible="1"/>
+                                            <hr/>
+                                            <group>
+                                                <group>
+                                                    <field name="name" string="Contact Name" attrs="{'required' : [('type', '=', 'contact')]}"/>
+                                                    <field name="title" options="{'no_open': True}" placeholder="e.g. Mr." attrs="{'invisible': [('type','!=', 'contact')]}"/>
+                                                    <field name="function" placeholder="e.g. Sales Director" attrs="{'invisible': [('type','!=', 'contact')]}"/>
+                                                    <label for="street" string="Address" attrs="{'invisible': [('type','=', 'contact')]}"/>
+                                                    <div attrs="{'invisible': [('type','=', 'contact')]}">
+                                                        <div class="o_address_format" name="div_address">
+                                                            <field name="street" placeholder="Street..." class="o_address_street"/>
+                                                            <field name="street2" placeholder="Street 2..." class="o_address_street"/>
+                                                            <field name="city" placeholder="City" class="o_address_city"/>
+                                                            <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'country_id': country_id, 'default_country_id': country_id, 'zip': zip}"/>
+                                                            <field name="zip" placeholder="ZIP" class="o_address_zip"/>
+                                                            <field name="country_id" placeholder="Country" class="o_address_country" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
+                                                        </div>
+                                                    </div>
+                                                </group>
+                                                <group>
+                                                    <field name="email" widget="email"/>
+                                                    <field name="phone" widget="phone"/>
+                                                    <field name="mobile" widget="phone"/>
+                                                    <field name="company_id" invisible="1"/>
+                                                </group>
+                                            </group>
+                                            <group>
+                                                <field name="comment" placeholder="Internal notes..."/>
+                                            </group>
+                                            <field name="lang" invisible="True"/>
+                                            <field name="user_id" invisible="True"/>
+                                        </sheet>
+                                    </form>
+                                </field>
+                            </page>
+<page string="Visita" attrs="{'invisible':[('type','!=','opportunity')]}">
                                 <group>
                                     <group>
                                         <field name="visit_payment_type" widget="radio" />
@@ -337,34 +446,18 @@
                                     </group>
                                 </group>
                             </page>
-                            <page string="Internal Notes" name="internal_notes">
-                                <group name="other_info_lead" string="Otra información del Lead" attrs="{'invisible':[('type','!=','lead')]}">
-                                    <group name="other_info_lead_left">
-                                        <field name="function"/>
-                                        <field name="website" widget="url" placeholder="e.g. https://www.odoo.com"/>
-                                    </group>
-                                    <group name="other_info_lead_right">
-                                        <field name="lang_id" options="{'no_open':True, 'no_create':True}"/>
-                                        <field name="email_cc"/>
-                                    </group>
-                                </group>
-                                <separator attrs="{'invisible':[('type','!=','lead')]}"/>
-                                <label for="description" string="Notas internas"/>
-                                <field name="description" placeholder="Añada una descripción..."/>
-                            </page>
-
                             <page name="extra_data" string="Información Extra" attrs="{'invisible': [('type', '=', 'lead')]}">
                                 <group>
                                     <group string="Información del contacto">
-                                        <field name="partner_name" readonly="1" force_save="1"/>
+                                        <field name="partner_name" readonly="0" force_save="1"/>
                                         <label for="street_page_lead" string="Dirección"/>
                                         <div class="o_address_format">
-                                            <field name="street" id="street_page_lead" placeholder="Street..." class="o_address_street" readonly="1" force_save="1"/>
-                                            <field name="street2" placeholder="Street 2..." class="o_address_street" readonly="1" force_save="1"/>
-                                            <field name="city" placeholder="City" class="o_address_city" readonly="1" force_save="1"/>
-                                            <field name="state_id" class="o_address_state" placeholder="State" options='{"no_open": True}' readonly="1" force_save="1"/>
-                                            <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="1" force_save="1"/>
-                                            <field name="country_id" placeholder="Country" class="o_address_country" options='{"no_open": True, "no_create": True}' readonly="1" force_save="1"/>
+                                            <field name="street" id="street_page_lead" placeholder="Street..." class="o_address_street" readonly="0" force_save="1"/>
+                                            <field name="street2" placeholder="Street 2..." class="o_address_street" readonly="0" force_save="1"/>
+                                            <field name="city" placeholder="City" class="o_address_city" readonly="0" force_save="1"/>
+                                            <field name="state_id" class="o_address_state" placeholder="State" options='{"no_open": True}' readonly="0" force_save="1"/>
+                                            <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="0" force_save="1"/>
+                                            <field name="country_id" placeholder="Country" class="o_address_country" options='{"no_open": True, "no_create": True}' readonly="0" force_save="1"/>
                                         </div>
                                         <field name="website" widget="url" placeholder="e.g. https://www.odoo.com" readonly="1" force_save="1"/>
                                         <field name="lang_id" options="{'no_create': True}" readonly="1" force_save="1"/>
