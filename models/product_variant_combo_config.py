@@ -93,15 +93,15 @@ class ProductProduct(models.Model):
                             'currency_id': self.env.user.company_id.currency_id.id,
                             'product_uom_qty': combo_config.product_uom_qty
                             }
-                    available_templates = template_obj.search(json.loads(combo_config.available_product_tmpl_domain.replace('True', 'true').replace('False', 'false'))).mapped('id')
-                    domain = [('product_tmpl_id.id', 'in', available_templates)]
+                    available_templates = template_obj.search(json.loads(combo_config.available_product_tmpl_domain.replace('True', 'true').replace('False', 'false')))
+                    domain = [('product_tmpl_id.id', 'in', available_templates.mapped('id'))]
                     for combo_config_line in combo_config.line_ids:
                         if combo_config_line.attribute_value_id.display_name in product_attr_names:
                             domain.extend(eval(combo_config_line.domain_term.replace("'", '"').replace('True', 'true').replace('False', 'false')))
                     matching_products = product_obj.search(domain)
                     if not matching_products:
                         vals['product_id'] = available_templates[0].product_variant_ids[0].id
-                        vals['product_domain'] = json.dumps([('product_tmpl_id.id', 'in', available_templates)])
+                        vals['product_domain'] = json.dumps([('product_tmpl_id.id', 'in', available_templates.mapped('id'))])
                     else:
                         vals['product_domain'] = json.dumps(domain)
                         vals['product_id'] = matching_products[0].id
