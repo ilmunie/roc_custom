@@ -16,7 +16,7 @@ class ProductVariantComboConfig(models.Model):
     product_template_id = fields.Many2one('product.template', string="Plantilla producto")
     product_uom_qty = fields.Float(string="Cantidad", default=1)
     available_product_tmpl_domain = fields.Char(string="Filtro Plantillas")
-    line_ids = fields.Many2many('product.variant.combo.config.line', 'variant_combo_config_table_rel','config_id', 'line_id', string="Reglas asignacion")
+    line_ids = fields.Many2many('product.variant.combo.config.line', 'variant_combo_config_table_rel','config_id', 'line_id', string="Reglas asignacion", copy=True)
 
 class ProductVariantComboConfigLine(models.Model):
     _name = "product.variant.combo.config.line"
