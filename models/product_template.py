@@ -197,20 +197,39 @@ class PurchaseOrderLine(models.Model):
     additional_product_done = fields.Boolean(compute=compute_additional_product_done, store=True)
     additional_product_required = fields.Boolean(compute=compute_additional_product_done, store=True)
 
+class ProductCategory(models.Model):
+    _inherit = "product.category"
+
+    material_rentability_multiplier = fields.Float(string="Rentabilidad costo materiales")
 
 class ProductTemplate(models.Model):
     _inherit = "product.template"
+
+    def get_material_rentability_multiplier(self):
+        self.ensure_one()
+        if self.material_rentability_multiplier > 0:
+            return self.material_rentability_multiplier
+        if self.categ_id.material_rentability_multiplier > 0:
+            return self.categ_id.material_rentability_multiplier
+        parent_categ = self.categ_id.parent_id
+        while parent_categ:
+            if parent_categ.material_rentability_multiplier > 0:
+                return parent_categ.material_rentability_multiplier
+            parent_categ = parent_categ.parent_id
+        return self.env.user.company_id.material_rentability_multiplier
 
     additional_product_ids = fields.Many2many('purchase.additional.product')
     pos_force_ship_later = fields.Boolean(string="Punto Venta: forzar enviar más tarde")
 
     price_from_seller = fields.Boolean(string="Precio de venta según costo")
 
+    material_rentability_multiplier = fields.Float(string="Rentabilidad costo materiales")
+
     #METHOD THAT WRITES STANDARD COST AND (IF CONFIGURED IN PRODUCT) THE SALE PRICE AND EXTRA OF ATTRS
-    @api.depends('price_from_seller', 'seller_ids', 'seller_ids.price', 'seller_ids.variant_extra_ids', 'seller_ids.variant_extra_ids.extra_amount', 'seller_ids.discount', 'price_from_seller')
+    @api.depends('price_from_seller', 'material_rentability_multiplier', 'categ_id.material_rentability_multiplier', 'seller_ids', 'seller_ids.price', 'seller_ids.variant_extra_ids', 'seller_ids.variant_extra_ids.extra_amount', 'seller_ids.discount', 'price_from_seller')
     def compute_list_price_from_sellers(self):
-        rentability_multiplier = self.env.user.company_id.material_rentability_multiplier
         for record in self:
+            rentability_multiplier = record.get_material_rentability_multiplier()
             if record.price_from_seller:
                 sellers = self.seller_ids.filtered(lambda x: x.price > 0)
                 sorted_sellers = sorted(sellers, key=lambda r: r.price*(1 - r.discount/100), reverse=True)

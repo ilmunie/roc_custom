@@ -69,22 +69,24 @@ class ProductProduct(models.Model):
     no_update_combo_lines = fields.Boolean(string="Configuracion manual")
     combo_variant_line_ids = fields.One2many('product.variant.combo.line', 'parent_product_id', string="Componentes Combo")
 
-    @api.depends('name', 'product_template_variant_value_ids')
+    @api.depends('name', 'trigger_compute_complete_name', 'product_template_variant_value_ids')
     def compute_complete_name(self):
         for record in self:
-            name = record.name + ")"
+            name = record.name + "("
             name += ','.join(record.product_template_variant_value_ids.mapped('product_attribute_value_id.display_name'))
             name += ")"
             record.complete_name = name
 
 
     complete_name = fields.Char(compute=compute_complete_name, store=True, string="Nombre Completo (busqueda)")
+    trigger_compute_complete_name = fields.Boolean()
 
-    @api.depends('product_tmpl_id.variant_combo_config_ids', 'product_tmpl_id.is_variant_combo', 'product_tmpl_id.variant_combo_config_ids.product_template_id', 'product_tmpl_id.variant_combo_config_ids.available_product_tmpl_domain', 'product_tmpl_id.variant_combo_config_ids.line_ids')
+    @api.depends('complete_name', 'product_tmpl_id.variant_combo_config_ids', 'product_tmpl_id.is_variant_combo', 'product_tmpl_id.variant_combo_config_ids.product_template_id', 'product_tmpl_id.variant_combo_config_ids.available_product_tmpl_domain', 'product_tmpl_id.variant_combo_config_ids.line_ids')
     def combo_product_assigment(self):
         template_obj = self.env['product.template']
         product_obj = self.env['product.product']
         for record in self:
+
             if record.product_tmpl_id.variant_combo_config_ids and not record.no_update_combo_lines:
                 combo_variant_line_vals = [(5,)]
                 product_attr_names = record.product_template_variant_value_ids.mapped('product_attribute_value_id.display_name')

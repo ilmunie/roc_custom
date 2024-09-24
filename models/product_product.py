@@ -16,9 +16,9 @@ class ProductProduct(models.Model):
         return sellers
 
     def _compute_product_lst_price(self):
-        rentability_multiplier = self.env.user.company_id.material_rentability_multiplier
         normal_recs = []
         for record in self:
+            rentability_multiplier = record.product_tmpl_id.get_material_rentability_multiplier()
             if record.product_tmpl_id.price_from_seller and record.standard_price:
                 record.lst_price = record.standard_price*rentability_multiplier
             else:

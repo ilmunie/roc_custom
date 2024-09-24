@@ -45,6 +45,19 @@
         </field>
     </record>
 
+    <record id="product_categ_form_roc_custom" model="ir.ui.view">
+        <field name="name">product.categ.form.roc.custom</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet[last()]" position="inside">
+                <group string="Cotizacion Venta">
+                    <field name="material_rentability_multiplier"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
     <record id="product_product_search_inherit_roc_custom" model="ir.ui.view">
         <field name="name">product.product.search.inherit.roc.custom</field>
         <field name="model">product.product</field>
@@ -75,6 +88,7 @@
             <xpath expr="//field[@name='taxes_id']" position="before">
                 <field name="price_from_seller"/>
                 <field name="seller_price_from_combo" attrs="{'invisible': [('is_variant_combo','=',False)]}"/>
+                <field name="material_rentability_multiplier" attrs="{'invisible': [('price_from_seller','=',False)]}"/>
             </xpath>
 
             <xpath expr="//field[@name='pos_categ_id']" position="after">
