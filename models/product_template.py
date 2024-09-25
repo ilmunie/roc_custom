@@ -1,3 +1,5 @@
+import pdb
+
 from odoo import fields, models, api
 import json
 from odoo.exceptions import UserError
@@ -106,6 +108,7 @@ class PurchaseOrder(models.Model):
     @api.constrains('state')
     def constraint_additional_product(self):
         for record in self:
+            import pdb; pdb.set_trace()
             if record.state not in ('draft', 'cancel') and record.order_line.filtered(lambda x: x.additional_product_required):
                 raise UserError("Faltan agregar productos adicionales")
     def open_additional_product_conf(self):
@@ -288,6 +291,15 @@ class PurchaseAdditionalProduct(models.Model):
                 min_stock = product_qty_in_loc
                 min_stock_prod = product
         return min_stock_prod
+
+class ProductTemplateAttributeLine(models.Model):
+    """Attributes available on product.template with their selected values in a m2m.
+    Used as a configuration model to generate the appropriate product.template.attribute.value"""
+
+    _inherit = "product.template.attribute.line"
+    _order = 'sequence'
+
+    sequence = fields.Integer(string="Sequencia")
 
 class AdditionalProductStatus(models.Model):
     _name = "additional.product.status"

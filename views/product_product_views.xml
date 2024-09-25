@@ -91,6 +91,9 @@
                 <field name="material_rentability_multiplier" attrs="{'invisible': [('price_from_seller','=',False)]}"/>
             </xpath>
 
+            <xpath expr="//field[@name='attribute_line_ids']//tree[last()]" position="inside">
+                <field name="sequence" widget="handle"/>
+            </xpath>
             <xpath expr="//field[@name='pos_categ_id']" position="after">
                 <field name="pos_force_ship_later"/>
             </xpath>
