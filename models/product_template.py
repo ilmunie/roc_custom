@@ -108,7 +108,6 @@ class PurchaseOrder(models.Model):
     @api.constrains('state')
     def constraint_additional_product(self):
         for record in self:
-            import pdb; pdb.set_trace()
             if record.state not in ('draft', 'cancel') and record.order_line.filtered(lambda x: x.additional_product_required):
                 raise UserError("Faltan agregar productos adicionales")
     def open_additional_product_conf(self):
