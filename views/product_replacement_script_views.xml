@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="action_trigger_replace_products" model="ir.actions.server">
+            <field name="name">Reemplazar productos</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id"
+                ref="model_product_product"/>
+            <field name="binding_model_id"  ref="model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">action = records.replace_product()</field>
+        </record>
+        <record id="product_replacement_wiz" model="ir.ui.view">
+            <field name="name">view_product_replacement_wiz</field>
+            <field name="model">product.replacement.wiz</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="line_ids">
+                        <tree editable="bottom" create="0">
+                            <field name="old_product_id"/>
+                            <field name="new_product_id"/>
+                        </tree>
+                    </field>
+                    <footer>
+                        <button name="action_done" string="Submit" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+</odoo>
