@@ -32,3 +32,4 @@ from . import technical_job_billing_assistant
 from . import variant_creator_assistant
 from . import product_variant_combo_config
 from . import product_replacement_script
+from . import partner_replacement_script

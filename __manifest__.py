@@ -89,6 +89,7 @@
         'views/technical_job_billing_assistant_views.xml',
         'views/technical_job_time_register_views.xml',
         'views/product_replacement_script_views.xml',
+        'views/partner_replacement_script_views.xml',
         'views/combo_variant_views.xml',
         'data/intrest_tag.xml',
         'views/res_config_settings.xml',
