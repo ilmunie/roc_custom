@@ -79,34 +79,39 @@ class TechnicalJobMixin(models.AbstractModel):
 
     @api.depends('customer_availability_type', 'customer_visit_datetime')
     def visit_job_generation(self):
-        config = self.env['technical.job.assistant.config'].search([('name', '=', 'Visita medición')])
         for record in self:
-            if record._name == "crm.lead":
-                    if config and record.stage_id.name == 'Visita' and \
-                            record.customer_availability_type == 'specific_date' and record.customer_visit_datetime and \
-                            not record.show_technical_schedule_job_ids.filtered(
-                                lambda x: x.job_type_id.id == config[0].technical_job_type_id.id):
-                        record.write({'technical_schedule_job_ids': [(0, 0,
-                                                                      {'res_model': record._name,
-                                                                       'job_status': 'confirmed',
-                                                                       'res_id': record.id,
-                                                                       'visit_payment_type': record.visit_payment_type,
-                                                                       'visit_priority': record.visit_priority,
-                                                                       'job_categ_ids': [(6, 0, record.job_categ_ids.mapped('id'))],
-                                                                       'estimated_visit_revenue': record.estimated_visit_revenue,
-                                                                       'internal_notes': record.visit_internal_notes,
-                                                                       'technical_job_tag_ids': [(6, 0, record.technical_job_tag_ids.mapped('id'))],
-                                                                       'job_employee_ids': [(6, 0, config[
-                                                                           0].technical_job_type_id.default_job_employee_ids.mapped('id'))] if not record.job_employee_ids else [(6,0,record.job_employee_ids.mapped('id'))],
-                                                                       'job_vehicle_ids': [(6, 0, config[
-                                                                           0].technical_job_type_id.default_job_vehicle_ids.mapped('id'))] if not record.job_vehicle_ids else [(6,0,record.job_vehicle_ids.mapped('id'))],
-                                                                       'job_type_id': config[
-                                                                           0].technical_job_type_id.id,
-                                                                       'job_duration': record.job_duration if record.job_duration>0 else config[
-                                                                           0].technical_job_type_id.default_duration_hs,
-                                                                       'user_id': config[
-                                                                           0].responsible_user_id.id,
-                                                                       'date_schedule': record.customer_visit_datetime})]})
+            model_configs = self.env['technical.job.assistant.config'].search([('model_id.model', '=', record._name)])
+            config = False
+            for model_conf in model_configs:
+                domain = eval(model_conf.domain_condition)
+                domain.insert(0, ('id', '=', record.id))
+                if self.env[record._name].search_count(domain) > 0:
+                    config = model_conf
+                    break
+            if config and record.customer_availability_type == 'specific_date' and record.customer_visit_datetime and \
+                    not record.show_technical_schedule_job_ids.filtered(
+                        lambda x: x.job_type_id.id == config[0].technical_job_type_id.id):
+                record.write({'technical_schedule_job_ids': [(0, 0,
+                                                              {'res_model': record._name,
+                                                               'job_status': 'confirmed',
+                                                               'res_id': record.id,
+                                                               'visit_payment_type': record.visit_payment_type,
+                                                               'visit_priority': record.visit_priority,
+                                                               'job_categ_ids': [(6, 0, record.job_categ_ids.mapped('id'))],
+                                                               'estimated_visit_revenue': record.estimated_visit_revenue,
+                                                               'internal_notes': record.visit_internal_notes,
+                                                               'technical_job_tag_ids': [(6, 0, record.technical_job_tag_ids.mapped('id'))],
+                                                               'job_employee_ids': [(6, 0, config[
+                                                                   0].technical_job_type_id.default_job_employee_ids.mapped('id'))] if not record.job_employee_ids else [(6,0,record.job_employee_ids.mapped('id'))],
+                                                               'job_vehicle_ids': [(6, 0, config[
+                                                                   0].technical_job_type_id.default_job_vehicle_ids.mapped('id'))] if not record.job_vehicle_ids else [(6,0,record.job_vehicle_ids.mapped('id'))],
+                                                               'job_type_id': config[
+                                                                   0].technical_job_type_id.id,
+                                                               'job_duration': record.job_duration if record.job_duration>0 else config[
+                                                                   0].technical_job_type_id.default_duration_hs,
+                                                               'user_id': config[
+                                                                   0].responsible_user_id.id,
+                                                               'date_schedule': record.customer_visit_datetime})]})
             record.trigger_visit_job_generation = True if record.trigger_visit_job_generation else False
 
 
@@ -247,6 +252,10 @@ class TechnicalJobMixin(models.AbstractModel):
 class CrmLead(models.Model,TechnicalJobMixin):
     _inherit = 'crm.lead'
 
+    @api.depends('customer_availability_type', 'customer_visit_datetime', 'stage_id')
+    def visit_job_generation(self):
+        return super().visit_job_generation()
+    trigger_visit_job_generation = fields.Boolean(store=True, compute=visit_job_generation)
 
     def get_sale_order(self):
         #sales = self.order_ids.filtered(lambda x: x.state not in ('cancel') and x.invoice_status != 'invoiced')
