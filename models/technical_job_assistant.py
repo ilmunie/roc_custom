@@ -120,7 +120,7 @@ class TechnicalJobAssistant(models.Model):
                 if date_to_use < today:
                     res = f"7. Varios pasados ptes finalizar"
                 else:
-                    res = f"5. Varios Ptes"
+                    res = f"2. Coordinado"
             elif not record.next_active_job_id:
                 if record.html_data_src_doc and "URGENT" in record.html_data_src_doc:
                     res = "1. Urgente"
