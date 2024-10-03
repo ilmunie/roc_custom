@@ -127,7 +127,7 @@
                     <field name="job_type_id"  attrs="{'invisible':[('job_type_id','=',False)]}" filters="True"/>
                     <field name="user_id"  attrs="{'invisible':[('user_id','=',False)]}" avatar_field="avatar_128" filters="True"/>
                     <field name="sale_order_ids" widget="many2many_tags" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
-                    <field name="html_data_src_doc" attrs="{'invisible':[('html_data_src_doc','=',False)]}" />
+                    <field name="html_data_src_doc" widget="text_widget" attrs="{'invisible':[('html_data_src_doc','=',False)]}" />
                 </calendar>
             </field>
         </record>
