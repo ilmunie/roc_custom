@@ -290,7 +290,7 @@ class TechnicalJobAssistant(models.Model):
             'type': 'ir.actions.act_window',
             'context': {
                     #'search_default_assigned_to_me': 1 if user_type == 'planner' else 0,
-                    'search_default_myjobs': 1 if user_type == 'user' else 0,
+                    #'search_default_myjobs': 1 if user_type == 'user' else 0,
                     'search_default_week_action_group': 1
                 },
             'domain': [('create_uid', '=', self.env.user.id)],
