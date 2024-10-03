@@ -105,7 +105,7 @@
         "web.assets_qweb": ["roc_custom/static/src/xml/pos_receipt.xml",
                             "roc_custom/static/src/xml/template.xml",
                             "roc_custom/static/src/xml/template_stock_wid.xml",
-                            #"roc_custom/static/src/xml/calendar_job_view.xml",
+                            "roc_custom/static/src/xml/calendar_job_view.xml",
                             "roc_custom/static/src/xml/purchase_stock.xml"],
         'point_of_sale.assets': [
             'roc_custom/static/src/js/pos_customizations.js',

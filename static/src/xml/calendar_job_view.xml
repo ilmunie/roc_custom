@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
     <t t-name="CalendarView.event.popover" t-inherit="web.CalendarView.event.popover" t-inherit-mode="extension" owl="1">
-        <xpath expr="//div[hasclass('o_cw_body')]//div[last()]" position="inside">
-                <a t-if = "widget.modelName == 'technical.job'" href="#" class="btn btn-primary o_cw_popover_done">Done</a>
+        <xpath expr="//div[hasclass('o_cw_body')]//div[last()]" position="replace">
         </xpath>
+        <xpath expr="//div[hasclass('o_cw_body')]" position="before">
+        <div t-attf-class="card-header #{ !widget.isEventEditable() &amp;&amp; !widget.isEventDeletable() ? 'o_header_shrink' : '' }">
+            <a t-if="widget.isEventEditable()" href="#" class="btn btn-primary o_cw_popover_edit">Edit</a>
+        </div>
+        </xpath>
+
     </t>
 </templates>
