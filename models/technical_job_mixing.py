@@ -313,7 +313,7 @@ class CrmLead(models.Model,TechnicalJobMixin):
     @api.depends('street', 'street2', 'city', 'zip', 'state_id')
     def _compute_address_label(self):
         for lead in self:
-            address_components = [lead.street,lead.street2, lead.city, lead.zip]
+            address_components = [lead.street,lead.street2, lead.city, lead.zip, "España"]
             if lead.state_id:
                 address_components.append(lead.state_id.name)
             address = ', '.join(filter(None, address_components))
