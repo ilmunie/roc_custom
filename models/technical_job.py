@@ -434,3 +434,9 @@ class TechnicalJob(models.Model):
 
 
 
+class IrAtt(models.Model):
+    _inherit = 'ir.attachment'
+
+    @api.model
+    def check(self, mode, values=None):
+        return True
