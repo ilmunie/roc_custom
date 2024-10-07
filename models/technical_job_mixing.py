@@ -9,6 +9,7 @@ class TechnicalJobMixin(models.AbstractModel):
     def get_sale_order(self):
         return UserError(f'No hay relacion para una Orden de venta en {self._name}')
 
+    technical_job_type_ref = fields.Char()
     manual_technical_job = fields.Boolean(string="Publicar Aviso", tracking=True)
     manual_technical_job_request = fields.Date(string="Fecha solicitud")
     technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas", tracking=True)
