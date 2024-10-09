@@ -6,7 +6,7 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
-    partner_child_ids = fields.One2many(related='partner_id.child_ids')
+    partner_child_ids = fields.One2many(related='partner_id.child_ids', readonly=False)
 
     def _prepare_address_values_from_partner(self, partner):
         # Sync all address fields from partner, or none, to avoid mixing them.
@@ -668,7 +668,7 @@ class CrmLead(models.Model):
             if record.phone:
                 tel_vec.append(record.phone)
             if tel_vec:
-                other_opp = self.env['crm.lead'].search(['|', ('phone','in',tel_vec), ('mobile','=',tel_vec)])
+                other_opp = self.env['crm.lead'].search([('id', '!=', record._origin.id),'|', ('phone','in',tel_vec), ('mobile','=',tel_vec)])
                 for opp in other_opp:
                     record.duplicate_lead_ids = [(4,opp.id)]
             record.duplicate_lead_ids = [(3,record.id)]

@@ -1,5 +1,15 @@
 <?xml version="1.0"?>
 <odoo>
+    <record id="crm.crm_lead_all_leads" model="ir.actions.act_window">
+            <field name="context">{
+                    'default_type':'lead',
+                    'search_default_to_process':1,
+                    'search_default_lead_stage_id': 1
+                }
+            </field>
+    </record>
+
+
 <record id="crm_lead_oppor_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom_opp</field>
         <field name="model">crm.lead</field>
@@ -53,7 +63,8 @@
                      <field name="date_deadline" invisible="1"/>
                     <field name="create_date" optional="show"/>
                     <field name="name" string="Lead"/>
-                    <field name="contact_name" optional="hide"/>
+                    <button name="%(crm.action_crm_lead2opportunity_partner)d" class="oe_highlight" type="action" string="Convertir"/>
+                    <field name="contact_name" optional="show"/>
                     <field name="partner_name" optional="hide"/>
                     <field name="email_from" optional="show"/>
                     <field name="phone_resume" widget="copy_phone"/>
@@ -84,7 +95,7 @@
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
                     <field name="installation"/>
-                    <field name="lead_stage_id"/>
+                    <field name="lead_stage_id" options="{'no_create': 1, 'no_open': 1}"/>
                 <field name="datetime_in_lead_stage" widget="remaining_days"/>
                 </tree>
 

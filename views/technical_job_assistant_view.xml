@@ -248,34 +248,6 @@
         </field>
     </record>
 
-    <record id="technical_job_assistant_config_form" model="ir.ui.view">
-        <field name="name">technical.job.assistant.config.form</field>
-        <field name="model">technical.job.assistant.config</field>
-        <field name="priority" eval="1"/>
-        <field name="arch" type="xml">
-            <form>
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="name"/>
-                            <field name="technical_job_type_id"/>
-                            <field name="responsible_user_id"/>
-                        </group>
-                        <group>
-                            <field name="model_id"/>
-                            <field name="model_name" invisible="1"/>
-                            <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
-                        </group>
-                        <group>
-                            <field name="date_field_id" domain="[('ttype','in',('date', 'datetime')),('model_id','=',model_id)]"/>
-                            <field name="date_field_tag"/>
-                        </group>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
     <record id="technical_job_assistant_config_action" model="ir.actions.act_window">
         <field name="name">Configuración planificación operaciones</field>
         <field name="res_model">technical.job.assistant.config</field>

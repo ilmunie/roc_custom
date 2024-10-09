@@ -19,6 +19,7 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     todo_description = fields.Text(string="A realizar")
     technical_job_id = fields.Many2one('technical.job')
     attch_ids = fields.Many2many('ir.attachment', string="Adjuntos")
+    technical_job_tag_ids = fields.Many2many(related='technical_job_id.technical_job_tag_ids', readonly=False)
 
 
 
@@ -32,8 +33,10 @@ class TechnicalJobNoteAssistant(models.TransientModel):
         return result
 
     def action_done(self):
+        user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
         if len(self.attch_ids) == 0:
-            raise UserError('Debe agregar al menos una foto adjunta')
+            if user_type == 'user':
+                raise UserError('Debe agregar al menos una foto adjunta')
         else:
             att_vals = []
             for att in self.attch_ids:

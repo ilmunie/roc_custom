@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="technical_job_assistant_config_form" model="ir.ui.view">
+        <field name="name">technical.job.assistant.config.form</field>
+        <field name="model">technical.job.assistant.config</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="technical_job_type_id"/>
+                            <field name="responsible_user_id"/>
+                        </group>
+                        <group>
+                            <field name="model_id"/>
+                            <field name="model_name" invisible="1"/>
+                            <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
+                        </group>
+                        <group>
+                            <field name="date_field_id" domain="[('ttype','in',('date', 'datetime')),('model_id','=',model_id)]"/>
+                            <field name="date_field_tag"/>
+                        </group>
+                    </group>
+                    <label for="action_done_line_ids" string="Acciones al finalizar operacion"/>
+                    <field name="action_done_line_ids" >
+                        <tree editable="bottom">
+                            <field name="domain_condition" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
+                            <field name="model_name" invisible="1"/>
+                            <field name="rec_field"/>
+                            <field name="write_vals"/>
+                            <field name="result_resume"/>
+                            <field name="rec_field_domain" invisible="1"/>
+                            <button type="object" name="open_write_assistant" string="CONFIGURAR"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="technical_job_action_done_wiz" model="ir.ui.view">
+        <field name="name">technical.job.action.done.wizard.form</field>
+        <field name="model">technical.job.action.done.wizard</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="rec_field" domain="rec_field_domain"/>
+                            <field name="rec_field_domain" invisible="1"/>
+                            <field name="rec_field_ttype" invisible="1"/>
+                            <field name="values_domain" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="char_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'char')]}"/>
+                            <field name="text_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'text')]}"/>
+                            <field name="boolean_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'boolean')]}"/>
+                            <field name="date_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'date')]}"/>
+                            <field name="datetime_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'datetime')]}"/>
+                            <field name="float_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'float')]}"/>
+                            <field name="integer_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'integer')]}"/>
+                            <field name="many2many_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'many2many')]}" domain="values_domain" widget="many2many_tags"/>
+                            <field name="many2many_write_type" attrs="{'invisible': [('rec_field_ttype', '!=', 'many2many')]}"/>
+                            <field name="many2one_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'many2one')]}" domain="values_domain"/>
+                            <field name="selection_value" attrs="{'invisible': [('rec_field_ttype', '!=', 'selection')]}" domain="values_domain"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="action_done" string="Submit" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

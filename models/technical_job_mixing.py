@@ -286,6 +286,7 @@ class CrmLead(models.Model,TechnicalJobMixin):
                    💬 Enviar WhatsApp {phone_number.replace(" ","").replace("-","")}<br/><br/>
                 </a>
             """
+
         if self.address_label:
             data += f"<a href='https://google.com/maps/search/{self.address_label}'><br/>📍 Dirección: {self.address_label}<br/><br/></a>"
         if self.customer_availability_info:
@@ -304,6 +305,20 @@ class CrmLead(models.Model,TechnicalJobMixin):
                 data += f"{self.description[:position].strip()}<br/><br/>"
             else:
                 data += f"{self.description}<br/><br/>"
+
+        if self.partner_id and self.partner_id.child_ids:
+            data += f"<br/><bold><span>CONTACTOS ALTERNATIVOS: <span/><bold/>"
+            for child_contact in self.partner_id.child_ids:
+                phone_number = child_contact.mobile or child_contact.phone
+                if phone_number:
+                    data += f"""
+                        <a href='tel:{phone_number.replace(" ", "").replace("-", "")}'><br/>
+                           📲 Llamar {child_contact.name}<br/><br/>
+                        </a>
+                        <a href='https://wa.me/{phone_number.replace(" ", "").replace("-", "")}'><br/>
+                           💬 Enviar WhatsApp {phone_number.replace(" ", "").replace("-", "")}<br/><br/>
+                        </a>
+                    """
         return data
 
     address_label = fields.Char(
@@ -314,10 +329,12 @@ class CrmLead(models.Model,TechnicalJobMixin):
     @api.depends('street', 'street2', 'city', 'zip', 'state_id')
     def _compute_address_label(self):
         for lead in self:
-            address_components = [lead.street,lead.street2, lead.city, lead.zip, "España"]
-            if lead.state_id:
-                address_components.append(lead.state_id.name)
-            address = ', '.join(filter(None, address_components))
+            address = False
+            if lead.street or lead.street2 :
+                address_components = [lead.street,lead.street2, lead.city, lead.zip, "España"]
+                if lead.state_id:
+                    address_components.append(lead.state_id.name)
+                address = ', '.join(filter(None, address_components))
             if not address:
                 address = "Sin datos de dirección"
             lead.address_label = address

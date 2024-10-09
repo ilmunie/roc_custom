@@ -9,6 +9,7 @@ class SeeFullHtmlMessage(models.TransientModel):
     html = fields.Html(nolabel="1", readonly=True)
     html_title = fields.Html(nolabel="1", readonly=True)
 
+
 class TechnicalJobAssistantConfig(models.Model):
     _name = 'technical.job.assistant.config'
 
@@ -20,6 +21,8 @@ class TechnicalJobAssistantConfig(models.Model):
     responsible_user_id = fields.Many2one('res.users')
     date_field_id = fields.Many2one('ir.model.fields')
     date_field_tag = fields.Char()
+
+
 
 
 class TechnicalJobAssistant(models.Model):

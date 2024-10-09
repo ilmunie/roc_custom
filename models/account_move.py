@@ -689,3 +689,6 @@ class AccountMove(models.Model):
         res['invoice_payment_label'] = counterpart_line.journal_id.invoice_payment_label or ''
         return res
 
+
+
+

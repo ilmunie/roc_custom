@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record model="ir.ui.view" id="email_compose_message_wizard_roccustom">
+        <field name="name">mail.compose.message.form.child_ids</field>
+        <field name="model">mail.compose.message</field>
+        <field name="inherit_id" ref="mail.email_compose_message_wizard_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='subject']//.." position="after">
+                <group attrs="{'invisible': [('show_child_ids', '=', False)]}">
+                    <field name="child_ids_domain" invisible="1"/>
+                    <field name="show_child_ids" invisible="1"/>
+                    <field name="child_ids" widget="many2many_checkboxes" domain="child_ids_domain"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

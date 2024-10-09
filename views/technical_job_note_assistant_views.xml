@@ -21,6 +21,8 @@
                 <div class="alert alert-info mb-0" role="info" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '!=', 'no')]}">
                     <span>Al continuar se marcará la operación como terminada</span>
                 </div>
+                <label for="technical_job_tag_ids" string="Etiquetas" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '!=', 'yes')]}"/>
+                <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True}" attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '!=', 'yes')]}"/>
                 <field name="content" nolabel="1" />
                 <br/>
                 <strong attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')]}"><span>A realizar</span></strong>

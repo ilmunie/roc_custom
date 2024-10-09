@@ -165,7 +165,6 @@ class TechnicalJob(models.Model):
 
     def mark_as_done(self):
         for record in self:
-            #import pdb;pdb.set_trace()
             if record.res_model=='crm.lead' and record.res_id and not record.attch_ids:
                 raise ValidationError('Cargue la documentación correspondiente')
             #if record.res_model=='crm.lead' and not record.minutes_in_job:
@@ -187,30 +186,47 @@ class TechnicalJob(models.Model):
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment',
                                                                             partner_ids=rec.user_id.mapped(
                                                                                 'partner_id.id'))
-            #custom implementation for crm lead mark as done
-            if (record.res_id and record.res_model and record.res_model == 'crm.lead'):
-                rec = self.env[record.res_model].browse(record.res_id)
-                if rec.stage_id.name == 'Visita':
-                    stages = self.env['crm.stage'].search([('name', '=', 'Procesamiento Roconsa')])
-                    if not stages:
-                        raise ValueError('No hay etapa de crm llamada Procesamiento Roconsa')
+            rec = self.env[record.res_model].browse(record.res_id)
+            model_configs = self.env['technical.job.assistant.config'].search([('model_id.model', '=', rec._name)])
+            config = False
+            for model_conf in model_configs:
+                domain = eval(model_conf.domain_condition)
+                domain.insert(0, ('id', '=', rec.id))
+                if self.env[rec._name].search_count(domain) > 0:
+                    config = model_conf
+                    break
+            if config:
+                for wr_action in config.action_done_line_ids:
+                    if wr_action.domain_condition:
+                        domain = eval(wr_action.domain_condition)
+                        domain.insert(0, ('id', '=', rec.id))
+                        if self.env[rec._name].search(domain):
+                            rec.write(eval(wr_action.write_vals))
                     else:
-                        rec.stage_id = stages[0].id
-                if rec.manual_technical_job:
-                    rec.manual_technical_job = False
-                assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])
-                assistant_to_delete.unlink()
-                if self.env.context.get("from_kanban", False):
-                    ctx = self.env.context.copy()
-                    ctx.pop('from_kanban')
-                    return {
-                        'name': "Planificación de Operaciones",
-                        'res_model': 'technical.job.assistant',
-                        'type': 'ir.actions.act_window',
-                        'context': ctx,
-                        'domain': [('create_uid', '=', self.env.user.id)],
-                        'views': [(False, 'kanban'), (self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')],
-                    }
+                        rec.write(eval(wr_action.write_vals))
+            #custom implementation for crm lead mark as done
+            #if (record.res_id and record.res_model and record.res_model == 'crm.lead'):
+            #    if rec.stage_id.name == 'Visita':
+            #        stages = self.env['crm.stage'].search([('name', '=', 'Procesamiento Roconsa')])
+            #        if not stages:
+            #            raise ValueError('No hay etapa de crm llamada Procesamiento Roconsa')
+            #        else:
+            #            rec.stage_id = stages[0].id
+            if rec.manual_technical_job:
+                rec.manual_technical_job = False
+            assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])
+            assistant_to_delete.unlink()
+            if self.env.context.get("from_kanban", False):
+                ctx = self.env.context.copy()
+                ctx.pop('from_kanban')
+                return {
+                    'name': "Planificación de Operaciones",
+                    'res_model': 'technical.job.assistant',
+                    'type': 'ir.actions.act_window',
+                    'context': ctx,
+                    'domain': [('create_uid', '=', self.env.user.id)],
+                    'views': [(False, 'kanban'), (self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')],
+                }
 
 
 

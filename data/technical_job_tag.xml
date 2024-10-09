@@ -31,6 +31,14 @@
         <field name="name">Comodin</field>
         <field name="color" eval="0"/>
     </record>
+    <record id="tj_tag_4" model="technical.job.tag">
+        <field name="name">Pendiente Cliente</field>
+        <field name="color" eval="4"/>
+    </record>
+    <record id="tj_tag_5" model="technical.job.tag">
+        <field name="name">URGENTE</field>
+        <field name="color" eval="5"/>
+    </record>
     <record id="technical_job_type_1" model="technical.job.type">
         <field name="name">Medición Técnica</field>
         <field name="default_duration_hs">1</field>
