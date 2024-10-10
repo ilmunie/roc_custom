@@ -7,6 +7,22 @@ from odoo.exceptions import UserError, ValidationError
 class TechnicalJob(models.Model):
     _name = 'technical.job'
 
+    @api.depends('job_employee_ids')
+    def see_ass_button(self):
+        for record in self:
+            res = False
+            employee = self.env.user.employee_id
+            if employee:
+                if employee.id not in record.job_employee_ids.mapped('id'):
+                    res = True
+            record.see_assign_button = res
+
+
+    see_assign_button = fields.Boolean(compute=see_ass_button)
+
+    def assign_to_me(self):
+        self.job_employee_ids = [(4, self.env.user.employee_id.id)]
+
     time_register_ids = fields.One2many(related='schedule_id.time_register_ids')
 
     def open_checklist_wiz(self):

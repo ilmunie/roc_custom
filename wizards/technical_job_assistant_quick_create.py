@@ -6,7 +6,7 @@ class TechnicalJobAssistantQuickCreate(models.TransientModel):
     _name = 'technical.job.assistant.quick.create'
 
     default_datetime = fields.Datetime(string="Fecha por defecto", required=True)
-    set_stand_by_to_draft = fields.Boolean(string="Stand-by a Borrador")
+    set_stand_by_to_draft = fields.Boolean(string="Stand-by a Planificado")
 
 
     def action_done(self):

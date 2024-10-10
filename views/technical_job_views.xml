@@ -54,7 +54,7 @@
                 <separator/>
                 <filter string="Mis coordinaciones" help="Mis coordinaciones: usted es el coordinador" name="mymeetings" domain="[('user_id', 'in', [uid])]"/>
                 <separator/>
-                <filter string="Mis trabajos" help="Mis trabajos: usted es el empleado" name="myjobs" domain="[('job_employee_id.user_id', 'in', [uid])]"/>
+                <filter string="Mis trabajos" help="Mis trabajos: usted es el empleado" name="myjobs" domain="['|',('job_employee_id.user_id', 'in', [uid]),('job_employee_id', '=', False)]"/>
                 <separator/>
                 <filter string="Fecha" name="filter_start_date" date="date_schedule"/>
                 <separator/>
@@ -147,6 +147,8 @@
                         <button name="call_checkout_wiz" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
                         <button name="call_billing_wiz" type="object" string="FACTURAR" class="btn-success" attrs="{'invisible': [('job_status','in',('cancel'))]}"/>
                         <button name="open_checklist_wiz" type="object" string="CHECKLIST" class="oe_highlight"/>
+                        <button name="assign_to_me" type="object" string="ASIGNARME" class="oe_highlight" attrs="{'invisible': [('see_assign_button', '=', False)] }"/>
+                        <field name="see_assign_button" invisible="1"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
