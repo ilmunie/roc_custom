@@ -181,6 +181,7 @@
                 <search string="Trabajos">
                     <field name="html_link_to_src_doc"/>
                     <field name="address"/>
+                    <field name="contact_number"/>
                     <field name="config_id" string="Tipo de operacion"/>
                     <field name="technical_job_tag_ids"/>
                     <field name="res_model"/>

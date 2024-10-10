@@ -310,6 +310,7 @@ class TechnicalJobAssistant(models.Model):
             show_technical_schedule_job_ids = []
             html = ""
             address = ""
+            phones = []
             html_data_src_doc = ""
             next_job = False
             internal_notes = ""
@@ -336,6 +337,21 @@ class TechnicalJobAssistant(models.Model):
                     if record.res_model != 'technical.job.schedule':
                         next_job = real_rec.next_active_job_id
                         address = real_rec.address_label
+                        if 'partner_id' in real_rec._fields.keys() and real_rec.partner_id:
+                            if  real_rec.partner_id.phone:
+                                phones.append(real_rec.partner_id.phone)
+                            if real_rec.partner_id.mobile:
+                                phones.append(real_rec.partner_id.mobile)
+                            if real_rec.partner_id.child_ids:
+                                for part in real_rec.partner_id.child_ids:
+                                    if part.phone:
+                                        phones.append(part.phone)
+                                    if part.mobile:
+                                        phones.append(part.mobile)
+                        if 'phone' in real_rec._fields.keys() and real_rec.phone:
+                            phones.append(real_rec.phone)
+                        if 'mobile' in real_rec._fields.keys() and real_rec.mobile:
+                            phones.append(real_rec.mobile)
                     else:
                         next_job = real_rec
                     internal_notes = real_rec.visit_internal_notes if record.res_model != 'technical.job.schedule' else next_job.internal_notes
@@ -358,6 +374,7 @@ class TechnicalJobAssistant(models.Model):
 
             record.estimated_visit_revenue = estimated_visit_revenue
             record.address = address
+            record.contact_number = '|'.join(phones) if phones else ""
             record.internal_notes = internal_notes
             record.job_duration = job_duration if not next_job else next_job.job_duration
             record.visit_payment_type = visit_payment_type
@@ -373,6 +390,7 @@ class TechnicalJobAssistant(models.Model):
 
 
     address = fields.Char(compute=related_rec_fields, store=True, string="Direccion")
+    contact_number = fields.Char(compute=related_rec_fields, store=True, string="N° Telefono")
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=related_rec_fields, store=True, string="Operaciones")
     technical_job_tag_ids = fields.Many2many(comodel_name='technical.job.tag', compute=related_rec_fields, store=True, string="Etiquetas")
     estimated_visit_revenue = fields.Float(compute=related_rec_fields, store=True, string="Estimado (EUR)")
