@@ -303,11 +303,13 @@ class TechnicalJobAssistant(models.Model):
     res_model = fields.Char(string="Modelo")
     res_id = fields.Integer(string="ID")
 
+
     @api.depends('res_model','res_id')
     def related_rec_fields(self):
         for record in self:
             show_technical_schedule_job_ids = []
             html = ""
+            address = ""
             html_data_src_doc = ""
             next_job = False
             internal_notes = ""
@@ -330,10 +332,10 @@ class TechnicalJobAssistant(models.Model):
                     if date_field_value:
                         date_field_value = date_field_value + timedelta(days=1)
                     estimated_visit_revenue = real_rec.estimated_visit_revenue
-
                     job_duration = real_rec.job_duration
                     if record.res_model != 'technical.job.schedule':
                         next_job = real_rec.next_active_job_id
+                        address = real_rec.address_label
                     else:
                         next_job = real_rec
                     internal_notes = real_rec.visit_internal_notes if record.res_model != 'technical.job.schedule' else next_job.internal_notes
@@ -355,6 +357,7 @@ class TechnicalJobAssistant(models.Model):
                     html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
 
             record.estimated_visit_revenue = estimated_visit_revenue
+            record.address = address
             record.internal_notes = internal_notes
             record.job_duration = job_duration if not next_job else next_job.job_duration
             record.visit_payment_type = visit_payment_type
@@ -368,6 +371,8 @@ class TechnicalJobAssistant(models.Model):
             record.next_active_job_id = next_job.id if next_job else False
             record.show_technical_schedule_job_ids = show_technical_schedule_job_ids if show_technical_schedule_job_ids else False
 
+
+    address = fields.Char(compute=related_rec_fields, store=True, string="Direccion")
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=related_rec_fields, store=True, string="Operaciones")
     technical_job_tag_ids = fields.Many2many(comodel_name='technical.job.tag', compute=related_rec_fields, store=True, string="Etiquetas")
     estimated_visit_revenue = fields.Float(compute=related_rec_fields, store=True, string="Estimado (EUR)")
