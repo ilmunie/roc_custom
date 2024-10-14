@@ -202,24 +202,24 @@ class TechnicalJob(models.Model):
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment',
                                                                             partner_ids=rec.user_id.mapped(
                                                                                 'partner_id.id'))
-            rec = self.env[record.res_model].browse(record.res_id)
-            model_configs = self.env['technical.job.assistant.config'].search([('model_id.model', '=', rec._name)])
-            config = False
-            for model_conf in model_configs:
-                domain = eval(model_conf.domain_condition)
-                domain.insert(0, ('id', '=', rec.id))
-                if self.env[rec._name].search_count(domain) > 0:
-                    config = model_conf
-                    break
-            if config:
-                for wr_action in config.action_done_line_ids:
-                    if wr_action.domain_condition:
-                        domain = eval(wr_action.domain_condition)
-                        domain.insert(0, ('id', '=', rec.id))
-                        if self.env[rec._name].search(domain):
+                rec = self.env[record.res_model].browse(record.res_id)
+                model_configs = self.env['technical.job.assistant.config'].search([('model_id.model', '=', rec._name)])
+                config = False
+                for model_conf in model_configs:
+                    domain = eval(model_conf.domain_condition)
+                    domain.insert(0, ('id', '=', rec.id))
+                    if self.env[rec._name].search_count(domain) > 0:
+                        config = model_conf
+                        break
+                if config:
+                    for wr_action in config.action_done_line_ids:
+                        if wr_action.domain_condition:
+                            domain = eval(wr_action.domain_condition)
+                            domain.insert(0, ('id', '=', rec.id))
+                            if self.env[rec._name].search(domain):
+                                rec.write(eval(wr_action.write_vals))
+                        else:
                             rec.write(eval(wr_action.write_vals))
-                    else:
-                        rec.write(eval(wr_action.write_vals))
             #custom implementation for crm lead mark as done
             #if (record.res_id and record.res_model and record.res_model == 'crm.lead'):
             #    if rec.stage_id.name == 'Visita':
@@ -228,8 +228,8 @@ class TechnicalJob(models.Model):
             #            raise ValueError('No hay etapa de crm llamada Procesamiento Roconsa')
             #        else:
             #            rec.stage_id = stages[0].id
-            if rec.manual_technical_job:
-                rec.manual_technical_job = False
+                if rec.manual_technical_job:
+                    rec.manual_technical_job = False
             assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])
             assistant_to_delete.unlink()
             if self.env.context.get("from_kanban", False):
