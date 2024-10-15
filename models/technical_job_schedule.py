@@ -92,7 +92,7 @@ class TechnicalJobSchedule(models.Model):
 
         #if self.res_model and self.res_id and :
         #    real_rec = self.env[self.res_model].browse(self.res_id)
-        #    body = "Ha modificado la nota interna de la proxima operacion<br/>"
+        #    body = "Ha modificado la nota interna de la proxima operacion<br/>"nñ. -|
         #    body += vals['internal_notes']
         #    real_rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment')
         return res
@@ -284,10 +284,18 @@ class TechnicalJobSchedule(models.Model):
         selection=[('to_do', 'Planificado'), ('confirmed', 'Confirmado'), ('stand_by', 'Aplazado'), ('done', 'Terminado'), ('cancel', 'Cancelado')],
         string="Estado", default='to_do')
     internal_notes = fields.Text(string="Notas internas")
-    attch_ids = fields.Many2many('ir.attachment', 'ir_attach_rel', 'technical_job', 'attachment_id',
-                                 string="Adjuntos",
-                                 help="If any")
 
+    @api.depends('sync_attachments')
+    def get_attch(self):
+        for record in self:
+            att = self.env['ir.attachment'].search([('res_id','=',record.id),('res_model','=','technical.job.schedule')])
+            record.attch_ids = [(6,0, att.mapped('id'))]
+
+    attch_ids = fields.Many2many('ir.attachment',
+                                 string="Adjuntos",
+                                 compute=get_attch, store=True)
+
+    sync_attachments = fields.Boolean()
 
     real_rec_message_id = fields.Many2one('mail.message')
     @api.depends('job_status')

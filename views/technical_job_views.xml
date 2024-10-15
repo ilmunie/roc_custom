@@ -137,6 +137,7 @@
             <field name="model">technical.job</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
+
                 <form string="Trabajo Técnico" >
                     <header>
                         <field name="job_status" widget="statusbar" options="{'clickable':False}" readonly="1"/>
@@ -236,8 +237,10 @@
                          </group>
                      </group>
                      <group string="Documentacion asociada">
-                        <field name="attch_ids" widget="many2many_binary" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                     </group>
+                     <div class="oe_chatter">
+                    </div>
+                        <field name="attch_ids" widget="many2many_binary"/>
                     <group string="Info y Aclaraciones">
                         <field name="internal_notes" widget="text" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                     </group>
@@ -249,6 +252,7 @@
                                 type="object" string="Ver | Editar Datos Contacto Cliente"/>
                     </group>
                     </sheet>
+
                 </form>
             </field>
         </record>

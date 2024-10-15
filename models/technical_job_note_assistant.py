@@ -6,6 +6,7 @@ from odoo.exceptions import UserError, ValidationError
 class TechnicalJobNoteAssistant(models.TransientModel):
     _name = "technical.job.note.assistant"
 
+
     new_opportunities = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Potencial otros trabajos")
     opportunities_description = fields.Text(string="Descripción oportunidad")
     opportunities_job_categ_ids = fields.Many2many('technical.job.categ', string="Tipo oportunidad")

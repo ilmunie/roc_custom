@@ -6,6 +6,8 @@ from odoo.exceptions import UserError, ValidationError
 
 class TechnicalJob(models.Model):
     _name = 'technical.job'
+    _inherit = ['mail.thread']
+
 
     @api.depends('job_employee_ids')
     def see_ass_button(self):
@@ -324,7 +326,14 @@ class TechnicalJob(models.Model):
             res.append((rec.id, name))
         return res
 
-    attch_ids = fields.Many2many(related="schedule_id.attch_ids", readonly=False)
+    def get_schedule_attch(self):
+        for record in self:
+            res_model = 'technical.job.schedule' if not record.schedule_id.res_model else record.schedule_id.res_model
+            res_id = record.schedule_id.id if not record.schedule_id.res_model else record.schedule_id.res_id
+            att = self.env['ir.attachment'].search([('res_id','=', res_id),('res_model', '=', res_model)])
+            record.attch_ids = [(6, 0, att.mapped('id'))]
+
+    attch_ids = fields.Many2many('ir.attachment', compute=get_schedule_attch)
     technical_job_tag_ids = fields.Many2many(related="schedule_id.technical_job_tag_ids", readonly=False)
     visit_priority = fields.Selection(related="schedule_id.visit_priority", readonly=False, store=True, force_save=True)
     job_categ_ids = fields.Many2many(related="schedule_id.job_categ_ids", readonly=False)
@@ -474,3 +483,19 @@ class IrAtt(models.Model):
     @api.model
     def check(self, mode, values=None):
         return True
+
+
+    #'res_id': 660, 'res_model': 'technical.job'
+    @api.model_create_multi
+    def create(self, vals_list):
+        new_val_list = []
+        for val in vals_list:
+            if val['res_model'] == 'technical.job':
+                schedule_id = self.env['technical.job'].browse(val['res_id']).schedule_id
+                val['res_model'] = 'technical.job.schedule' if not schedule_id.res_model else schedule_id.res_model
+                val['res_id'] = schedule_id.id if not schedule_id.res_model else schedule_id.res_id
+                new_val_list.append(val)
+            else:
+                new_val_list.append(val)
+        records = super().create(new_val_list)
+        return records

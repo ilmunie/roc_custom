@@ -9,3 +9,5 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.my_class [data-id="internal_notes"]{width: 2000px;}
