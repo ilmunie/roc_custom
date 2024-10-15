@@ -121,7 +121,7 @@ class TechnicalJobAssistant(models.Model):
                 date_to_use = record.next_active_job_id.date_schedule.date() if record.next_active_job_id else datetime.date.today()
                 today = datetime.date.today()
                 if date_to_use < today:
-                    res = f"6. Varios pasados ptes finalizar"
+                    res = f"7. Varios ptes finalizar (Vencidos)"
                 else:
                     res = f"2. Coordinado"
             elif not record.next_active_job_id:
@@ -133,7 +133,7 @@ class TechnicalJobAssistant(models.Model):
                     res = "4. No coordinado (s/info cliente)"
             else:
                 if record.job_status == 'stand_by':
-                    res = f"5. Recoordinar / Aplazado"
+                    res = f"5. Aplazado (Stand-by)"
                 else:
                     date_to_use = record.next_active_job_date
                     input_date = date_to_use
@@ -147,17 +147,17 @@ class TechnicalJobAssistant(models.Model):
                                 "The input_date must be a date object, datetime object, or a string in 'YYYY-MM-DD' format")
                         today = datetime.date.today()
                         if input_date < today:
-                            res = f"5. Recoordinar / Aplazado"
+                            res = f"5. Recoordinar (Vencidos)"
                         else:
                             week_diff = self.weeks_difference(date_to_use)
                             if week_diff == 0:
                                 res = "2. Coordinado"
                             elif week_diff <= -1:
-                                res = f"5. Recoordinar / Aplazado"
+                                res = f"5. Recoordinar (Vencidos)"
                             elif week_diff < 2:
-                                res = f"7. En {week_diff} Semanas"
+                                res = f"8. En {week_diff} Semanas"
                             else:
-                                res = f"8. +1 Semanas"
+                                res = f"9. +1 Semanas"
             record.week_action_group = res
 
     week_action_group = fields.Char(string='Week Action Group', compute='_compute_week_action_group', store=True)

@@ -35,7 +35,7 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     def action_done(self):
         user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
         if len(self.attch_ids) == 0:
-            if user_type == 'user':
+            if user_type == 'user' and self.pending_jobs == 'no':
                 raise UserError('Debe agregar al menos una foto adjunta')
         else:
             att_vals = []

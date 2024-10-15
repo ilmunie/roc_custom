@@ -154,6 +154,10 @@ class TechnicalJob(models.Model):
                 job.write({'job_status': 'confirmed'})
     def stand_by(self):
         for record in self:
+            if record.start_tracking_time and record.schedule_id:
+                record.schedule_id.stop_tracking()
+            if record.displacement_start_datetime:
+                record.end_displacement()
             if not record.internal_notes:
                 raise ValidationError("Debe ingresar una nota interna para aplazar la operacion")
             jobs_edit = []
@@ -181,10 +185,15 @@ class TechnicalJob(models.Model):
 
     def mark_as_done(self):
         for record in self:
-            if record.res_model=='crm.lead' and record.res_id and not record.attch_ids:
+            if record.start_tracking_time and record.schedule_id:
+                record.schedule_id.stop_tracking()
+            if record.displacement_start_datetime:
+                record.end_displacement()
+            user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
+            if record.res_model=='crm.lead' and record.res_id and not record.attch_ids and user_type=='user':
                 raise ValidationError('Cargue la documentación correspondiente')
-            #if record.res_model=='crm.lead' and not record.minutes_in_job:
-            #    raise ValidationError('Debe registrar tiempo en la operacion')
+            if user_type=='user' and not record.minutes_in_job:
+                raise ValidationError('Debe registrar tiempo en la operacion')
             jobs_to_make_done = []
             jobs_to_make_done.append(record)
             if record.schedule_id:
@@ -220,14 +229,7 @@ class TechnicalJob(models.Model):
                                 rec.write(eval(wr_action.write_vals))
                         else:
                             rec.write(eval(wr_action.write_vals))
-            #custom implementation for crm lead mark as done
-            #if (record.res_id and record.res_model and record.res_model == 'crm.lead'):
-            #    if rec.stage_id.name == 'Visita':
-            #        stages = self.env['crm.stage'].search([('name', '=', 'Procesamiento Roconsa')])
-            #        if not stages:
-            #            raise ValueError('No hay etapa de crm llamada Procesamiento Roconsa')
-            #        else:
-            #            rec.stage_id = stages[0].id
+                            rec.write(eval(wr_action.write_vals))
                 if rec.manual_technical_job:
                     rec.manual_technical_job = False
             assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])

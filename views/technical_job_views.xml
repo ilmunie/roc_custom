@@ -142,9 +142,9 @@
                         <field name="job_status" widget="statusbar" options="{'clickable':False}" readonly="1"/>
                         <button name="delete_schedule" type="object" confirm="¿Seguro desea eliminar la operacion?" string="Eliminar" class="btn-danger"/>
                         <button name="confirm" type="object" string="Confirmar" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','confirmed'))]}"/>
-                        <button name="call_checkout_wiz_standby" type="object" string="Aplazar" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
+                        <button name="call_checkout_wiz_standby" type="object" string="APLAZAR" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
                         <button name="set_draft" type="object" string="Borrador"  attrs="{'invisible': [('job_status','in',('to_do'))]}"/>
-                        <button name="call_checkout_wiz" type="object" string="Hecho" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
+                        <button name="call_checkout_wiz" type="object" string="Hecho" groups="roc_custom.technical_job_planner" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
                         <button name="call_billing_wiz" type="object" string="FACTURAR" class="btn-success" attrs="{'invisible': [('job_status','in',('cancel'))]}"/>
                         <button name="open_checklist_wiz" type="object" string="CHECKLIST" class="oe_highlight"/>
                         <button name="assign_to_me" type="object" string="ASIGNARME" class="oe_highlight" attrs="{'invisible': [('see_assign_button', '=', False)] }"/>
@@ -208,7 +208,7 @@
                                 class="oe_highlight" attrs="{'invisible': ['|', ('displacement_start_datetime', '=', False),('job_status','in',('done','cancel'))]}"/>
                             <button name="start_tracking" type="object" string="COMIENZO TRABAJO" confirm="Al aceptar se iniciará el registro del tiempo en domicilio" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':['|', ('displacement_total_min', '=', 0), ('start_tracking_time', '!=', False)]}" class="oe_highlight"/>
                             <button name="stop_tracking" type="object" string="FIN TRABAJO" confirm="Al aceptar se detiene el registro del tiempo en el domicilio " attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':[('start_tracking_time', '=', False)]}" class="oe_highlight"/>
-                        <button name="call_checkout_wiz" type="object" string="FIN TRABAJO" class="oe_highlight" attrs="{'invisible': ['|',('job_status','in',('done','cancel')),('start_tracking_time', '!=', False)]}"/>
+                            <button name="call_checkout_wiz" type="object" string="FIN TRABAJO" class="oe_highlight" attrs="{'invisible': ['|','|',('billable_total_min', '=', 0),('job_status','in',('done','cancel')),('start_tracking_time', '!=', False)]}"/>
                         </header>
                     </group>
                     <group>
