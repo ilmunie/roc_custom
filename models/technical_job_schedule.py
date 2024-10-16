@@ -82,13 +82,6 @@ class TechnicalJobSchedule(models.Model):
             if 'job_categ_ids' in vals:
                 if real_rec.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
                     real_rec.job_categ_ids = vals.get('job_categ_ids', [(5,)])
-            if 'attch_ids' in vals:
-                    body = ''
-                    if self.attch_ids:
-                        if body:
-                            body += "<br/>"
-                        body += "Ha modificado los archivos adjuntos"
-                    real_rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment', attachment_ids=self.attch_ids.mapped('id'))
 
         #if self.res_model and self.res_id and :
         #    real_rec = self.env[self.res_model].browse(self.res_id)
@@ -288,7 +281,7 @@ class TechnicalJobSchedule(models.Model):
     @api.depends('sync_attachments')
     def get_attch(self):
         for record in self:
-            att = self.env['ir.attachment'].search([('res_id','=',record.id),('res_model','=','technical.job.schedule')])
+            att = self.env['ir.attachment'].search([('res_id','=',record.id),('res_model','=','technical.job.schedule'), ('added_from_technical_job', '=', True)])
             record.attch_ids = [(6,0, att.mapped('id'))]
 
     attch_ids = fields.Many2many('ir.attachment',

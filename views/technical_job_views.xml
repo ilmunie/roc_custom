@@ -238,6 +238,7 @@
                      </group>
                      <group string="Documentacion asociada">
                     </group>
+
                      <div class="oe_chatter">
                     </div>
                         <field name="attch_ids" widget="many2many_binary"/>

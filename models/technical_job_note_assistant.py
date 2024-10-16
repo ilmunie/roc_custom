@@ -6,7 +6,6 @@ from odoo.exceptions import UserError, ValidationError
 class TechnicalJobNoteAssistant(models.TransientModel):
     _name = "technical.job.note.assistant"
 
-
     new_opportunities = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Potencial otros trabajos")
     opportunities_description = fields.Text(string="Descripción oportunidad")
     opportunities_job_categ_ids = fields.Many2many('technical.job.categ', string="Tipo oportunidad")
@@ -34,15 +33,16 @@ class TechnicalJobNoteAssistant(models.TransientModel):
         return result
 
     def action_done(self):
-        user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
-        if len(self.attch_ids) == 0:
-            if user_type == 'user' and self.pending_jobs == 'no':
-                raise UserError('Debe agregar al menos una foto adjunta')
-        else:
-            att_vals = []
-            for att in self.attch_ids:
-                att_vals.append((4, att.id))
-            self.technical_job_id.attch_ids = att_vals
+        #user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
+        #if len(self.attch_ids) == 0:
+        #    if user_type == 'user' and self.pending_jobs == 'no':
+        #        False
+        #        raise UserError('Debe agregar al menos una foto adjunta')
+        #else:
+        #    att_vals = []
+        #    for att in self.attch_ids:
+        #        att_vals.append((4, att.id))
+        #    self.technical_job_id.attch_ids = att_vals
         if self.content_type == 'Finalizacion trabajo' and self.pending_jobs == 'yes':
             content_label = 'Pendientes'
         else:

@@ -330,7 +330,7 @@ class TechnicalJob(models.Model):
         for record in self:
             res_model = 'technical.job.schedule' if not record.schedule_id.res_model else record.schedule_id.res_model
             res_id = record.schedule_id.id if not record.schedule_id.res_model else record.schedule_id.res_id
-            att = self.env['ir.attachment'].search([('res_id','=', res_id),('res_model', '=', res_model)])
+            att = self.env['ir.attachment'].search([('res_id','=', res_id),('res_model', '=', res_model), ('added_from_technical_job', '=', True)])
             record.attch_ids = [(6, 0, att.mapped('id'))]
 
     attch_ids = fields.Many2many('ir.attachment', compute=get_schedule_attch)
@@ -480,20 +480,24 @@ class TechnicalJob(models.Model):
 class IrAtt(models.Model):
     _inherit = 'ir.attachment'
 
+    added_from_technical_job = fields.Boolean()
+    
     @api.model
     def check(self, mode, values=None):
         return True
 
 
-    #'res_id': 660, 'res_model': 'technical.job'
     @api.model_create_multi
     def create(self, vals_list):
         new_val_list = []
         for val in vals_list:
             if val['res_model'] == 'technical.job':
-                schedule_id = self.env['technical.job'].browse(val['res_id']).schedule_id
-                val['res_model'] = 'technical.job.schedule' if not schedule_id.res_model else schedule_id.res_model
-                val['res_id'] = schedule_id.id if not schedule_id.res_model else schedule_id.res_id
+                schedule = self.env['technical.job'].browse(val['res_id']).schedule_id
+                model = 'technical.job.schedule' if not schedule.res_model else schedule.res_model
+                res_id = schedule.id if not schedule.res_model else schedule.res_id
+                val['res_model'] = model
+                val['res_id'] = res_id
+                val['added_from_technical_job'] = True
                 new_val_list.append(val)
             else:
                 new_val_list.append(val)
