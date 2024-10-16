@@ -491,7 +491,7 @@ class IrAtt(models.Model):
     def create(self, vals_list):
         new_val_list = []
         for val in vals_list:
-            if val['res_model'] == 'technical.job':
+            if 'res_model' in val.keys() and val['res_model'] == 'technical.job':
                 schedule = self.env['technical.job'].browse(val['res_id']).schedule_id
                 model = 'technical.job.schedule' if not schedule.res_model else schedule.res_model
                 res_id = schedule.id if not schedule.res_model else schedule.res_id
