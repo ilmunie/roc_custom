@@ -93,7 +93,9 @@ class TechnicalJobSchedule(models.Model):
     def stop_tracking(self):
         self.ensure_one()
         time_difference = fields.Datetime.now() - self.start_tracking_time
-        self.time_register_ids.filtered(lambda x: x.start_time and not x.end_time)[0].end_time = fields.Datetime.now()
+        reg_to_end = self.time_register_ids.filtered(lambda x: x.start_time and not x.end_time)
+        for reg in reg_to_end:
+            reg.end_time = fields.Datetime.now()
         self.minutes_in_job += time_difference.total_seconds() / 60
         self.start_tracking_time = False
 
