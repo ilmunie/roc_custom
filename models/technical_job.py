@@ -401,7 +401,9 @@ class TechnicalJob(models.Model):
         self.ensure_one()
         schedule_id = self.schedule_id
         if schedule_id:
-            schedule_id.time_register_ids.filtered(lambda x: x.displacement and not x.end_time)[0].end_time = fields.Datetime.now()
+            register_to_end = schedule_id.time_register_ids.filtered(lambda x: x.displacement and not x.end_time)
+            for reg in register_to_end:
+                reg.end_time = fields.Datetime.now()
             schedule_id.displacement_start_datetime = False
 
     def call_billing_wiz(self):
