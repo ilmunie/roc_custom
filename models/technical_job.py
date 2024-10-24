@@ -8,6 +8,9 @@ class TechnicalJob(models.Model):
     _name = 'technical.job'
     _inherit = ['mail.thread']
 
+    allow_displacement_tracking = fields.Boolean(related='job_type_id.allow_displacement_tracking')
+    data_assistant = fields.Boolean(related='job_type_id.data_assistant')
+
 
     @api.depends('job_employee_ids')
     def see_ass_button(self):
@@ -47,7 +50,6 @@ class TechnicalJob(models.Model):
             self.env['technical.job.assistant'].browse(self.env.context.get("update_assistant_id", False)).related_rec_fields()
         return res
 
-    color = fields.Integer(related='job_type_id.color')
     def open_form_partner(self):
         action = self.env.ref('roc_custom.action_technical_job_partner_form').read()[0]
         if self.res_model == 'crm.lead':
@@ -192,9 +194,9 @@ class TechnicalJob(models.Model):
             if record.displacement_start_datetime:
                 record.end_displacement()
             user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
-            if record.res_model=='crm.lead' and record.res_id and not record.attch_ids and user_type=='user':
+            if record.job_type_id.requires_documentation and record.res_id and not record.attch_ids and user_type=='user':
                 raise ValidationError('Cargue la documentación correspondiente')
-            if user_type=='user' and not record.minutes_in_job:
+            if record.job_type_id.force_time_registration and user_type=='user' and not record.minutes_in_job:
                 raise ValidationError('Debe registrar tiempo en la operacion')
             jobs_to_make_done = []
             jobs_to_make_done.append(record)
@@ -224,13 +226,19 @@ class TechnicalJob(models.Model):
                         break
                 if config:
                     for wr_action in config.action_done_line_ids:
+                        apply = True
+                        if wr_action.wiz_condition:
+                            wizard = self.env.context.get('wiz_id', False)
+                            domain = eval(wr_action.wiz_condition)
+                            domain.insert(0, ('id', '=', wizard.id))
+                            if wizard and not self.env[wizard._name].search(domain):
+                                apply = False
                         if wr_action.domain_condition:
                             domain = eval(wr_action.domain_condition)
                             domain.insert(0, ('id', '=', rec.id))
-                            if self.env[rec._name].search(domain):
-                                rec.write(eval(wr_action.write_vals))
-                        else:
-                            rec.write(eval(wr_action.write_vals))
+                            if not self.env[rec._name].search(domain):
+                                apply = False
+                        if apply:
                             rec.write(eval(wr_action.write_vals))
                 if rec.manual_technical_job:
                     rec.manual_technical_job = False
@@ -446,30 +454,35 @@ class TechnicalJob(models.Model):
         if self.schedule_id:
             self.schedule_id.stop_tracking()
             self.schedule_id.out_time = fields.Datetime.now()
-            ctx = {'note_assistant_type': 'Finalizacion trabajo', 'technical_job': self.id}
-            return {
-                'name': "Descripción trabajo realizado",
-                'res_model': 'technical.job.note.assistant',
-                'type': 'ir.actions.act_window',
-                'view_mode': 'form',
-                'context': ctx,
-                'target': 'new',
-            }
+            if self.job_type_id.data_assistant:
+                ctx = {'note_assistant_type': 'Finalizacion trabajo', 'technical_job': self.id}
+                return {
+                    'name': "Descripción trabajo realizado",
+                    'res_model': 'technical.job.note.assistant',
+                    'type': 'ir.actions.act_window',
+                    'view_mode': 'form',
+                    'context': ctx,
+                    'target': 'new',
+                }
+            else:
+                self.mark_as_done()
+
 
     def start_tracking(self):
         if self.schedule_id:
             self.schedule_id.start_tracking()
             if not self.schedule_id.arrive_time:
                 self.schedule_id.arrive_time = fields.Datetime.now()
-        ctx = {'note_assistant_type': 'Descripcion Inicial', 'technical_job': self.id}
-        return {
-            'name': "Descripción antes de realizar el trabajo",
-            'res_model': 'technical.job.note.assistant',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'context': ctx,
-            'target': 'new',
-        }
+        if self.job_type_id.data_assistant:
+            ctx = {'note_assistant_type': 'Descripcion Inicial', 'technical_job': self.id}
+            return {
+                'name': "Descripción antes de realizar el trabajo",
+                'res_model': 'technical.job.note.assistant',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'context': ctx,
+                'target': 'new',
+            }
 
     @api.depends('date_schedule', 'job_duration')
     def get_end_time(self):

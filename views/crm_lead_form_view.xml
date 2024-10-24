@@ -9,6 +9,8 @@
             <xpath expr="//form[last()]" position="replace">
                 <form class="o_lead_opportunity_form">
                     <header>
+                        <button name="create_new_ticket" type="object" string="Nuevo ticket" class="btn-primary"
+                        attrs="{'invisible':[('type','=', 'lead')]}"/>
                         <button name="action_set_won_rainbowman" string="Ganado"
                             type="object" class="oe_highlight" data-hotkey="w" title="Mark as won"
                             attrs="{'invisible': ['|','|', ('active','=',False), ('probability', '=', 100), ('type', '=', 'lead')]}"/>
@@ -39,6 +41,16 @@
                                     <span class="o_stat_text" attrs="{'invisible': [('calendar_event_count', '&gt;', 1)]}"> Reunión</span>
                                 </div>
                             </button>
+                    <button name="view_tickets" type="object" class="oe_stat_button" icon="fa-life-ring" >
+                        <div class="o_stat_info">
+                            <field name="helpdesk_ticket_ids" invisible="1"/>
+                            <div class="o_field_widget o_stat_info">
+                                <field name="active_ticket_count" nolabel="1" widget="statinfo"/>
+                                <span class="o_stat_text">Tickets</span><br/>
+                                <span class="o_stat_text">Activos</span>
+                            </div>
+                        </div>
+                    </button>
                             <button name="action_view_pos_order" type="object" class="oe_stat_button" icon="fa-shipping-basket" attrs="{'invisible':[('pos_order_count','=',0)]}" >
                                 <div class="o_stat_info">
                                     <field name="pos_order_ids" invisible="1"/>
@@ -304,6 +316,70 @@
                                 <label for="description" string="Notas internas"/>
                                 <field name="description" placeholder="Añada una descripción..."/>
                             </page>
+<page string="Visita" attrs="{'invisible':[('type','!=','opportunity')]}">
+                                <group>
+                                    <group>
+                                        <field name="visit_payment_type" widget="radio" />
+                                        <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type','!=','to_bill')]}" />
+                                        <field name="job_employee_ids" widget="many2many_tags" options="{'no_create': 1}" domain="[('technical','=', True)]"/>
+                                        <field name="job_vehicle_ids" widget="many2many_tags" options="{'no_create': 1}" />
+                                    </group>
+                                    <group>
+                                        <field name="visit_priority" widget="priority" />
+                                        <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
+                                        <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags"/>
+                                        <field name="job_duration"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <field name="visit_internal_notes"/>
+                                    <field name="stage_name" invisible="1"/>
+                                </group>
+                                <group string="Disponibilidad cliente" name="customer_availability" attrs="{'invisible': [('next_active_job_id', '!=', False)]}">
+                                     <group>
+                                        <field name="customer_availability_type"/>
+                                     </group>
+                                     <group>
+                                         <field name="customer_visit_datetime" attrs="{'invisible': [('customer_availability_type', '!=', 'specific_date')]}"/>
+                                         <field name="customer_av_visit_date" attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}"/>
+                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
+                                                <strong><span>DE:   </span></strong>
+                                                <field name="customer_av_hour_start" class="oe_inline" />
+                                                <field name="customer_av_min_start" class="oe_inline" />
+                                         </div>
+                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
+                                                <strong><span>HASTA:   </span></strong>
+                                                <field name="customer_av_hour_end" class="oe_inline" />
+                                                <field name="customer_av_min_end" class="oe_inline" />
+                                         </div>
+                                     </group>
+                                    <field name="customer_availability_info" nolabel="1" attrs="{'invisible': [('customer_availability_type', '!=', 'week_availability')]}"
+                                    />
+                                </group>
+                                <group string="Proximo trabajo activo" attrs="{'invisible': [('next_active_job_id', '=', False)]}">
+                                    <group>
+                                        <field name="next_active_job_id" nolabel="1" readonly="1" />
+                                    </group>
+                                    <group>
+                                        <field name="next_active_job_date" string="Fecha" readonly="1" />
+                                    </group>
+                                </group>
+                            </page>
+                            <page name="tickets" string="Servicio Asistencia">
+                        <group>
+                            <field name="active_ticket_count"/>
+                        </group>
+                        <field name="helpdesk_ticket_ids">
+                            <tree>
+                                <field name="name"/>
+                                <field name="team_id"/>
+                                <field name="address_label"/>
+                                <field name="next_active_job_id"/>
+                                <field name="next_active_job_date" widget="remaining_days"/>
+                                <field name="stage_id"/>
+                            </tree>
+                        </field>
+                    </page>
                             <page string="Contactos y direcciones" name="contact_addresses" autofocus="autofocus">
                                 <field name="partner_child_ids" mode="kanban" context="{'default_parent_id': partner_id, 'default_street': street, 'default_street2': street2, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang_id, 'default_user_id': user_id, 'default_type': 'other'}">
                                     <kanban>
@@ -397,55 +473,7 @@
                                     </form>
                                 </field>
                             </page>
-<page string="Visita" attrs="{'invisible':[('type','!=','opportunity')]}">
-                                <group>
-                                    <group>
-                                        <field name="visit_payment_type" widget="radio" />
-                                        <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type','!=','to_bill')]}" />
-                                        <field name="job_employee_ids" widget="many2many_tags" options="{'no_create': 1}" domain="[('technical','=', True)]"/>
-                                        <field name="job_vehicle_ids" widget="many2many_tags" options="{'no_create': 1}" />
-                                    </group>
-                                    <group>
-                                        <field name="visit_priority" widget="priority" />
-                                        <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
-                                        <field name="job_categ_ids" widget="many2many_tags"/>
-                                        <field name="job_duration"/>
-                                    </group>
-                                </group>
-                                <group>
-                                    <field name="visit_internal_notes"/>
-                                    <field name="stage_name" invisible="1"/>
-                                </group>
-                                <group string="Disponibilidad cliente" name="customer_availability" attrs="{'invisible': [('next_active_job_id', '!=', False)]}">
-                                     <group>
-                                        <field name="customer_availability_type"/>
-                                     </group>
-                                     <group>
-                                         <field name="customer_visit_datetime" attrs="{'invisible': [('customer_availability_type', '!=', 'specific_date')]}"/>
-                                         <field name="customer_av_visit_date" attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}"/>
-                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
-                                                <strong><span>DE:   </span></strong>
-                                                <field name="customer_av_hour_start" class="oe_inline" />
-                                                <field name="customer_av_min_start" class="oe_inline" />
-                                         </div>
-                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
-                                                <strong><span>HASTA:   </span></strong>
-                                                <field name="customer_av_hour_end" class="oe_inline" />
-                                                <field name="customer_av_min_end" class="oe_inline" />
-                                         </div>
-                                     </group>
-                                    <field name="customer_availability_info" nolabel="1" attrs="{'invisible': [('customer_availability_type', '!=', 'week_availability')]}"
-                                    />
-                                </group>
-                                <group string="Proximo trabajo activo" attrs="{'invisible': [('next_active_job_id', '=', False)]}">
-                                    <group>
-                                        <field name="next_active_job_id" nolabel="1" readonly="1" />
-                                    </group>
-                                    <group>
-                                        <field name="next_active_job_date" string="Fecha" readonly="1" />
-                                    </group>
-                                </group>
-                            </page>
+
                             <page name="extra_data" string="Información Extra" attrs="{'invisible': [('type', '=', 'lead')]}">
                                 <group>
                                     <group string="Información del contacto">

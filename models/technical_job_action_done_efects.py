@@ -17,7 +17,7 @@ class TechnicalJobActionDoneConfig(models.Model):
             "view_mode": "form",
         }
 
-
+    wiz_condition = fields.Char(string="Condicion Asistente finalización")
     domain_condition = fields.Char(string="Condicion aplicación")
     config_id = fields.Many2one('technical.job.assistant.config')
     model_name = fields.Char(related="config_id.model_name", string="Modelo")

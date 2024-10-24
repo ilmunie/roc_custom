@@ -10,10 +10,10 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     opportunities_description = fields.Text(string="Descripción oportunidad")
     opportunities_job_categ_ids = fields.Many2many('technical.job.categ', string="Tipo oportunidad")
     opp_attch_ids = fields.Many2many('ir.attachment','technical_job_opp_creation_att_rel', 'wiz_id', 'attach_id', string="Adjuntos")
-
     currency_id = fields.Many2one('res.currency')
     content_type = fields.Char()
-    pending_jobs = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Trabajos pendientes")
+    pending_jobs = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Operacion en domicilio pendiente")
+    needs_quotation = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Necesita presupuesto?")
     needs_billing = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Necesita facturacion adicional?")
     content = fields.Text(required=True, string="Comentarios")
     todo_description = fields.Text(string="A realizar")
@@ -33,16 +33,6 @@ class TechnicalJobNoteAssistant(models.TransientModel):
         return result
 
     def action_done(self):
-        #user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
-        #if len(self.attch_ids) == 0:
-        #    if user_type == 'user' and self.pending_jobs == 'no':
-        #        False
-        #        raise UserError('Debe agregar al menos una foto adjunta')
-        #else:
-        #    att_vals = []
-        #    for att in self.attch_ids:
-        #        att_vals.append((4, att.id))
-        #    self.technical_job_id.attch_ids = att_vals
         if self.content_type == 'Finalizacion trabajo' and self.pending_jobs == 'yes':
             content_label = 'Pendientes'
         else:
@@ -64,7 +54,7 @@ class TechnicalJobNoteAssistant(models.TransientModel):
             if self.pending_jobs == 'yes':
                 self.technical_job_id.stand_by()
             else:
-                self.technical_job_id.mark_as_done()
+                self.technical_job_id.with_context(wiz_id=self).mark_as_done()
         if self.new_opportunities=='yes':
             real_rec = False
             if self.technical_job_id and self.technical_job_id.res_id and self.technical_job_id.res_model:

@@ -34,3 +34,5 @@ from . import product_variant_combo_config
 from . import product_replacement_script
 from . import partner_replacement_script
 from . import technical_job_action_done_efects
+from . import helpdesk_integration
+from . import helpdesk_ticket

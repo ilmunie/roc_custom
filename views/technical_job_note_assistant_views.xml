@@ -14,7 +14,7 @@
                 <strong><field name="content_type" readonly="1" nolabel="1" /></strong>
                 <br attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"/>
                 <field name="currency_id" invisible="1"/>
-                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿QUEDAN TAREAS PENDIENTES?</span></strong>
+                <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿OPERACIONES PENDIENTES POR TECNICO EN DOMICILIO?</span></strong>
                 <br/>
                 <field name="pending_jobs" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
                 <br/>
@@ -31,6 +31,13 @@
                 <strong attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')]}"><span>A realizar</span></strong>
                 <br/><br/>
                 <field name="todo_description" string="A realizar" nolabel="1" attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')], 'required': [('content_type', '=', 'Descripcion Inicial')] }"/>
+                <br/>
+                <strong attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'yes')]}"><span>¿NECESITA PRESUPUESTO?</span></strong><br/>
+                <field name="needs_quotation" widget="statusbar" options="{'clickable':1}" attrs="{'invisible':['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'yes')]}" />
+                <br/>
+                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|','|', ('pending_jobs', '=', 'yes'),('content_type', '!=', 'Finalizacion trabajo'), ('needs_quotation', '!=', 'yes')]}">
+                    <span>Al continuar notifica a la oficina para realizar el nuevo presupuesto</span>
+                </div>
                 <br/>
                 <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿NECESITA FACTURACION?</span></strong><br/>
                 <field name="needs_billing" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />

@@ -42,9 +42,40 @@
                 <xpath expr="//field[@name='qty_delivered']" position="attributes">
                     <attribute name="optional">show</attribute>
                 </xpath>
+                <xpath expr="//button[@name='action_view_purchase_orders']" position="after">
+                    <button name="view_tickets" type="object" class="oe_stat_button" icon="fa-life-ring" >
+                        <div class="o_stat_info">
+                            <field name="helpdesk_ticket_ids" invisible="1"/>
+                            <div class="o_field_widget o_stat_info">
+                                <field name="active_ticket_count" nolabel="1" widget="statinfo"/>
+                                <span class="o_stat_text">Tickets</span><br/>
+                                <span class="o_stat_text">Activos</span>
+                            </div>
+                        </div>
+                    </button>
+                </xpath>
+                <xpath expr="//notebook[last()]" position="inside">
+                    <page name="tickets" string="Servicio Asistencia">
+                        <group>
+                            <field name="active_ticket_count"/>
+                        </group>
+                        <field name="helpdesk_ticket_ids">
+                            <tree>
+                                <field name="name"/>
+                                <field name="team_id"/>
+                                <field name="address_label"/>
+                                <field name="next_active_job_id"/>
+                                <field name="next_active_job_date" widget="remaining_days"/>
+                                <field name="stage_id"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+
 
                 <xpath expr="//header[last()]" position="inside">
                     <button name="%(action_sale_purchase_order_wizard)d" type="action" string="Nueva compra" class="btn-primary" attrs="{'invisible':[('state','in',['done','cancel'])]}"/>
+                    <button name="create_new_ticket" type="object" string="Nuevo ticket" class="btn-primary" />
                 </xpath>
 
                 <xpath expr="//field[@name='sale_order_template_id']" position="before">

@@ -28,7 +28,7 @@ class TechnicalJobType(models.Model):
     default_duration_hs = fields.Float(string="Duración Hs")
     default_job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita", domain=[('technical','=',True)])
     default_job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Vehículo")
-
-    def _get_default_color(self):
-        return randint(1, 11)
-    color = fields.Integer('Color', default=_get_default_color)
+    allow_displacement_tracking = fields.Boolean(default=True, string="Cronometrar Desplazamiento?")
+    requires_documentation = fields.Boolean(default=True, string="Tecnico: Requiere Documentacion?")
+    data_assistant = fields.Boolean(default=True, string="Asistente Finalizacion?")
+    force_time_registration = fields.Boolean(default=True, string="Tecnico: Forzar registro de tiempo")

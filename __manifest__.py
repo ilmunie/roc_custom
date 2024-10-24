@@ -59,7 +59,7 @@
         'views/crm_tag_views.xml',
         'views/hr_views.xml',
         'views/report_stock_forecasted.xml',
-        #'views/helpdesk_views.xml',
+        'views/helpdesk_views.xml',
         'views/technical_job_action_done_efects_views.xml',
         'views/purchase_order_report.xml',
         'views/crm_lead_form_view.xml',

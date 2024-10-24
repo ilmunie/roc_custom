@@ -2,6 +2,7 @@ import datetime
 from odoo import fields, models, api, SUPERUSER_ID
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
+from random import randint
 
 class SeeFullHtmlMessage(models.TransientModel):
     _name = 'see.full.html.message'
@@ -21,8 +22,9 @@ class TechnicalJobAssistantConfig(models.Model):
     responsible_user_id = fields.Many2one('res.users')
     date_field_id = fields.Many2one('ir.model.fields')
     date_field_tag = fields.Char()
-
-
+    def _get_default_color(self):
+        return randint(1, 11)
+    color = fields.Integer('Color', default=_get_default_color)
 
 
 class TechnicalJobAssistant(models.Model):
@@ -208,6 +210,21 @@ class TechnicalJobAssistant(models.Model):
                 }
                 return action
 
+    def edit_internal_note(self):
+        self.ensure_one()
+        context = {'update_assistant_id': self.id}
+        action = {
+            'name': "Edicion notas internas",
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'context': context,
+            'res_id': self.id,
+            'res_model': 'technical.job.assistant',
+            'target': 'new',
+        }
+        return action
+
     def see_all_data(self):
         self.ensure_one()
         action = {
@@ -276,7 +293,9 @@ class TechnicalJobAssistant(models.Model):
             return action
 
     config_id = fields.Many2one('technical.job.assistant.config', string="Configuración")
+    color = fields.Integer(related='config_id.color')
     responsible_user_id = fields.Many2one(related='config_id.responsible_user_id', store=True, string="Usuario Responsable")
+
     def start_assistant(self):
         self.env['technical.job.assistant'].search([('create_uid','=', self.env.user.id)]).unlink()
         configs = self.env['technical.job.assistant.config'].search([('id', '!=', 0)])
@@ -294,7 +313,8 @@ class TechnicalJobAssistant(models.Model):
             'context': {
                     #'search_default_assigned_to_me': 1 if user_type == 'planner' else 0,
                     #'search_default_myjobs': 1 if user_type == 'user' else 0,
-                    'search_default_week_action_group': 1
+                    'search_default_week_action_group': 1,
+                    'search_default_configuration': 1,
                 },
             'domain': [('create_uid', '=', self.env.user.id)],
             'views': [(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree'),(False,'kanban')] if user_type=='planner' else [(False,'kanban'),(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')] ,
@@ -311,6 +331,7 @@ class TechnicalJobAssistant(models.Model):
             html = ""
             address = ""
             phones = []
+            internal_notes_html = ""
             html_data_src_doc = ""
             next_job = False
             internal_notes = ""
@@ -355,6 +376,7 @@ class TechnicalJobAssistant(models.Model):
                     else:
                         next_job = real_rec
                     internal_notes = real_rec.visit_internal_notes if record.res_model != 'technical.job.schedule' else next_job.internal_notes
+                    internal_notes_html = internal_notes.replace("\n","<br/>") if internal_notes else ""
                     visit_payment_type = real_rec.visit_payment_type if record.res_model != 'technical.job.schedule' else next_job.visit_payment_type
                     visit_priority = real_rec.visit_priority if record.res_model != 'technical.job.schedule' else next_job.visit_priority
                     if record.res_model != 'technical.job.schedule':
@@ -372,6 +394,7 @@ class TechnicalJobAssistant(models.Model):
                         record.res_id, record.res_model)
                     html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
 
+            record.internal_notes_html = internal_notes_html
             record.estimated_visit_revenue = estimated_visit_revenue
             record.address = address
             record.contact_number = '|'.join(phones) if phones else ""
@@ -396,6 +419,7 @@ class TechnicalJobAssistant(models.Model):
     estimated_visit_revenue = fields.Float(compute=related_rec_fields, store=True, string="Estimado (EUR)")
     job_duration = fields.Float(compute=related_rec_fields, store=True, string="Horas estimadas")
     internal_notes = fields.Text(compute=related_rec_fields, store=True, string="Notas internas")
+    internal_notes_html = fields.Html(compute=related_rec_fields, store=True, string="Notas int")
     visit_payment_type = fields.Selection(compute=related_rec_fields, store=True, string="Política de cobro", selection=[('free','Sin cargo'), ('to_bill','Con cargo')])
     visit_priority = fields.Selection(compute=related_rec_fields, store=True, string="Prioridad Visita",  selection=[('0', 'Sin definir'), ('1','Baja'), ('2','Media'), ('3','Alta')])
     job_categ_ids = fields.Many2many('technical.job.categ',compute=related_rec_fields, store=True, string="Categoria")

@@ -425,24 +425,64 @@ class MrpProduction(models.Model,TechnicalJobMixin):
 class HelpdeskTicket(models.Model,TechnicalJobMixin):
     _inherit = 'helpdesk.ticket'
 
+
+
     def get_job_data(self):
-        return self.address_label
+        data = ''
+        #if self.visit_payment_type:
+        #    data += "<strong>" + dict(self._fields['visit_payment_type']._description_selection(self.env)).get(self.visit_payment_type) + "<strong/><br/><br/>"
+        if self.partner_mobile or self.partner_phone:
+            phone_number = self.partner_mobile or self.partner_phone
+            data += f"""
+                <a href='tel:{phone_number.replace(" ","").replace("-","")}'><br/>
+                   📲 Llamar Cliente<br/><br/>
+                </a>
+                <a href='https://wa.me/{phone_number.replace(" ","").replace("-","")}'><br/>
+                   💬 Enviar WhatsApp {phone_number.replace(" ","").replace("-","")}<br/><br/>
+                </a>
+            """
+        if self.address_label:
+            data += f"<a href='https://google.com/maps/search/{self.address_label}'><br/>📍 Dirección: {self.address_label}<br/><br/></a>"
+        if self.customer_availability_info:
+            data += self.customer_availability_info + "<br/><br/>"
+
+        if self.description:
+            if "Se le informó / respondió:" in self.description:
+                position = self.description.find("Se le informó / respondió:")
+                # If the phrase is found, extract the content before it
+                data += f"{self.description[:position].strip()}<br/><br/>"
+            else:
+                data += f"{self.description}<br/><br/>"
+
+        if self.partner_id and self.partner_id.child_ids:
+            data += f"<br/><bold><span>CONTACTOS ALTERNATIVOS: <span/><bold/>"
+            for child_contact in self.partner_id.child_ids:
+                phone_number = child_contact.mobile or child_contact.phone
+                if phone_number:
+                    data += f"""
+                        <a href='tel:{phone_number.replace(" ", "").replace("-", "")}'><br/>
+                           📲 Llamar {child_contact.name}<br/><br/>
+                        </a>
+                        <a href='https://wa.me/{phone_number.replace(" ", "").replace("-", "")}'><br/>
+                           💬 Enviar WhatsApp {phone_number.replace(" ", "").replace("-", "")}<br/><br/>
+                        </a>
+                    """
+        return data
 
     address_label = fields.Char(
         string='Address Label',
         compute='_compute_address_label',
     )
 
-    @api.depends('partner_id','partner_id.street','partner_id.street2','partner_id.city','partner_id.zip')
+    @api.depends('partner_street', 'partner_street_2', 'partner_city', 'partner_zip', 'partner_state_id')
     def _compute_address_label(self):
-        for ticket in self:
-            address = ''
-            partner = ticket.partner_id
-            if partner:
-                address_components = [partner.street, partner.street2, partner.city, partner.zip]
-                if partner.state_id:
-                    address_components.append(partner.state_id.name)
+        for lead in self:
+            address = False
+            if lead.partner_street or lead.partner_street_2 :
+                address_components = [lead.partner_street,lead.partner_street_2, lead.partner_city, lead.partner_zip, "España"]
+                if lead.partner_state_id:
+                    address_components.append(lead.partner_state_id.name)
                 address = ', '.join(filter(None, address_components))
-                if not address:
-                    address = "Sin datos de dirección"
-            ticket.address_label = address
+            if not address:
+                address = "Sin datos de dirección"
+            lead.address_label = address

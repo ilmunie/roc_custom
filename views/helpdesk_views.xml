@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="helpdesk_stage_form_custom" model="ir.ui.view">
+        <field name="name">helpdesk.stage.form.custom</field>
+        <field name="model">helpdesk.stage</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_stage_view_form"/>
+        <field name="arch" type="xml">
+            <field name="sequence" position="before">
+                <field name="active_process" />
+            </field>
+        </field>
+    </record>
+    <record id="helpdesk_ticket_tree_custom" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.tree.custom</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_tickets_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="address_label" />
+                <field name="next_active_job_id"/>
+                <field name="link_to_src_document"/>
+                <field name="res_model" invisible = "1"/>
+                <field name="res_id" invisible = "1"/>
+                <field string="Origen" name="src_doc_name"/>
+                <button class="oe_stat_button" name="view_form_src_document" attrs="{'invisible': [('res_model', '=', False)]}"  type="object" icon="fa-pencil-square-o"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="helpdesk_ticket_form_custom" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.custom</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button class="oe_stat_button" name="view_form_src_document" attrs="{'invisible': [('res_model', '=', False)]}"  type="object" icon="fa-pencil-square-o">
+                    <field string="Origen" name="src_doc_name" widget="statinfo"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//field[@name='email_cc']" position="replace">
+                <label for="partner_street" string="Dirección"/>
+                <div class="o_address_format">
+                    <field name="partner_street" placeholder="Calle..." class="o_address_street"/>
+                    <field name="partner_street_2" placeholder="Dpto..." class="o_address_street"/>
+                    <field name="partner_city" placeholder="Ciudad" class="o_address_city"/>
+                    <field name="partner_state_id" class="o_address_state" placeholder="Provincia" options='{"no_open": True}'/>
+                    <field name="partner_zip" placeholder="ZIP" class="o_address_zip"/>
+                    <field name="partner_country_id" placeholder="Pais" class="o_address_country" options='{"no_open": True, "no_create": True}'/>
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_phone']" position="after">
+                        <field name="partner_mobile" widget="phone"/>
+            </xpath>
+            <xpath expr="//field[@name='tag_ids']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='priority']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//sheet[last()]" position="inside">
+                <notebook>
+                <page string="Visita">
+                                <group>
+                                    <group>
+                                        <field name="visit_payment_type" widget="radio" />
+                                        <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type','!=','to_bill')]}" />
+                                        <field name="job_employee_ids" widget="many2many_tags" options="{'no_create': 1}" domain="[('technical','=', True)]"/>
+                                        <field name="job_vehicle_ids" widget="many2many_tags" options="{'no_create': 1}" />
+                                    </group>
+                                    <group>
+                                        <field name="visit_priority" widget="priority" />
+                                        <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
+                                        <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags"/>
+                                        <field name="job_duration"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <field name="visit_internal_notes"/>
+                                </group>
+                                <group string="Disponibilidad cliente" name="customer_availability" attrs="{'invisible': [('next_active_job_id', '!=', False)]}">
+                                     <group>
+                                        <field name="customer_availability_type"/>
+                                     </group>
+                                     <group>
+                                         <field name="customer_visit_datetime" attrs="{'invisible': [('customer_availability_type', '!=', 'specific_date')]}"/>
+                                         <field name="customer_av_visit_date" attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}"/>
+                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
+                                                <strong><span>DE:   </span></strong>
+                                                <field name="customer_av_hour_start" class="oe_inline" />
+                                                <field name="customer_av_min_start" class="oe_inline" />
+                                         </div>
+                                         <div attrs="{'invisible': [('customer_availability_type', '!=', 'hour_range')]}" class="oe_inline">
+                                                <strong><span>HASTA:   </span></strong>
+                                                <field name="customer_av_hour_end" class="oe_inline" />
+                                                <field name="customer_av_min_end" class="oe_inline" />
+                                         </div>
+                                     </group>
+                                    <field name="customer_availability_info" nolabel="1" attrs="{'invisible': [('customer_availability_type', '!=', 'week_availability')]}"
+                                    />
+                                </group>
+                                <group string="Proximo trabajo activo" attrs="{'invisible': [('next_active_job_id', '=', False)]}">
+                                    <group>
+                                        <field name="next_active_job_id" nolabel="1" readonly="1" />
+                                    </group>
+                                    <group>
+                                        <field name="next_active_job_date" string="Fecha" readonly="1" />
+                                    </group>
+                                </group>
+                            </page>
+
+                <page string="Contactos y direcciones" name="contact_addresses">
+                    <field name="partner_child_ids" mode="kanban" context="{'default_parent_id': partner_id, 'default_type': 'other'}">
+                        <kanban>
+                            <field name="id"/>
+                            <field name="color"/>
+                            <field name="name"/>
+                            <field name="title"/>
+                            <field name="type"/>
+                            <field name="email"/>
+                            <field name="parent_id"/>
+                            <field name="is_company"/>
+                            <field name="function"/>
+                            <field name="phone"/>
+                            <field name="street"/>
+                            <field name="street2"/>
+                            <field name="zip"/>
+                            <field name="city"/>
+                            <field name="country_id"/>
+                            <field name="mobile"/>
+                            <field name="state_id"/>
+                            <field name="image_128"/>
+                            <field name="avatar_128"/>
+                            <field name="lang"/>
+                            <!-- fields in form x2many view to diminish requests -->
+                            <field name="comment"/>
+                            <field name="display_name"/>
+                            <templates>
+                                <t t-name="kanban-box">
+                                    <t t-set="color" t-value="kanban_color(record.color.raw_value)"/>
+                                    <div t-att-class="color + (record.title.raw_value == 1 ? ' oe_kanban_color_alert' : '') + ' oe_kanban_global_click'">
+                                        <div class="o_kanban_image">
+                                            <img alt="Contact image" t-att-src="kanban_image('res.partner', 'avatar_128', record.id.raw_value)"/>
+                                        </div>
+                                        <div class="oe_kanban_details">
+                                            <field name="name"/>
+                                            <div t-if="record.function.raw_value"><field name="function"/></div>
+                                            <div t-if="record.email.raw_value"><field name="email" widget="email"/></div>
+                                            <div t-if="record.type.raw_value != 'contact'">
+                                                <div>
+                                                    <field name="zip"/>
+                                                    <field name="city"/>
+                                                </div>
+                                                <field t-if="record.state_id.raw_value" name="state_id"/>
+                                                <field name="country_id"/>
+                                            </div>
+                                            <div t-if="record.phone.raw_value">Phone: <t t-esc="record.phone.value"/></div>
+                                            <div t-if="record.mobile.raw_value">Mobile: <t t-esc="record.mobile.value"/></div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </templates>
+                        </kanban>
+                        <form string="Contact / Address">
+                            <sheet>
+                                <!-- parent_id and type fields needed in attrs in base_address_city module which overwrites
+                                            _fields_view_get() of partner. It would be better to put those fields there but the web client
+                                            dosen't support when a field is displayed several times in the same view.-->
+                                <field name="type" required="1" widget="radio" options="{'horizontal': true}"/>
+                                <field name="parent_id" invisible="1"/>
+                                <hr/>
+                                <group>
+                                    <group>
+                                        <field name="name" string="Contact Name" attrs="{'required' : [('type', '=', 'contact')]}"/>
+                                        <field name="title" options="{'no_open': True}" placeholder="e.g. Mr." attrs="{'invisible': [('type','!=', 'contact')]}"/>
+                                        <field name="function" placeholder="e.g. Sales Director" attrs="{'invisible': [('type','!=', 'contact')]}"/>
+                                        <label for="street" string="Address" attrs="{'invisible': [('type','=', 'contact')]}"/>
+                                        <div attrs="{'invisible': [('type','=', 'contact')]}">
+                                            <div class="o_address_format" name="div_address">
+                                                <field name="street" placeholder="Street..." class="o_address_street"/>
+                                                <field name="street2" placeholder="Street 2..." class="o_address_street"/>
+                                                <field name="city" placeholder="City" class="o_address_city"/>
+                                                <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'country_id': country_id, 'default_country_id': country_id, 'zip': zip}"/>
+                                                <field name="zip" placeholder="ZIP" class="o_address_zip"/>
+                                                <field name="country_id" placeholder="Country" class="o_address_country" options="{&quot;no_open&quot;: True, &quot;no_create&quot;: True}"/>
+                                            </div>
+                                        </div>
+                                    </group>
+                                    <group>
+                                        <field name="email" widget="email"/>
+                                        <field name="phone" widget="phone"/>
+                                        <field name="mobile" widget="phone"/>
+                                        <field name="company_id" invisible="1"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <field name="comment" placeholder="Internal notes..."/>
+                                </group>
+                                <field name="lang" invisible="True"/>
+                                <field name="user_id" invisible="True"/>
+                            </sheet>
+                        </form>
+                    </field>
+                </page>
+                 <page string="Documento Origen" name="description">
+                    <group string="Asignacion Documento Origen" attrs="{'invisible': [('id', '=', False)]}">
+                        <group>
+                            <field name="assignation_config_id" string="Tipo Origen" options="{'no_open':True, 'no_create':1}"/>
+                            <field name="sync_default_fields" string="Sobre-escribir Datos"/>
+                        </group>
+                        <group attrs="{'invisible': [('assignation_config_id','=',False)]}">
+                            <field name="rec_selector" domain="selector_domain" string="Documento relacionado" options="{'no_open':True, 'no_create':1}"/>
+                            <field name="selector_domain" invisible="1"/>
+                            <field name="res_id" invisible="1"/>
+                            <field name="res_model" invisible="1"/>
+                            <field name="id" invisible="1"/>
+                        </group>
+                    </group>
+                </page>
+                <page string="Órdenes de trabajo">
+                                <group>
+                                    <field name="total_job_minutes" string="Min totales registrados"/>
+                                </group>
+                                <field name="show_technical_schedule_job_ids" readonly="1">
+                                    <tree create="0" delete="0" editable="False">
+                                        <field name="job_type_id"/>
+                                        <field name="minutes_in_job" string="Min registrados" readonly="1"/>
+                                        <field name="job_employee_ids" widget="many2many_tags"/>
+                                        <field name="job_vehicle_ids" widget="many2many_tags"/>
+                                        <field name="date_schedule"/>
+                                        <field name="job_duration"/>
+                                        <field name="job_status" widget="badge"/>
+                                        <field name="date_status" widget="remaining_days"/>
+                                        <field name="user_id"/>
+                                        <button name="open_in_calendar_view" type="object" icon="fa-calendar"/>
+                                    </tree>
+                                </field>
+                            </page>
+            </notebook>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="helpdesk_ticket_assignator_form" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.assignator.config.form</field>
+        <field name="model">helpdesk.ticket.assignator.config</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <form string="Asignacion Documentos">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="model_id"/>
+                            <field name="model_name" invisible="1"/>
+                            <field name="domain" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
+                        </group>
+                        <group>
+                            <field name="field_domain" invisible="1"/>
+                            <field name="name_field" domain="field_domain"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="helpdesk_ticket_assignator_config_tree" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.assignator.config.tree</field>
+        <field name="model">helpdesk.ticket.assignator.config</field>
+        <field name="priority" eval="2"/>
+        <field name="arch" type="xml">
+            <tree string="Asignacion Documentos">
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="model_name" invisible="1"/>
+                <field name="name_field"/>
+                <field name="domain" widget="domain" options="{'model': 'model_name', 'in_dialog': true}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_helpdesk_ticket_assignator_config" model="ir.actions.act_window">
+        <field name="name">Configuracion Asignacion Documentos</field>
+        <field name="res_model">helpdesk.ticket.assignator.config</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="roc_custom.helpdesk_ticket_assignator_config_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+           No se encontraron configuraciones asignacion de documentos.
+          </p>
+        </field>
+    </record>
+
+
+    <menuitem
+        id="menu_helpdesk_ticket_assignator_config"
+        name="Configuracion Asignacion Documento"
+        sequence="88"
+        parent="helpdesk.helpdesk_menu_config"
+        action="roc_custom.action_helpdesk_ticket_assignator_config"/>
+
+</odoo>
+
+
+<!--
+    SaleOrder
+    helpdesk_ticket_ids
+    active_ticket_count
+    create_new_ticket-->

@@ -76,7 +76,6 @@
                     <field name="partner_id" invisible="1"/>
                     <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
                     <field name="user_id" invisible="0" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
-
                     <field name="active" invisible="1"/>
                     <field name="campaign_id" optional="hide"/>
                     <field name="referred" invisible="1"/>
@@ -84,7 +83,6 @@
                     <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <!--<field name="customer_concern"/>-->
                     <field name="company_concern" widget="priority"/>
-
                     <field name="type_of_client"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
@@ -96,6 +94,8 @@
                     <field name="activity_ids" widget="list_activity"/>
                     <field name="installation"/>
                     <field name="lead_stage_id" options="{'no_create': 1, 'no_open': 1}"/>
+                <field name="datetime_in_lead_stage" widget="remaining_days"/>
+                <button name="%(crm_helpdesk.crm_lead_convert2ticket_action)d" class="oe_highlight" type="action" string="Conv a Ticket"/>
                 <field name="datetime_in_lead_stage" widget="remaining_days"/>
                 </tree>
 

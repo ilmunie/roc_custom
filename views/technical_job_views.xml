@@ -143,9 +143,11 @@
                         <field name="job_status" widget="statusbar" options="{'clickable':False}" readonly="1"/>
                         <button name="delete_schedule" type="object" confirm="¿Seguro desea eliminar la operacion?" string="Eliminar" class="btn-danger"/>
                         <button name="confirm" type="object" string="Confirmar" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','confirmed'))]}"/>
-                        <button name="call_checkout_wiz_standby" type="object" string="APLAZAR" class="btn-warning" attrs="{'invisible': [('job_status','in',('done','cancel','stand_by'))]}"/>
+                        <button name="call_checkout_wiz_standby" type="object" string="APLAZAR" class="btn-warning" attrs="{'invisible': ['|',('data_assistant','=', False),('job_status','in',('done','cancel','stand_by'))]}"/>
+                        <button name="stand_by" confirm="Al continuar se aplazará la operación" type="object" string="APLAZAR" class="btn-warning" attrs="{'invisible': ['|',('data_assistant','=', True),('job_status','in',('done','cancel','stand_by'))]}"/>
                         <button name="set_draft" type="object" string="Borrador"  attrs="{'invisible': [('job_status','in',('to_do'))]}"/>
-                        <button name="call_checkout_wiz" type="object" string="Hecho" groups="roc_custom.technical_job_planner" class="oe_highlight" attrs="{'invisible': [('job_status','in',('done','cancel'))]}"/>
+                        <button name="call_checkout_wiz" type="object" string="Hecho" groups="roc_custom.technical_job_planner" class="oe_highlight" attrs="{'invisible': ['|',('data_assistant','=', False),('job_status','in',('done','cancel'))]}"/>
+                        <button name="mark_as_done" confirm="Al continuar se finalizará la operación" type="object" string="Hecho" groups="roc_custom.technical_job_planner" class="oe_highlight" attrs="{'invisible': ['|',('data_assistant','=', True),('job_status','in',('done','cancel'))]}"/>
                         <button name="call_billing_wiz" type="object" string="FACTURAR" class="btn-success" attrs="{'invisible': [('job_status','in',('cancel'))]}"/>
                         <button name="open_checklist_wiz" type="object" string="CHECKLIST" class="oe_highlight"/>
                         <button name="assign_to_me" type="object" string="ASIGNARME" class="oe_highlight" attrs="{'invisible': [('see_assign_button', '=', False)] }"/>
@@ -159,6 +161,7 @@
                                 </div>
                             </button>
                             <field name="sale_order_ids" invisible="1"/>
+                            <field name="data_assistant" invisible="1"/>
                         </div>
                         <widget name="web_ribbon" title="Aplazado" bg_color="bg-danger" attrs="{'invisible': [('job_status','!=',('stand_by'))]}"/>
                         <widget name="web_ribbon" title="En camino" bg_color="bg-warning" attrs="{'invisible': ['|', ('displacement_start_datetime', '=', False),('job_status','in',('done','cancel'))]}"/>
@@ -183,7 +186,7 @@
                     <group string="Datos Operacion">
                         <group>
                             <field name="job_type_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="job_categ_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="visit_priority" widget="priority" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="visit_payment_type" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
@@ -196,20 +199,22 @@
                                     <field name="job_duration" class="oe_inline" attrs="{'readonly':[('job_status','in',('done','cancel'))]}" />
                                     <span class="o_duration_suffix"> hs.</span>
                             </div>
-                            <field name="job_employee_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="job_vehicle_ids" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
-                            <field name="user_id" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="job_employee_ids" options="{'no_create':1}" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="job_vehicle_ids" options="{'no_create':1}" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="user_id" options="{'no_create':1}" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
+                            <field name="allow_displacement_tracking"/>
                         </group>
                     </group>
                     <group string="Registro de tiempo operación">
                         <header attrs="{'invisible': [('job_status', 'in', ('cancel', 'done'))]}">
                             <button name="start_displacement" type="object" string="Iniciar Desplazamiento" confirm="Seguro inicia el viaje?"
-                                class="oe_highlight" attrs="{'invisible': ['|', ('displacement_start_datetime', '!=', False),('job_status','in',('done','cancel'))]}"/>
+                                class="oe_highlight" attrs="{'invisible': ['|', '|', ('allow_displacement_tracking', '=', False), ('displacement_start_datetime', '!=', False),('job_status','in',('done','cancel'))]}"/>
                             <button name="end_displacement" type="object" string="Fin Desplazamiento" confirm="Ya llego a destino?"
-                                class="oe_highlight" attrs="{'invisible': ['|', ('displacement_start_datetime', '=', False),('job_status','in',('done','cancel'))]}"/>
-                            <button name="start_tracking" type="object" string="COMIENZO TRABAJO" confirm="Al aceptar se iniciará el registro del tiempo en domicilio" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':['|', ('displacement_total_min', '=', 0), ('start_tracking_time', '!=', False)]}" class="oe_highlight"/>
-                            <button name="stop_tracking" type="object" string="FIN TRABAJO" confirm="Al aceptar se detiene el registro del tiempo en el domicilio " attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':[('start_tracking_time', '=', False)]}" class="oe_highlight"/>
-                            <button name="call_checkout_wiz" type="object" string="FIN TRABAJO" class="oe_highlight" attrs="{'invisible': ['|','|',('billable_total_min', '=', 0),('job_status','in',('done','cancel')),('start_tracking_time', '!=', False)]}"/>
+                                class="oe_highlight" attrs="{'invisible': ['|', '|', ('allow_displacement_tracking', '=', False),('displacement_start_datetime', '=', False),('job_status','in',('done','cancel'))]}"/>
+                            <button name="start_tracking" type="object" string="COMIENZO TRABAJO" confirm="Al aceptar se iniciará el registro del tiempo en domicilio" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':['|', ('start_tracking_time', '!=', False), ('displacement_total_min', '=', 0),('allow_displacement_tracking', '=', True)]}" class="oe_highlight"/>
+                            <button name="stop_tracking" type="object" string="FIN TRABAJO" confirm="Al aceptar se detiene el registro del tiempo en el domicilio y finaliza la operacion" attrs="{'readonly':[('job_status','in',('done','cancel'))], 'invisible':[('start_tracking_time', '=', False)]}" class="oe_highlight"/>
+                            <button name="call_checkout_wiz" type="object" string="FIN TRABAJO" class="oe_highlight" attrs="{'invisible': ['|','|','|',('data_assistant','=', False),('billable_total_min', '=', 0),('job_status','in',('done','cancel')),('start_tracking_time', '!=', False)]}"/>
+                            <button name="mark_as_done" confirm="Al continuar se finaliza la operacion" type="object" string="FIN TRABAJO" class="oe_highlight" attrs="{'invisible': ['|','|','|',('data_assistant','=', True),('billable_total_min', '=', 0),('job_status','in',('done','cancel')),('start_tracking_time', '!=', False)]}"/>
                         </header>
                     </group>
                     <group>
@@ -289,8 +294,8 @@
                             <field name="start_tracking_time" invisible="True"/>
                             <field name="res_model" invisible="True"/>
                             <field name="res_id" invisible="True"/>
-                            <field name="job_type_id"/>
-                            <field name="job_categ_ids" widget="many2many_tags"/>
+                            <field name="job_type_id" options="{'no_create':1}"/>
+                            <field name="job_categ_ids" widget="many2many_tags" options="{'no_create':1}"/>
                             <field name="date_status" widget="remaining_days"/>
                             <field name="technical_job_tag_ids" widget="many2many_tags"
                                    options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
@@ -371,11 +376,24 @@
                 <form string="Tipo Trabajo Técnico" >
                     <sheet>
                         <group>
-                            <field name="name" />
-                            <field name="color" widget="color_picker" />
-                            <field name="default_duration_hs"/>
-                            <field name="default_job_employee_ids" widget="many2many_tags"/>
-                            <field name="default_job_vehicle_ids" widget="many2many_tags"/>
+                            <group>
+                                <field name="name" />
+                                <field name="default_duration_hs"/>
+                            </group>
+                            <group>
+                                <field name="default_job_employee_ids" widget="many2many_tags"/>
+                                <field name="default_job_vehicle_ids" widget="many2many_tags"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="allow_displacement_tracking"/>
+                                <field name="requires_documentation"/>
+                            </group>
+                            <group>
+                                <field name="data_assistant"/>
+                                <field name="force_time_registration"/>
+                            </group>
                         </group>
                     </sheet>
                 </form>
@@ -476,6 +494,7 @@
         id="menu_job_products"
         name="Productos"
         sequence="35"
+        groups="roc_custom.technical_job_planner"
         parent="roc_custom.menu_job"
         action="roc_custom.action_technical_job_python"/>
     <menuitem
@@ -495,6 +514,7 @@
         id="menu_crm_job_config"
         name="Configuracion"
         sequence="90"
+        groups="roc_custom.technical_job_planner"
         parent="roc_custom.menu_job"/>
         <menuitem
             id="menu_crm_job_assistant_planner_2"
