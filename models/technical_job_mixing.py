@@ -140,6 +140,8 @@ class TechnicalJobMixin(models.AbstractModel):
                                                          ('15', '15'), ('16', '16'), ('17', '17'), ('18', '18')], default="08")
     customer_av_min_end = fields.Selection(string="Min fin", selection=[('00', '00'), ('15', '15'), ('30', '30'), ('45', '45')], default="00")
     customer_availability_info = fields.Text(string="Disponibilidad cliente")
+    customer_availability_widget_data = fields.Char(string="Disponibilidad cliente (Widget)")
+
     visit_internal_notes = fields.Text(string="Nota a técnico")
 
     @api.onchange('customer_availability_type', 'customer_visit_datetime', 'customer_av_visit_date',
