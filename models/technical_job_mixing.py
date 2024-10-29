@@ -277,6 +277,7 @@ class CrmLead(models.Model,TechnicalJobMixin):
         data = ''
         if self.customer_availability_type == 'urgent':
             data += "<strong>" + dict(self._fields['customer_availability_type']._description_selection(self.env)).get(self.customer_availability_type) + "<strong/><br/><br/>"
+        if self.type_of_client:
             data += "Tipo de cliente: " + dict(self._fields['type_of_client']._description_selection(self.env)).get(self.type_of_client) + "<br/><br/>"
         if self.mobile or self.mobile_partner or self.phone:
             phone_number = self.mobile or self.mobile_partner or self.phone
