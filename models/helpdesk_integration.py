@@ -10,14 +10,20 @@ class HelpDeskTicketAssignatorConfig(models.Model):
     model_id = fields.Many2one('ir.model')
     domain = fields.Char()
     name_field = fields.Many2one('ir.model.fields')
+    partner_field = fields.Many2one('ir.model.fields')
 
     @api.depends('model_id')
     def get_domain(self):
         for record in self:
             res = [('id', '=', 0)]
+            res_partner = [('id', '=', 0)]
             if record.model_id:
+                res_partner = [('model_id', '=', record.model_id.id), ('store','=', True), ('relation','=','res.partner'), ('ttype', '=', 'many2one')]
                 res = [('model_id', '=', record.model_id.id), ('store','=', True)]
+            record.partner_field_domain = json.dumps(res_partner)
             record.field_domain = json.dumps(res)
+
+    partner_field_domain = fields.Char(compute=get_domain, store=True)
     field_domain = fields.Char(compute=get_domain, store=True)
     model_name = fields.Char(related='model_id.model')
 
@@ -44,6 +50,7 @@ class HelpDeskTicketAssignator(models.Model):
 
 
     record_name = fields.Char()
+    partner_id = fields.Many2one('res.partner')
     res_id = fields.Integer()
     res_model = fields.Char()
     ticket_id = fields.Many2one('helpdesk.ticket', ondelete='cascade')

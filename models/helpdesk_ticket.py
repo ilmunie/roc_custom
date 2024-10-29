@@ -254,11 +254,10 @@ class HelpDeskTicket(models.Model):
         if self.assignation_config_id and self.assignation_config_id.domain:
             query = self.env[self.assignation_config_id.model_id.model]._where_calc(eval(self.assignation_config_id.domain))
             from_clause, where_clause, where_clause_params = query.get_sql()
-
             query_txt = f"""
                 INSERT INTO helpdesk_ticket_assignator
-                (ticket_id, res_model, res_id, record_name)
-                SELECT %s, %s, id, {self.assignation_config_id.name_field.name}
+                (ticket_id, res_model, res_id, record_name, partner_id)
+                SELECT %s, %s, id, {self.assignation_config_id.name_field.name}, {self.assignation_config_id.partner_field.name}
                 FROM {from_clause}
                 WHERE {where_clause}
             """
@@ -276,10 +275,13 @@ class HelpDeskTicket(models.Model):
 
     rec_selector = fields.Many2one('helpdesk.ticket.assignator', tracking=True)
 
-    @api.depends('assignation_config_id')
+    @api.depends('assignation_config_id', 'partner_id')
     def get_selector_domain(self):
         for record in self:
-            record.selector_domain = json.dumps([('ticket_id', '=', record._origin.id)])
+            if record.partner_id:
+                record.selector_domain = json.dumps([('partner_id', '=', record.partner_id.id),('ticket_id', '=', record._origin.id)])
+            else:
+                record.selector_domain = json.dumps([('ticket_id', '=', record._origin.id)])
     selector_domain = fields.Char(compute=get_selector_domain, store=True)
     res_id = fields.Integer()
     res_model = fields.Char()
