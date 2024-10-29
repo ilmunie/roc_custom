@@ -8,9 +8,17 @@
                 }
             </field>
     </record>
+    <record id="crm_lead_quick_edit" model="ir.ui.view">
+        <field name="name">crm_lead_quick_edit</field>
+        <field name="model">crm.lead</field>
+        <field name="arch" type="xml">
+            <form create="false">
+                <field name="description"/>
+            </form>
+        </field>
+    </record>
 
-
-<record id="crm_lead_oppor_custom" model="ir.ui.view">
+    <record id="crm_lead_oppor_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom_opp</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
@@ -89,6 +97,7 @@
                     <field name="probability" string="Probability (%)" optional="hide"/>
                     <field name="message_needaction" invisible="1"/>
                     <field name="description" widget="text_widget" readonly="1" />
+                    <button name="edit_description" type="object" icon="fa-edit"/>
                     <field name="priority" widget="priority"/>
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
@@ -96,7 +105,6 @@
                     <field name="lead_stage_id" options="{'no_create': 1, 'no_open': 1}"/>
                 <field name="datetime_in_lead_stage" widget="remaining_days"/>
                 <button name="%(crm_helpdesk.crm_lead_convert2ticket_action)d" class="oe_highlight" type="action" string="Conv a Ticket"/>
-                <field name="datetime_in_lead_stage" widget="remaining_days"/>
                 </tree>
 
             </xpath>

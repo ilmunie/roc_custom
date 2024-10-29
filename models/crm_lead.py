@@ -6,6 +6,19 @@ class CrmLead(models.Model):
     _inherit = 'crm.lead'
     _order = 'datetime_in_stage,datetime_in_lead_stage desc'
 
+    def edit_description(self):
+        self.ensure_one()
+        action = {
+            'name': "Edicion notas",
+            'type': 'ir.actions.act_window',
+            'view_id': self.env.ref('roc_custom.crm_lead_quick_edit').id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'res_model': 'crm.lead',
+            'target': 'new',
+        }
+        return action
     partner_child_ids = fields.One2many(related='partner_id.child_ids', readonly=False)
 
     def _prepare_address_values_from_partner(self, partner):
