@@ -275,9 +275,8 @@ class CrmLead(models.Model,TechnicalJobMixin):
 
     def get_job_data(self):
         data = ''
-        #if self.visit_payment_type:
-        #    data += "<strong>" + dict(self._fields['visit_payment_type']._description_selection(self.env)).get(self.visit_payment_type) + "<strong/><br/><br/>"
-        if self.type_of_client:
+        if self.customer_availability_type == 'urgent':
+            data += "<strong>" + dict(self._fields['customer_availability_type']._description_selection(self.env)).get(self.customer_availability_type) + "<strong/><br/><br/>"
             data += "Tipo de cliente: " + dict(self._fields['type_of_client']._description_selection(self.env)).get(self.type_of_client) + "<br/><br/>"
         if self.mobile or self.mobile_partner or self.phone:
             phone_number = self.mobile or self.mobile_partner or self.phone
@@ -432,8 +431,8 @@ class HelpdeskTicket(models.Model,TechnicalJobMixin):
 
     def get_job_data(self):
         data = ''
-        #if self.visit_payment_type:
-        #    data += "<strong>" + dict(self._fields['visit_payment_type']._description_selection(self.env)).get(self.visit_payment_type) + "<strong/><br/><br/>"
+        if self.customer_availability_type == 'urgent':
+            data += "<strong>" + dict(self._fields['customer_availability_type']._description_selection(self.env)).get(self.customer_availability_type) + "<strong/><br/><br/>"
         if self.partner_mobile or self.partner_phone:
             phone_number = self.partner_mobile or self.partner_phone
             data += f"""
