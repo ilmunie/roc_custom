@@ -127,7 +127,7 @@ class TechnicalJobAssistant(models.Model):
                 else:
                     res = f"2. Coordinado"
             elif not record.next_active_job_id:
-                if record.html_data_src_doc and "URGENT" in record.html_data_src_doc:
+                if record.html_data_src_doc and "Urgente" in record.html_data_src_doc:
                     res = "1. Urgente"
                 elif record.job_status == "waiting_job":
                     res = "3. No coordinado (c/info cliente)"
