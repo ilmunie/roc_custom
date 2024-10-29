@@ -370,7 +370,7 @@ class CrmLead(models.Model):
             val = {
                 'name': f"TICKET {contact_name} - {ticket_type_name}" ,
                 'partner_id': partner_id[0].id if partner_id else False,
-                'partner_name': f"{partner_id[0].name} - {contact_name}" if partner_id else ticket_val.get('contact_name', False),
+                'partner_name': f"{partner_id[0].name} - {contact_name}" if partner_id else contact_name,
                 'partner_email': email,
                 'partner_mobile': mobile,
                 'partner_phone': mobile,
@@ -384,6 +384,7 @@ class CrmLead(models.Model):
                 'source_url': ticket_val.get('source_url', False)
             }
             self.env['helpdesk.ticket'].create(val)
+            import pdb;pdb.set_trace()
             return True
 
     source_url = fields.Char(
