@@ -384,7 +384,6 @@ class CrmLead(models.Model):
                 'source_url': ticket_val.get('source_url', False)
             }
             self.env['helpdesk.ticket'].create(val)
-            import pdb;pdb.set_trace()
             return True
 
     source_url = fields.Char(
