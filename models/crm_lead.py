@@ -346,7 +346,7 @@ class CrmLead(models.Model):
             mobile = ticket_val.get('mobile', False)
             contact_name = ticket_val.get('contact_name', False)
             priority_type_widget_data = ticket_val.get('priority_type_widget_data', False)
-            customer_availability_widget_data = ticket_val.get('priority_type_widget_data', False)
+            customer_availability_widget_data = ticket_val.get('customer_availability_widget_data', False)
             availability_type = 'no_data'
             if priority_type_widget_data and priority_type_widget_data == 'Si':
                 availability_type = 'urgent'
@@ -371,9 +371,10 @@ class CrmLead(models.Model):
                 'name': f"TICKET {contact_name} - {ticket_type_name}" ,
                 'partner_id': partner_id[0].id if partner_id else False,
                 'partner_name': f"{partner_id[0].name} - {contact_name}" if partner_id else ticket_val.get('contact_name', False),
-                'partner_email': ticket_val.get('email', False),
-                'partner_mobile': ticket_val.get('mobile', False),
-                'partner_phone': ticket_val.get('mobile', False),
+                'partner_email': email,
+                'partner_mobile': mobile,
+                'partner_phone': mobile,
+                'visit_internal_notes': customer_availability_widget_data,
                 'ticket_type_id': ticket_type_id.id if ticket_type_id else False,
                 'team_id': team.id,
                 'customer_availability_info': availability_info,
