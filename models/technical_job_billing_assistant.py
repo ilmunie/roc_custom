@@ -331,6 +331,17 @@ class TechnicalJobBillingAssistant(models.TransientModel):
             if self.rounded_time_to_bill and self.hs_bill:
                 for line in self.prepare_billing_time_lines():
                     lines.append((0, 0, line))
+
+            #link to tickets - opportunity_id
+            ticket_id = real_rec.id if real_rec._name == 'helpdesk.ticket' else False
+            opportunity_id = False
+            if real_rec._name == 'crm.lead':
+                opportunity_id = real_rec.id
+            if not opportunity_id and real_rec._name == 'helpdesk.ticket':
+                if real_rec.res_model == 'crm.lead':
+                    opportunity_id = real_rec.res_id
+                elif real_rec.res_model == 'sale.order' and real_rec.src_rec and real_rec.src_rec.opportunity_id:
+                    opportunity_id = real_rec.src_rec.opportunity_id.id
             if lines:
                 so_vals = {
                     'order_line': lines,
@@ -340,7 +351,8 @@ class TechnicalJobBillingAssistant(models.TransientModel):
                     'partner_invoice_id': real_rec.partner_id.id if real_rec else False,
                     'partner_shipping_id': real_rec.partner_id.id if real_rec else False,
                     'journal_id': company.default_job_billing_journal_id.id if company.default_job_billing_journal_id else False,
-                    'opportunity_id': real_rec.id if real_rec._name == 'crm.lead' else False ,
+                    'opportunity_id': opportunity_id,
+                    'ticket_id': ticket_id ,
                     'user_id': real_rec.user_id.id if real_rec and real_rec.user_id else self.env.user.id,
                     'team_id': real_rec.team_id.id if real_rec and 'team_id' in real_rec._fields.keys() and real_rec.team_id else False,
                     'require_signature': True,
@@ -368,7 +380,12 @@ class TechnicalJobBillingAssistant(models.TransientModel):
                 existing_po.write(so_write_vals)
         if self.technical_job_id and self.technical_job_id.schedule_id:
             self.technical_job_id.schedule_id.sale_order_ids = [(4, existing_po.id)]
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "technical.job",
+            "views": [[False, "form"]],
+            "res_id": self.technical_job_id.id
+        }
 
     def prepare_material_cost_lines(self):
         company = self.env.user.company_id

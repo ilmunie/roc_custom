@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="ticket_sale_action_quotations_new" model="ir.actions.act_window">
+        <field name="name">Presupuestos</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">form,tree,graph</field>
+        <field name="domain">[('ticket_id', '=', active_id)]</field>
+        <field name="context">{'search_default_ticket_id': active_id, 'default_ticket_id': active_id}</field>
+    </record>
+
     <record id="helpdesk_stage_form_custom" model="ir.ui.view">
         <field name="name">helpdesk.stage.form.custom</field>
         <field name="model">helpdesk.stage</field>
@@ -15,6 +23,11 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_tickets_view_tree"/>
         <field name="arch" type="xml">
+
+            <field name="display_name" position="before">
+                <field name="create_date" />
+            </field>
+
             <field name="partner_id" position="after">
                 <field name="address_label" />
                 <field name="next_active_job_id"/>
@@ -36,6 +49,33 @@
                 <button class="oe_stat_button" name="view_form_src_document" attrs="{'invisible': [('res_model', '=', False)]}"  type="object" icon="fa-pencil-square-o">
                     <field string="Origen" name="src_doc_name" widget="statinfo"/>
                 </button>
+                <button class="oe_stat_button" type="object" name="action_view_sale_quotation" icon="fa-pencil-square-o">
+                        <field name="quotation_count" widget="statinfo" string="Presupuestos"/>
+                    </button>
+                <button class="oe_stat_button" type="object" attrs="{'invisible': [('sale_order_count', '=', 0)]}" name="action_view_sale_order" icon="fa-usd">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value"><field name="sale_amount_total" widget="monetary" options="{'currency_field': 'company_currency'}"/></span>
+                        <span class="o_stat_text"> Pedidos</span>
+                        <field name="sale_order_count" invisible="1"/>
+                    </div>
+                </button>
+                <button class="oe_stat_button" type="object" attrs="{'invisible': [('invoice_count', '=', 0)]}" name="action_open_so_account_move" icon="fa-book">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value"><field name="invoice_total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/></span>
+                        <span class="o_stat_text"> Facturas</span>
+                        <field name="invoice_count" invisible="1"/>
+                    </div>
+                </button>
+                <button class="oe_stat_button" type="object" attrs="{'invisible': [('invoice_count', '=', 0)]}" name="action_open_so_account_move_unpaid" icon="fa-bullhorn">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value"><field name="invoice_unpaid_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/></span>
+                        <span class="o_stat_text"> Debe</span>
+                        <field name="invoice_unpaid_count" invisible="1"/>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//header[last()]" position="inside">
+                <button string="Nuevo Presupuesto" name="action_new_quotation" type="object" class="oe_highlight" data-hotkey="q" title="Crear nuevo presupuesto"/>
             </xpath>
 
             <xpath expr="//field[@name='email_cc']" position="replace">

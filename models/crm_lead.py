@@ -300,37 +300,91 @@ class CrmLead(models.Model):
         # perform search
         stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
         return stages.browse(stage_ids)
+
+
     @api.model_create_multi
     def create(self, vals_list):
+        lead_vals = []
         for vals in vals_list:
+            if not vals.get('name', False):
+                vals['name'] = "CONSULTA"
+            if vals.get('technical_job_type_ref', False):
+                self.create_ticket_from_leads(vals)
+            else:
+                if 'won_status' in vals and vals['won_status'] == 'won':
+                    vals['won_written'] = True
+                if 'medium_id' in vals and vals['medium_id']:
+                    vals['medium_written'] = True
+                if 'type' in vals and vals['type'] == 'odoo':
+                    vals['type'] = 'lead'
+                if 'sale_team_text' in vals and vals['sale_team_text']:
+                    sale_teams = self.env['crm.team'].search([('name','ilike',vals['sale_team_text'])])
+                    if sale_teams:
+                        vals['team_id'] = sale_teams[0].id
+                    else:
+                        vals['team_id'] = self.env['crm.team'].create({'name': vals['sale_team_text']}).id
+                if 'utm_medium_text' in vals and vals['utm_medium_text']:
+                    mediums = self.env['utm.medium'].search([('name','ilike',vals['utm_medium_text'])])
+                    if mediums:
+                        vals['medium_id'] = mediums[0].id
+                    else:
+                        vals['medium_id'] = self.env['utm.medium'].create({'name': vals['utm_medium_text']}).id
+                if 'utm_campaign_text' in vals and vals['utm_campaign_text']:
+                    campaigns = self.env['utm.campaign'].search([('name','ilike',vals['utm_campaign_text'])])
+                    if campaigns:
+                        vals['campaign_id'] = campaigns[0].id
+                    else:
+                        vals['campaign_id'] = self.env['utm.campaign'].create({'name': vals['utm_campaign_text']}).id
+                lead_vals.append(vals)
+        return super(CrmLead, self).create(vals_list=lead_vals)
 
-            if 'won_status' in vals and vals['won_status'] == 'won':
-                vals['won_written'] = True
-            if 'medium_id' in vals and vals['medium_id']:
-                vals['medium_written'] = True
-            if 'type' in vals and vals['type'] == 'odoo':
-                vals['type'] = 'lead'
-            if 'sale_team_text' in vals and vals['sale_team_text']:
-                sale_teams = self.env['crm.team'].search([('name','ilike',vals['sale_team_text'])])
-                if sale_teams:
-                    vals['team_id'] = sale_teams[0].id
-                else:
-                    vals['team_id'] = self.env['crm.team'].create({'name': vals['sale_team_text']}).id
-            if 'utm_medium_text' in vals and vals['utm_medium_text']:
-                mediums = self.env['utm.medium'].search([('name','ilike',vals['utm_medium_text'])])
-                if mediums:
-                    vals['medium_id'] = mediums[0].id
-                else:
-                    vals['medium_id'] = self.env['utm.medium'].create({'name': vals['utm_medium_text']}).id
-            if 'utm_campaign_text' in vals and vals['utm_campaign_text']:
-                campaigns = self.env['utm.campaign'].search([('name','ilike',vals['utm_campaign_text'])])
-                if campaigns:
-                    vals['campaign_id'] = campaigns[0].id
-                else:
-                    vals['campaign_id'] = self.env['utm.campaign'].create({'name': vals['utm_campaign_text']}).id
-        res = super(CrmLead, self).create(vals_list=vals_list)
-        return res
-#aux field
+    def create_ticket_from_leads(self, ticket_val):
+            team = self.env.ref('helpdesk.helpdesk_team1')
+            partner_id = False
+            email = ticket_val.get('email_from', False)
+            ticket_type_name = ticket_val.get('technical_job_type_ref', False)
+            mobile = ticket_val.get('mobile', False)
+            contact_name = ticket_val.get('contact_name', False)
+            priority_type_widget_data = ticket_val.get('priority_type_widget_data', False)
+            customer_availability_widget_data = ticket_val.get('priority_type_widget_data', False)
+            availability_type = 'no_data'
+            if priority_type_widget_data and priority_type_widget_data == 'Si':
+                availability_type = 'urgent'
+            elif customer_availability_widget_data:
+                availability_type = 'week_availability'
+            availability_info = customer_availability_widget_data
+            # Find or create partner based on email, mobile, or contact name
+            if email:
+                partner_id = self.env['res.partner'].search([('email', 'ilike', email)], limit=1)
+            if not partner_id and mobile:
+                partner_id = self.env['res.partner'].search(
+                    ['|', ('mobile', 'ilike', mobile), ('phone', 'ilike', mobile)], limit=1)
+            if not partner_id and contact_name:
+                partner_id = self.env['res.partner'].search([('name', 'ilike', contact_name)], limit=1)
+
+            # Find or create ticket type based on name
+            ticket_type_id = self.env['helpdesk.ticket.type'].search([('name', '=', ticket_type_name)], limit=1)
+            if not ticket_type_id:
+                ticket_type_id = self.env['helpdesk.ticket.type'].create({'name': ticket_type_name})
+            # Append ticket values as a tuple for SQL insertion
+            val = {
+                'name': f"TICKET {contact_name} - {ticket_type_name}" ,
+                'partner_id': partner_id[0].id if partner_id else False,
+                'partner_name': f"{partner_id[0].name} - {contact_name}" if partner_id else ticket_val.get('contact_name', False),
+                'partner_email': ticket_val.get('email', False),
+                'partner_mobile': ticket_val.get('mobile', False),
+                'partner_phone': ticket_val.get('mobile', False),
+                'ticket_type_id': ticket_type_id.id if ticket_type_id else False,
+                'team_id': team.id,
+                'customer_availability_info': availability_info,
+                'customer_availability_type': availability_type,
+                'stage_id': team._determine_stage()[team.id].id,
+                'description': ticket_val.get('description', False),
+                'source_url': ticket_val.get('source_url', False)
+            }
+            self.env['helpdesk.ticket'].create(val)
+            return True
+
     source_url = fields.Char(
         string="URL de procedencia",
     )

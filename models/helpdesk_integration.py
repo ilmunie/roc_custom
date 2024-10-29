@@ -65,7 +65,7 @@ class HelpDeskMixin(models.AbstractModel):
     def get_tickets(self):
         for record in self:
             tickets = self.env['helpdesk.ticket'].search([('res_model','=', record._name),
-                                                  ('res_id', '=', record._origin.id)]).mapped('id')
+                                                  ('res_id', '=', record.id)]).mapped('id')
             record.helpdesk_ticket_ids = [(6,0,tickets)]
     helpdesk_ticket_ids = fields.Many2many('helpdesk.ticket', compute=get_tickets)
 
@@ -97,7 +97,6 @@ class HelpDeskMixin(models.AbstractModel):
             vals_to_ticket['visit_internal_notes'] = self.visit_internal_notes
         return vals_to_ticket
 
-    @api.depends('helpdesk_ticket_ids', 'helpdesk_ticket_ids.stage_id', 'helpdesk_ticket_ids.stage_id.active_process')
     def compute_active_ticket_count(self):
         for record in self:
             record.active_ticket_count = len(record.helpdesk_ticket_ids.filtered(lambda x: x.stage_id.active_process))

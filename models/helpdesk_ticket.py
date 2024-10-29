@@ -3,8 +3,180 @@ import json
 from odoo.osv import expression
 from odoo.addons.iap.tools import iap_tools
 
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
+
+    ticket_id = fields.Many2one('helpdesk.ticket', string="Ticket")
+
 class HelpDeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
+
+    source_url = fields.Char(
+        string="URL de procedencia",
+    )
+
+    def write(self, vals):
+        res = super(HelpDeskTicket, self).write(vals)
+        for record in self:
+            opportunity_id = record.res_id if record.res_model == 'crm.lead' else False
+            if not opportunity_id and record.res_model == 'sale.order':
+                if record.src_rec and record.src_rec.opportunity_id:
+                    opportunity_id = record.src_rec.opportunity_id.id
+            if opportunity_id:
+                for order in record.order_ids:
+                    order.opportunity_id = opportunity_id
+        return res
+
+    def action_view_sale_quotation(self):
+        action = self.env["ir.actions.actions"]._for_xml_id("sale.action_quotations_with_onboarding")
+        action['context'] = {
+            'search_default_draft': 1,
+            'search_default_partner_id': self.partner_id.id,
+            'default_partner_id': self.partner_id.id,
+            'default_ticket_id': self.id
+        }
+        action['domain'] = [('ticket_id', '=', self.id), ('state', 'in', ['draft', 'sent'])]
+        quotations = self.mapped('order_ids').filtered(lambda l: l.state in ('draft', 'sent'))
+        if len(quotations) == 1:
+            action['views'] = [(self.env.ref('sale.view_order_form').id, 'form')]
+            action['res_id'] = quotations.id
+        return action
+
+    def action_view_sale_order(self):
+        action = self.env["ir.actions.actions"]._for_xml_id("sale.action_orders")
+        action['context'] = {
+            'search_default_partner_id': self.partner_id.id,
+            'default_partner_id': self.partner_id.id,
+            'default_ticket_id': self.id,
+        }
+        action['domain'] = [('ticket_id', '=', self.id), ('state', 'not in', ('draft', 'sent', 'cancel'))]
+        orders = self.mapped('order_ids').filtered(lambda l: l.state not in ('draft', 'sent', 'cancel'))
+        if len(orders) == 1:
+            action['views'] = [(self.env.ref('sale.view_order_form').id, 'form')]
+            action['res_id'] = orders.id
+        return action
+
+    def action_open_so_account_move(self):
+        invoices = self.mapped('sale_account_move_ids')
+        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+        if len(invoices) > 1:
+            action['domain'] = [('id', 'in', invoices.ids)]
+        elif len(invoices) == 1:
+            form_view = [(self.env.ref('account.view_move_form').id, 'form')]
+            if 'views' in action:
+                action['views'] = form_view + [(state, view) for state, view in action['views'] if view != 'form']
+            else:
+                action['views'] = form_view
+            action['res_id'] = invoices.id
+        else:
+            action = {'type': 'ir.actions.act_window_close'}
+        return action
+
+    def action_open_so_account_move_unpaid(self):
+        invoices = self.mapped('sale_account_move_ids')
+        action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+        if len(invoices) > 1:
+            action['domain'] = [('id', 'in', invoices.ids)]
+        elif len(invoices) == 1:
+            form_view = [(self.env.ref('account.view_move_form').id, 'form')]
+            if 'views' in action:
+                action['views'] = form_view + [(state, view) for state, view in action['views'] if view != 'form']
+            else:
+                action['views'] = form_view
+            action['res_id'] = invoices.id
+        else:
+            action = {'type': 'ir.actions.act_window_close'}
+        context = {
+            'search_default_filter_open': '1',
+        }
+        action['context'] = context
+        return action
+
+    company_currency = fields.Many2one(related="company_id.currency_id")
+
+    @api.depends('order_ids','order_ids.invoice_ids')
+    def get_sam(self):
+        for record in self:
+            am = []
+            for so in record.order_ids:
+                if so.invoice_ids:
+                    am.extend(so.invoice_ids.mapped('id'))
+            record.sale_account_move_ids = [(6,0,am)]
+
+    sale_account_move_ids = fields.Many2many(comodel_name='account.move', compute=get_sam, store=True)
+
+    @api.depends('order_ids.state', 'order_ids.currency_id', 'order_ids.amount_untaxed', 'order_ids.date_order', 'order_ids.company_id')
+    def _compute_sale_data(self):
+        for lead in self:
+            total = 0.0
+            quotation_cnt = 0
+            sale_order_cnt = 0
+            company_currency = lead.company_currency or self.env.company.currency_id
+            for order in lead.order_ids:
+                if order.state in ('draft', 'sent'):
+                    quotation_cnt += 1
+                if order.state not in ('draft', 'sent', 'cancel'):
+                    sale_order_cnt += 1
+                    total += order.currency_id._convert(
+                        order.amount_total, company_currency, order.company_id, order.date_order or fields.Date.today())
+            lead.sale_amount_total = total
+            lead.quotation_count = quotation_cnt
+            lead.sale_order_count = sale_order_cnt
+
+    sale_amount_total = fields.Monetary(compute='_compute_sale_data', string="Suma de ventas", help="Untaxed Total of Confirmed Orders", currency_field='company_currency', store=True)
+    quotation_count = fields.Integer(compute='_compute_sale_data', string="Cantidad Presupuesto", store=True)
+    sale_order_count = fields.Integer(compute='_compute_sale_data', string="Cantidad Ventas", store=True)
+
+    def compute_sale_move_values(self):
+        for record in self:
+            invoice_count = 0
+            invoice_total_amount = 0
+            invoice_unpaid_count = 0
+            invoice_unpaid_amount = 0
+            if record.sale_account_move_ids:
+                invoice_count = len(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted') or [])
+                invoice_total_amount = sum(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted').mapped('amount_total_signed') or [])
+                invoice_unpaid_count = len(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0) or [])
+                invoice_unpaid_amount = sum(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0).mapped('amount_residual') or [])
+            record.invoice_count = invoice_count
+            record.invoice_total_amount = invoice_total_amount
+            record.invoice_unpaid_count = invoice_unpaid_count
+            record.invoice_unpaid_amount = invoice_unpaid_amount
+
+    invoice_count = fields.Integer(compute=compute_sale_move_values)
+    invoice_total_amount = fields.Float(compute=compute_sale_move_values)
+    invoice_unpaid_count = fields.Integer(compute=compute_sale_move_values)
+    invoice_unpaid_amount = fields.Float(compute=compute_sale_move_values)
+
+    def action_new_quotation(self):
+        action = self.env["ir.actions.actions"]._for_xml_id("roc_custom.ticket_sale_action_quotations_new")
+
+        opportunity_id = self.res_id if self.res_model == 'crm.lead' else False
+        if not opportunity_id and self.res_model == 'sale.order':
+            if self.src_rec.opportunity_id:
+                opportunity_id = self.src_rec.opportunity_id.id
+
+        action['context'] = {
+            'search_default_opportunity_id': self.id,
+            'default_ticket_id': self.id,
+            'default_opportunity_id': opportunity_id,
+            'search_default_partner_id': self.partner_id.id,
+            'default_partner_id': self.partner_id.id,
+            'default_campaign_id': self.campaign_id.id,
+            'default_medium_id': self.medium_id.id,
+            'default_origin': self.name,
+            'default_source_id': self.source_id.id,
+            'default_company_id': self.company_id.id or self.env.company.id,
+            'default_tag_ids': [(6, 0, self.tag_ids.ids)]
+        }
+        if self.team_id:
+            action['context']['default_team_id'] = self.team_id.id,
+        if self.user_id:
+            action['context']['default_user_id'] = self.user_id.id
+        return action
+
+
+    order_ids = fields.One2many('sale.order', 'ticket_id', string="Ordenes Venta")
 
     @api.depends('visit_priority')
     def compute_pr(self):
