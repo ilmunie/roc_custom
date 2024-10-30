@@ -30,10 +30,22 @@
             <field name="res_model">technical.job.time.register</field>
             <field name="view_mode">tree,calendar</field>
         </record>
+        <record id="technical_job_done_operations" model="ir.actions.act_window">
+            <field name="name">Operaciones finalizadas</field>
+            <field name="res_model">technical.job</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_done':1}</field>
+        </record>
         <menuitem
             id="menu_job_time_register"
             name="Tiempos registrados"
             sequence="30"
             parent="roc_custom.menu_job"
             action="roc_custom.technical_job_time_register_action"/>
+        <menuitem
+            id="menu_job_time_register"
+            name="Operaciones Finalizadas"
+            sequence="29"
+            parent="roc_custom.menu_job"
+            action="roc_custom.technical_job_done_operations"/>
 </odoo>

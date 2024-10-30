@@ -11,6 +11,39 @@ class TechnicalJob(models.Model):
     allow_displacement_tracking = fields.Boolean(related='job_type_id.allow_displacement_tracking')
     data_assistant = fields.Boolean(related='job_type_id.data_assistant')
 
+    def edit_internal_note(self):
+        self.ensure_one()
+        action = {
+            'name': "Edicion notas internas",
+            'type': 'ir.actions.act_window',
+            'view_id': self.env.ref('roc_custom.quick_data_edit_technical_job').id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'res_model': 'technical.job',
+            'target': 'new',
+        }
+        return action
+
+    def see_all_data(self):
+        self.ensure_one()
+        action = {
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': self.env['see.full.html.message'].create({'html': self.html_data_src_doc, 'html_title': self.html_link_to_src_doc}).id,
+            'res_model': 'see.full.html.message',
+            'target': 'new',
+        }
+        return action
+
+    @api.depends('internal_notes')
+    def related_internal_notes(self):
+        for record in self:
+            record.internal_notes_html = record.internal_notes.replace("\n", "<br/>") if record.internal_notes else ""
+    internal_notes_html = fields.Html(compute=related_internal_notes, string="Notas int")
+
+
 
     @api.depends('job_employee_ids')
     def see_ass_button(self):
@@ -345,6 +378,7 @@ class TechnicalJob(models.Model):
     technical_job_tag_ids = fields.Many2many(related="schedule_id.technical_job_tag_ids", readonly=False)
     visit_priority = fields.Selection(related="schedule_id.visit_priority", readonly=False, store=True, force_save=True)
     job_categ_ids = fields.Many2many(related="schedule_id.job_categ_ids", readonly=False)
+    datetime_in_status = fields.Datetime(related="schedule_id.datetime_in_status", store=True)
 
     def see_sale_order(self):
         if len(self.sale_order_ids.mapped('id')) == 1:

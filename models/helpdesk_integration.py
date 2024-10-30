@@ -63,6 +63,7 @@ class HelpDeskStage(models.Model):
     _inherit = 'helpdesk.stage'
 
     active_process = fields.Boolean()
+    categorization_stage = fields.Boolean()
 
 
 class HelpDeskMixin(models.AbstractModel):

@@ -11,6 +11,48 @@ class SaleOrder(models.Model):
 class HelpDeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
+    @api.depends('visit_internal_notes')
+    def translate_html_internal_notes(self):
+        for record in self:
+            record.visit_internal_notes_html = record.visit_internal_notes.replace('\n', '<br/>') if record.visit_internal_notes else False
+
+    visit_internal_notes_html = fields.Html(compute=translate_html_internal_notes, string='Nota tecnico')
+    def edit_desctiption(self):
+        self.ensure_one()
+        action = {
+            'name': "Edicion descripcion ticket",
+            'type': 'ir.actions.act_window',
+            'view_id': self.env.ref('roc_custom.quick_description_edit_ticket').id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'res_model': 'helpdesk.ticket',
+            'target': 'new',
+        }
+        return action
+
+    def edit_visit_note(self):
+        self.ensure_one()
+        action = {
+            'name': "Nota a técnico",
+            'type': 'ir.actions.act_window',
+            'view_id': self.env.ref('roc_custom.quick_visit_note_edit_ticket').id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'res_model': 'helpdesk.ticket',
+            'target': 'new',
+        }
+        return action
+
+    def view_form_view(self):
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": self._name,
+            "res_id": self.id,
+            "views": [[False, "form"]],
+        }
+
     source_url = fields.Char(
         string="URL de procedencia",
     )
@@ -291,7 +333,7 @@ class HelpDeskTicket(models.Model):
             link = """"""
             record.link_to_src_document = link
 
-    link_to_src_document = fields.Html(compute=compute_link_to_src_doc)
+    link_to_src_document = fields.Html(compute=compute_link_to_src_doc, string="Documento Referencia")
 
     def get_src_doc_name(self):
         for record in self:

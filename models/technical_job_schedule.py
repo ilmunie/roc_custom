@@ -3,10 +3,40 @@ from odoo import fields, models, api
 from datetime import timedelta
 import pytz
 
+class TechnicalJobStatusChange(models.Model):
+    _name = 'technical.job.status.change'
+
+    schedule_id = fields.Many2one('technical.job.schedule')
+    date = fields.Datetime()
+    job_status = fields.Char()
 
 class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
     order = 'date_schedule DESC'
+
+
+    @api.depends('status_change_ids')
+    def compute_datetime_last_status(self):
+        for record in self:
+            if record.status_change_ids:
+                record.datetime_in_status = sorted(record.status_change_ids, key=lambda r: r.date, reverse=True)[0].date #+ timedelta(days=1)
+            else:
+                record.datetime_in_status = record.write_date or record.create_date
+
+    datetime_in_status = fields.Datetime(compute=compute_datetime_last_status, store=True, string="Cambio de estado")
+    status_change_ids = fields.One2many('technical.job.status.change','schedule_id')
+
+    @api.depends('job_status')
+    def compute_status_change(self):
+        for record in self:
+            if record.job_status:
+                self.env['technical.job.status.change'].create({
+                    'schedule_id': record.id,
+                    'date': fields.Datetime.now(),
+                    'job_status': record.job_status
+                })
+            record.trigger_status_change = False if record.trigger_status_change else True
+    trigger_status_change = fields.Boolean(compute=compute_status_change, store=True)
 
     checklist_line_ids = fields.One2many('technical.job.checklist.assistant.line', 'technical_schedule_id')
 

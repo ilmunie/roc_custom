@@ -15,6 +15,7 @@
         <field name="arch" type="xml">
             <field name="sequence" position="before">
                 <field name="active_process" />
+                <field name="categorization_stage" />
             </field>
         </field>
     </record>
@@ -34,7 +35,7 @@
                 <field name="link_to_src_document"/>
                 <field name="res_model" invisible = "1"/>
                 <field name="res_id" invisible = "1"/>
-                <field string="Origen" name="src_doc_name"/>
+                <field string="Doc. Referencia" name="src_doc_name"/>
                 <button class="oe_stat_button" name="view_form_src_document" attrs="{'invisible': [('res_model', '=', False)]}"  type="object" icon="fa-pencil-square-o"/>
             </field>
         </field>
@@ -47,7 +48,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
                 <button class="oe_stat_button" name="view_form_src_document" attrs="{'invisible': [('res_model', '=', False)]}"  type="object" icon="fa-pencil-square-o">
-                    <field string="Origen" name="src_doc_name" widget="statinfo"/>
+                    <field string="Doc Referencia" name="src_doc_name" widget="statinfo"/>
                 </button>
                 <button class="oe_stat_button" type="object" name="action_view_sale_quotation" icon="fa-pencil-square-o">
                         <field name="quotation_count" widget="statinfo" string="Presupuestos"/>
@@ -243,14 +244,17 @@
                         </form>
                     </field>
                 </page>
-                 <page string="Documento Origen" name="description">
-                    <group string="Asignacion Documento Origen" attrs="{'invisible': [('id', '=', False)]}">
+                 <page string="Doc. Referencia" name="description">
+                     <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': [('partner_id','=',False)]}">
+                         <span>Solo se muestran los documentos asociados al cliente del ticket</span>
+                     </div>
+                    <group string="Asignacion Doc Referencia" attrs="{'invisible': [('id', '=', False)]}">
                         <group>
-                            <field name="assignation_config_id" string="Tipo Origen" options="{'no_open':True, 'no_create':1}"/>
+                            <field name="assignation_config_id" string="Tipo Ref" options="{'no_open':True, 'no_create':1}"/>
                             <field name="sync_default_fields" string="Sobre-escribir Datos"/>
                         </group>
                         <group attrs="{'invisible': [('assignation_config_id','=',False)]}">
-                            <field name="rec_selector" domain="selector_domain" string="Documento relacionado" options="{'no_open':True, 'no_create':1}"/>
+                            <field name="rec_selector" domain="selector_domain" string="Documento" options="{'no_open':True, 'no_create':1}"/>
                             <field name="selector_domain" invisible="1"/>
                             <field name="res_id" invisible="1"/>
                             <field name="res_model" invisible="1"/>
@@ -280,6 +284,28 @@
             </notebook>
             </xpath>
 
+        </field>
+    </record>
+
+    <record id="quick_description_edit_ticket" model="ir.ui.view">
+        <field name="name">quick_description_edit_ticket</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority" eval="98"/>
+        <field name="arch" type="xml">
+            <form string="Edicion rapida descripcion ticket" create="0">
+                <field name="description"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="quick_visit_note_edit_ticket" model="ir.ui.view">
+        <field name="name">quick_visit_note_edit_ticket</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority" eval="99"/>
+        <field name="arch" type="xml">
+            <form string="Edicion rapida notas visita ticket" create="0">
+                <field name="visit_internal_notes"/>
+            </form>
         </field>
     </record>
 
@@ -341,6 +367,62 @@
         </field>
     </record>
 
+    <record id="helpdesk_ticket_categorization_tree" model="ir.ui.view">
+        <field name="name">helpdesk_ticket_categorization_tree</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority" eval="99"/>
+        <field name="arch" type="xml">
+            <tree string="Categorizacion Tickets" multi_edit="1" editable="top" default_order="create_date desc">
+                <button class="oe_stat_button" name="view_form_view" type="object" string=" VER  "/>
+                <field name="res_model" invisible="1"/>
+                <field name="res_id" invisible="1"/>
+                <field name="create_date"/>
+                <field name="name"/>
+                <field name="team_id" options="{'no_create': True, 'no_open': True}"/>
+                <field name="description" widget="text_widget"/>
+                <button class="oe_stat_button" name="edit_desctiption" type="object" icon="fa-pencil-square-o"/>
+                <field name="partner_id" options="{'no_create': True, 'no_open': True}"/>
+                <field name="partner_name"/>
+                <field name="partner_mobile"/>
+                <field name="partner_phone"/>
+                <field name="partner_email"/>
+                <field name="address_label"/>
+                <field name="visit_priority" optional="show" widget="priority"/>
+                <field name="job_duration"/>
+                <field name="visit_payment_type"/>
+                <field name="technical_job_tag_ids" widget="many2many_tags"
+                       options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
+                <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags"/>
+                <field name="assignation_config_id" string="Tipo Ref" options="{'no_open':True, 'no_create':1}"/>
+                <field name="rec_selector" domain="selector_domain" string="Documento" options="{'no_open':True, 'no_create':1}"/>
+                <field name="selector_domain" invisible="1"/>
+                <button class="oe_stat_button" name="view_form_src_document" attrs="{'invisible': [('res_model', '=', False)]}" type="object" icon="fa-pencil-square-o"/>
+                <field name="visit_internal_notes_html" widget="text_widget"/>
+                <button class="oe_stat_button" name="edit_visit_note" type="object" icon="fa-pencil-square-o"/>
+                                <field name="stage_id" options="{'no_create': True, 'no_open': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_helpdesk_ticket_categorization" model="ir.actions.act_window">
+        <field name="name">Categorizacion Tickets</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="roc_custom.helpdesk_ticket_categorization_tree"/>
+        <field name="domain">[('stage_id.categorization_stage', '=', True)]</field>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+           No se encontraron tickets a categorizar.
+          </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_helpdesk_ticket_categorization"
+        name="Categorización Tickets"
+        sequence="1"
+        parent="helpdesk.helpdesk_ticket_menu_main"
+        action="roc_custom.action_helpdesk_ticket_categorization"/>
 
     <menuitem
         id="menu_helpdesk_ticket_assignator_config"
@@ -350,10 +432,3 @@
         action="roc_custom.action_helpdesk_ticket_assignator_config"/>
 
 </odoo>
-
-
-<!--
-    SaleOrder
-    helpdesk_ticket_ids
-    active_ticket_count
-    create_new_ticket-->

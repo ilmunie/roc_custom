@@ -215,7 +215,7 @@ class TechnicalJobMixin(models.AbstractModel):
             for tja in tjas:
                 tja.related_rec_fields()
 
-    next_active_job_id = fields.Many2one('technical.job.schedule', compute=get_next_job, store=True)
+    next_active_job_id = fields.Many2one('technical.job.schedule', compute=get_next_job, store=True, string= "Próx. Planificación",)
     next_active_job_date = fields.Datetime(compute=get_next_job, store=True, tracking=True, string="Fecha Proxima operacion")
 
     def open_next_job_calendar_view(self):
@@ -325,7 +325,7 @@ class CrmLead(models.Model,TechnicalJobMixin):
         return data
 
     address_label = fields.Char(
-        string='Address Label',
+        string='Direccion',
         compute='_compute_address_label',
     )
 
@@ -349,7 +349,7 @@ class StockPicking(models.Model,TechnicalJobMixin):
         return self.address_label
 
     address_label = fields.Char(
-        string='Address Label',
+        string='Direccion',
         compute='_compute_address_label',
     )
 
@@ -375,7 +375,7 @@ class PurchaseOrder(models.Model,TechnicalJobMixin):
         return self.address_label
 
     address_label = fields.Char(
-        string='Address Label',
+        string='Direccion',
         compute='_compute_address_label',
     )
 
@@ -402,7 +402,7 @@ class SaleOrder(models.Model,TechnicalJobMixin):
         return self.address_label
 
     address_label = fields.Char(
-        string='Address Label',
+        string='Direccion',
         compute='_compute_address_label',
     )
 
@@ -473,7 +473,7 @@ class HelpdeskTicket(models.Model,TechnicalJobMixin):
         return data
 
     address_label = fields.Char(
-        string='Address Label',
+        string='Direccion',
         compute='_compute_address_label',
     )
 

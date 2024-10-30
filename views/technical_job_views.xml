@@ -11,6 +11,15 @@
             </form>
             </field>
         </record>
+    <record id="quick_data_edit_technical_job" model="ir.ui.view">
+        <field name="name">quick_data_edit_technical_job</field>
+        <field name="model">technical.job</field>
+        <field name="arch" type="xml">
+            <form create="false">
+                <field name="internal_notes"/>
+            </form>
+        </field>
+    </record>
 
     <record id="action_delete_schedule_tree" model="ir.actions.server">
         <field name="name">Eliminar</field>
@@ -91,17 +100,22 @@
             <field name="model">technical.job</field>
             <field name="priority" eval="2"/>
             <field name="arch" type="xml">
-                <tree string="Trabajos" delete="0">
+
+                <tree string="Trabajos" default_order='datetime_in_status desc' delete="0">
                     <field name="display_name"/>
                     <field name="html_link_to_src_doc"/>
                     <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
                     <field name="job_status" />
+                    <field name="datetime_in_status" widget="remaining_days"/>
                     <field name="job_type_id" />
                     <field name="job_employee_id" avatar_field="avatar_128"/>
                     <field name="job_vehicle_id" />
                     <field name="user_id" avatar_field="avatar_128"/>
-                    <field name="html_data_src_doc"/>
-                    <field name="internal_notes"/>
+                    <field name="internal_notes_html" widget="text_widget"/>
+                    <button name="edit_internal_note" type="object" icon="fa-edit"/>
+                    <field name="html_data_src_doc" widget="text_widget" readonly="1"/>
+                    <button name="see_all_data" type="object" icon="fa-eye" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
+                    <field name="res_model" optional="hide"/>
                 </tree>
             </field>
         </record>

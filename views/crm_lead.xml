@@ -18,6 +18,8 @@
         </field>
     </record>
 
+
+
     <record id="crm_lead_oppor_custom" model="ir.ui.view">
         <field name="name">crm_lead_tree_custom_opp</field>
         <field name="model">crm.lead</field>
@@ -132,7 +134,6 @@
                     <!-- Explicit domain due to multi edit -> real company domain would be complicated -->
                     <field name="team_id" optional="show" options="{'no_open': True, 'no_create': True}" domain="[('id','!=',False)]"/>
                     <field name="user_id" invisible="0" options="{'no_open': True, 'no_create': True}" domain="[('share', '=', False)]"/>
-
                     <field name="active" invisible="1"/>
                     <field name="campaign_id" optional="hide"/>
                     <field name="referred" invisible="1"/>
@@ -140,22 +141,18 @@
                     <field name="source_id" optional="show" options="{'no_open': True, 'no_create': True}"/>
                     <!--<field name="customer_concern"/>-->
                     <field name="company_concern" widget="priority"/>
-
                     <field name="type_of_client"/>
                     <field string="Tipo de trabajo" name="work_type_id" options="{'create': False,'create_edit': False}"/>
-
                     <field string="Productos de interés" name="intrest_tag_ids" widget="many2many_tags" options="{'create': False,'create_edit': False}"/>
                     <field name="probability" string="Probability (%)" optional="hide"/>
                     <field name="message_needaction" invisible="1"/>
                     <field name="description" optional="hide"/>
-
                     <field name="priority" widget="priority"/>
-
                     <field name="tag_ids" string="Etiquetas" optional="show" widget="many2many_tags" options="{'create':False,'create_edit':False,'color_field': 'color'}"/>
                     <field name="activity_ids" widget="list_activity"/>
                     <field name="installation"/>
                     <field name="lead_stage_id" widget="badge"/>
-                <field name="datetime_in_lead_stage" widget="remaining_days"/>
+                    <field name="datetime_in_lead_stage" widget="remaining_days"/>
 
                 </tree>
         </field>
