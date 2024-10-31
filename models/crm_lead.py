@@ -359,7 +359,11 @@ class CrmLead(models.Model):
             mobile = ticket_val.get('mobile', False)
             contact_name = ticket_val.get('contact_name', False)
             priority_type_widget_data = ticket_val.get('priority_type_widget_data', False)
-            customer_availability_widget_data = ticket_val.get('customer_availability_widget_data', False)
+            if priority_type_widget_data == 'Si':
+                customer_availability_widget_data = "- URGENTE -"
+            else:
+                customer_availability_widget_data = ""
+            customer_availability_widget_data += ticket_val.get('customer_availability_widget_data', "")
             availability_type = 'no_data'
             if priority_type_widget_data and priority_type_widget_data == 'Si':
                 availability_type = 'urgent'
