@@ -400,7 +400,7 @@ class CrmLead(models.Model):
                 'customer_availability_info': availability_info,
                 'customer_availability_type': availability_type,
                 'stage_id': self.env.ref('helpdesk.stage_new').id,
-                'description': ticket_val.get('description', False),
+                'description': ticket_val.get('description_char', False),
                 'source_url': ticket_val.get('source_url', False)
             }
             self.env['helpdesk.ticket'].create(val)
