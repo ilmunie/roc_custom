@@ -392,7 +392,7 @@ class CrmLead(models.Model):
                 'team_id': team.id,
                 'customer_availability_info': availability_info,
                 'customer_availability_type': availability_type,
-                'stage_id': team._determine_stage()[team.id].id,
+                'stage_id': self.env.ref('helpdesk.stage_new').id,
                 'description': ticket_val.get('description', False),
                 'source_url': ticket_val.get('source_url', False)
             }
