@@ -6,6 +6,7 @@ from odoo.exceptions import UserError, ValidationError
 class PosSession(models.Model):
     _inherit = 'pos.session'
 
+
     def custom_close_session(self):
         self.ensure_one()
         """

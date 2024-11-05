@@ -25,6 +25,16 @@ odoo.define('roc_custom.POSValidateOverride', function(require) {
                     });
                     return false;
                 }
+                if (this.currentOrder.get_due() <= 0 && this.currentOrder.is_to_ship() && this.currentOrder.get_client() && !this.currentOrder.is_to_invoice()) {
+                    return await this._finalizeValidation();
+                }
+                if (this.currentOrder.get_due() > 0 ) {
+                    this.showPopup('ErrorPopup', {
+                        title: this.env._t('Error de pago'),
+                        body: this.env._t('Por favor, seleccione un medio de pago'),
+                    });
+                    return false;
+                }
                 super.validateOrder(isForceValidate);
             }
         };
@@ -33,5 +43,3 @@ odoo.define('roc_custom.POSValidateOverride', function(require) {
 
     return PaymentScreen;
 });
-
-
