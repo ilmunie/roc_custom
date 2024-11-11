@@ -277,13 +277,16 @@ class CrmLead(models.Model,TechnicalJobMixin):
         data = ''
         if self.customer_availability_type == 'urgent':
             data += "<strong>" + dict(self._fields['customer_availability_type']._description_selection(self.env)).get(self.customer_availability_type) + "<strong/><br/><br/>"
+        amount_due = self.invoice_unpaid_amount
+        if amount_due > 0:
+            data += f'<strong style="color: red;">FALTA ABONAR {round(amount_due,2)} {self.company_id.currency_id.symbol}<strong/><br/><br/>'
         if self.type_of_client:
             data += "Tipo de cliente: " + dict(self._fields['type_of_client']._description_selection(self.env)).get(self.type_of_client) + "<br/><br/>"
         if self.mobile or self.mobile_partner or self.phone:
             phone_number = self.mobile or self.mobile_partner or self.phone
             data += f"""
                 <a href='tel:{phone_number.replace(" ","").replace("-","")}'><br/>
-                   📲 Llamar Cliente<br/><br/>
+                   📲 Llamar {self.partner_name or "Cliente"}<br/><br/>
                 </a>
                 <a href='https://wa.me/{phone_number.replace(" ","").replace("-","")}'><br/>
                    💬 Enviar WhatsApp {phone_number.replace(" ","").replace("-","")}<br/><br/>
@@ -434,11 +437,16 @@ class HelpdeskTicket(models.Model,TechnicalJobMixin):
         data = ''
         if self.customer_availability_type == 'urgent':
             data += "<strong>" + dict(self._fields['customer_availability_type']._description_selection(self.env)).get(self.customer_availability_type) + "<strong/><br/><br/>"
+
+        amount_due = self.invoice_unpaid_amount
+        if amount_due > 0:
+            data += f'<strong style="color: red;">FALTA ABONAR {round(amount_due,2)} {self.company_id.currency_id.symbol}<strong/><br/><br/>'
+
         if self.partner_mobile or self.partner_phone:
             phone_number = self.partner_mobile or self.partner_phone
             data += f"""
                 <a href='tel:{phone_number.replace(" ","").replace("-","")}'><br/>
-                   📲 Llamar Cliente<br/><br/>
+                   📲 Llamar {self.partner_name or "Cliente"}<br/><br/>
                 </a>
                 <a href='https://wa.me/{phone_number.replace(" ","").replace("-","")}'><br/>
                    💬 Enviar WhatsApp {phone_number.replace(" ","").replace("-","")}<br/><br/>

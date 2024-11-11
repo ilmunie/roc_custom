@@ -485,11 +485,13 @@ class CrmLead(models.Model):
             lead.sale_amount_total = total
             lead.quotation_count = quotation_cnt
             lead.sale_order_count = sale_order_cnt
+
     @api.depends('order_ids','order_ids.invoice_ids')
     def get_sam(self):
         for record in self:
             am = []
-            for so in record.order_ids:
+            orders = record.order_ids or []
+            for so in orders:
                 if so.invoice_ids:
                     am.extend(so.invoice_ids.mapped('id'))
             record.sale_account_move_ids = [(6,0,am)]
@@ -498,6 +500,9 @@ class CrmLead(models.Model):
 
     def action_open_so_account_move(self):
             invoices = self.mapped('sale_account_move_ids')
+            if self.helpdesk_ticket_ids:
+                for ticket in self.helpdesk_ticket_ids:
+                    invoices += ticket.sale_account_move_ids
             action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
             if len(invoices) > 1:
                 action['domain'] = [('id', 'in', invoices.ids)]
@@ -513,6 +518,9 @@ class CrmLead(models.Model):
             return action
     def action_open_so_account_move_unpaid(self):
         invoices = self.mapped('sale_account_move_ids')
+        if self.helpdesk_ticket_ids:
+            for ticket in self.helpdesk_ticket_ids:
+                invoices += ticket.sale_account_move_ids
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
         if len(invoices) > 1:
             action['domain'] = [('id', 'in', invoices.ids)]
@@ -536,11 +544,15 @@ class CrmLead(models.Model):
             invoice_total_amount = 0
             invoice_unpaid_count = 0
             invoice_unpaid_amount = 0
-            if record.sale_account_move_ids:
-                invoice_count = len(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted') or [])
-                invoice_total_amount = sum(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted').mapped('amount_total_signed') or [])
-                invoice_unpaid_count = len(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0) or [])
-                invoice_unpaid_amount = sum(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0).mapped('amount_residual') or [])
+            sale_moves = record.sale_account_move_ids
+            if record.helpdesk_ticket_ids:
+                for ticket in record.helpdesk_ticket_ids:
+                    sale_moves += ticket.sale_account_move_ids.filtered(lambda x: x.id not in sale_moves.mapped('id'))
+            if sale_moves:
+                invoice_count = len(sale_moves.filtered(lambda x: x.state == 'posted') or [])
+                invoice_total_amount = sum(sale_moves.filtered(lambda x: x.state == 'posted').mapped('amount_total_signed') or [])
+                invoice_unpaid_count = len(sale_moves.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0) or [])
+                invoice_unpaid_amount = sum(sale_moves.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0).mapped('amount_residual') or [])
             record.invoice_count = invoice_count
             record.invoice_total_amount = invoice_total_amount
             record.invoice_unpaid_count = invoice_unpaid_count

@@ -73,12 +73,14 @@ class HelpDeskTicket(models.Model):
         action = self.env["ir.actions.actions"]._for_xml_id("sale.action_quotations_with_onboarding")
         action['context'] = {
             'search_default_draft': 1,
-            'search_default_partner_id': self.partner_id.id,
-            'default_partner_id': self.partner_id.id,
-            'default_ticket_id': self.id
         }
-        action['domain'] = [('ticket_id', '=', self.id), ('state', 'in', ['draft', 'sent'])]
-        quotations = self.mapped('order_ids').filtered(lambda l: l.state in ('draft', 'sent'))
+        quotations = self.mapped('order_ids')
+        if self.src_rec:
+            quotations += self.src_rec.order_ids
+            other_tickets = self.src_rec.helpdesk_ticket_ids.filtered(lambda x: x.id != self.id)
+            for ticket in other_tickets:
+                quotations += ticket.mapped('order_ids')
+        action['domain'] = [ ('id', 'in', quotations.mapped('id'))]
         if len(quotations) == 1:
             action['views'] = [(self.env.ref('sale.view_order_form').id, 'form')]
             action['res_id'] = quotations.id
@@ -87,12 +89,15 @@ class HelpDeskTicket(models.Model):
     def action_view_sale_order(self):
         action = self.env["ir.actions.actions"]._for_xml_id("sale.action_orders")
         action['context'] = {
-            'search_default_partner_id': self.partner_id.id,
-            'default_partner_id': self.partner_id.id,
-            'default_ticket_id': self.id,
+            'search_default_sales': 1,
         }
-        action['domain'] = [('ticket_id', '=', self.id), ('state', 'not in', ('draft', 'sent', 'cancel'))]
-        orders = self.mapped('order_ids').filtered(lambda l: l.state not in ('draft', 'sent', 'cancel'))
+        orders = self.mapped('order_ids')
+        if self.src_rec:
+            orders += self.src_rec.order_ids
+            other_tickets = self.src_rec.helpdesk_ticket_ids.filtered(lambda x: x.id != self.id)
+            for ticket in other_tickets:
+                orders += ticket.mapped('order_ids')
+        action['domain'] = [('id', 'in', orders.mapped('id'))]
         if len(orders) == 1:
             action['views'] = [(self.env.ref('sale.view_order_form').id, 'form')]
             action['res_id'] = orders.id
@@ -100,6 +105,14 @@ class HelpDeskTicket(models.Model):
 
     def action_open_so_account_move(self):
         invoices = self.mapped('sale_account_move_ids')
+        if self.src_rec:
+            invoices += self.src_rec.sale_account_move_ids.filtered(
+                    lambda x: x.id not in invoices.mapped('id'))
+            other_tickets = self.src_rec.helpdesk_ticket_ids.filtered(lambda x: x.id != self.id)
+            if other_tickets:
+                for ticket in other_tickets:
+                    invoices += ticket.sale_account_move_ids.filtered(lambda x: x.id not in invoices.mapped('id'))
+
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
         if len(invoices) > 1:
             action['domain'] = [('id', 'in', invoices.ids)]
@@ -116,6 +129,13 @@ class HelpDeskTicket(models.Model):
 
     def action_open_so_account_move_unpaid(self):
         invoices = self.mapped('sale_account_move_ids')
+        if self.src_rec:
+            invoices += self.src_rec.sale_account_move_ids.filtered(
+                    lambda x: x.id not in invoices.mapped('id'))
+            other_tickets = self.src_rec.helpdesk_ticket_ids.filtered(lambda x: x.id != self.id)
+            if other_tickets:
+                for ticket in other_tickets:
+                    invoices += ticket.sale_account_move_ids.filtered(lambda x: x.id not in invoices.mapped('id'))
         action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
         if len(invoices) > 1:
             action['domain'] = [('id', 'in', invoices.ids)]
@@ -129,7 +149,7 @@ class HelpDeskTicket(models.Model):
         else:
             action = {'type': 'ir.actions.act_window_close'}
         context = {
-            'search_default_filter_open': '1',
+            'search_default_open': 1,
         }
         action['context'] = context
         return action
@@ -140,21 +160,28 @@ class HelpDeskTicket(models.Model):
     def get_sam(self):
         for record in self:
             am = []
-            for so in record.order_ids:
+            orders = record.order_ids
+            for so in orders:
                 if so.invoice_ids:
                     am.extend(so.invoice_ids.mapped('id'))
             record.sale_account_move_ids = [(6,0,am)]
 
     sale_account_move_ids = fields.Many2many(comodel_name='account.move', compute=get_sam, store=True)
 
-    @api.depends('order_ids.state', 'order_ids.currency_id', 'order_ids.amount_untaxed', 'order_ids.date_order', 'order_ids.company_id')
+    #@api.depends('order_ids.state', 'order_ids.currency_id', 'order_ids.amount_untaxed', 'order_ids.date_order', 'order_ids.company_id')
     def _compute_sale_data(self):
         for lead in self:
             total = 0.0
             quotation_cnt = 0
             sale_order_cnt = 0
             company_currency = lead.company_currency or self.env.company.currency_id
-            for order in lead.order_ids:
+            orders = lead.mapped('order_ids')
+            if lead.src_rec:
+                orders += lead.src_rec.order_ids
+                other_tickets = lead.src_rec.helpdesk_ticket_ids.filtered(lambda x: x.id != self.id)
+                for ticket in other_tickets:
+                    orders += ticket.mapped('order_ids')
+            for order in orders:
                 if order.state in ('draft', 'sent'):
                     quotation_cnt += 1
                 if order.state not in ('draft', 'sent', 'cancel'):
@@ -165,9 +192,9 @@ class HelpDeskTicket(models.Model):
             lead.quotation_count = quotation_cnt
             lead.sale_order_count = sale_order_cnt
 
-    sale_amount_total = fields.Monetary(compute='_compute_sale_data', string="Suma de ventas", help="Untaxed Total of Confirmed Orders", currency_field='company_currency', store=True)
-    quotation_count = fields.Integer(compute='_compute_sale_data', string="Cantidad Presupuesto", store=True)
-    sale_order_count = fields.Integer(compute='_compute_sale_data', string="Cantidad Ventas", store=True)
+    sale_amount_total = fields.Monetary(compute='_compute_sale_data', string="Suma de ventas", help="Untaxed Total of Confirmed Orders", currency_field='company_currency')
+    quotation_count = fields.Integer(compute='_compute_sale_data', string="Cantidad Presupuesto")
+    sale_order_count = fields.Integer(compute='_compute_sale_data', string="Cantidad Ventas")
 
     def compute_sale_move_values(self):
         for record in self:
@@ -175,11 +202,21 @@ class HelpDeskTicket(models.Model):
             invoice_total_amount = 0
             invoice_unpaid_count = 0
             invoice_unpaid_amount = 0
-            if record.sale_account_move_ids:
-                invoice_count = len(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted') or [])
-                invoice_total_amount = sum(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted').mapped('amount_total_signed') or [])
-                invoice_unpaid_count = len(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0) or [])
-                invoice_unpaid_amount = sum(record.sale_account_move_ids.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0).mapped('amount_residual') or [])
+            sale_moves = record.mapped('sale_account_move_ids')
+            if record.src_rec:
+                sale_moves += record.src_rec.sale_account_move_ids.filtered(
+                    lambda x: x.id not in sale_moves.mapped('id'))
+                other_tickets = record.src_rec.helpdesk_ticket_ids.filtered(lambda x: x.id != record.id).filtered(
+                    lambda x: x.id not in sale_moves.mapped('id'))
+                if other_tickets:
+                    for ticket in other_tickets:
+                        sale_moves += ticket.sale_account_move_ids.filtered(lambda x: x.id not in sale_moves.mapped('id'))
+            if sale_moves:
+                invoice_count = len(sale_moves.filtered(lambda x: x.state == 'posted') or [])
+                invoice_total_amount = sum(sale_moves.filtered(lambda x: x.state == 'posted').mapped('amount_total_signed') or [])
+                invoice_unpaid_count = len(sale_moves.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0) or [])
+                invoice_unpaid_amount = sum(sale_moves.filtered(lambda x: x.state == 'posted' and x.amount_residual > 0).mapped('amount_residual') or [])
+
             record.invoice_count = invoice_count
             record.invoice_total_amount = invoice_total_amount
             record.invoice_unpaid_count = invoice_unpaid_count
@@ -348,7 +385,10 @@ class HelpDeskTicket(models.Model):
 
     @property
     def src_rec(self):
-        return self.env[self.res_model].browse(self.res_id)
+        if self.res_model and self.res_id:
+            return self.env[self.res_model].browse(self.res_id)
+        else:
+            return False
 
     def view_form_src_document(self):
         return {

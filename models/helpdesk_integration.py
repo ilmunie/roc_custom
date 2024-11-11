@@ -118,7 +118,7 @@ class HelpDeskMixin(models.AbstractModel):
             "type": "ir.actions.act_window",
             "res_model": "helpdesk.ticket",
             "context": ctx,
-            "view_mode": 'tree',
+            "view_mode": 'tree,form',
             'view_ids': [(False, 'list'), (False, 'form')],
             "domain": [('res_id', '=', self.id),('res_model', '=', self._name)]
         }

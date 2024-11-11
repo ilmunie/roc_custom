@@ -284,6 +284,7 @@ class TechnicalJobAssistant(models.Model):
                 action["context"].update(action_sch["context"])
             action["context"].update({'update_assistant_id': self.id, 'from_calendar': True, 'initial_date': self.next_active_job_date})
             return action
+
     def action_schedule_job(self):
         self.ensure_one()
         if self.res_model and self.res_id:
@@ -428,7 +429,7 @@ class TechnicalJobAssistant(models.Model):
     date_field_value = fields.Datetime(string="Fecha interés")
     date_field_tag = fields.Char(string="Solicitud", related="config_id.date_field_tag")
     html_link_to_src_doc = fields.Html(compute=related_rec_fields, store=True, string="Documento origen")
-    html_data_src_doc = fields.Html(compute=related_rec_fields, store=True, string="Data")
+    html_data_src_doc = fields.Html(compute=related_rec_fields, store=True, string="Info trabajo a realizar")
     technical_job_count = fields.Integer(string='Planificaciones activas')
     next_active_job_type_id = fields.Many2one(related='next_active_job_id.job_type_id', store=True, string="Tipo próx. trabajo")
 

@@ -266,7 +266,7 @@ class TechnicalJobSchedule(models.Model):
                         html += info
             html += '</table>'
             record.html_data_src_doc = html
-    html_data_src_doc = fields.Html(compute=get_data_src_doc, string="Info")
+    html_data_src_doc = fields.Html(compute=get_data_src_doc, string="Info trabajo a realizar")
 
 
     @api.depends('res_model', 'res_id')
