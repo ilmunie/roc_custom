@@ -6,6 +6,9 @@
         <field name="inherit_id" ref="mail.email_compose_message_wizard_form" />
         <field name="arch" type="xml">
             <xpath expr="//field[@name='subject']//.." position="after">
+                <group>
+                    <field name="partner_followers_ids" widget="many2many_tags"/>
+                </group>
                 <group attrs="{'invisible': [('show_child_ids', '=', False)]}">
                     <field name="child_ids_domain" invisible="1"/>
                     <field name="show_child_ids" invisible="1"/>
