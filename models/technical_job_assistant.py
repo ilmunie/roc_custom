@@ -2,6 +2,7 @@ import datetime
 from odoo import fields, models, api, SUPERUSER_ID
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
+from odoo.exceptions import ValidationError
 from random import randint
 
 class SeeFullHtmlMessage(models.TransientModel):
@@ -26,9 +27,41 @@ class TechnicalJobAssistantConfig(models.Model):
         return randint(1, 11)
     color = fields.Integer('Color', default=_get_default_color)
 
+class TechnicalJobCalendarQuickResolve(models.TransientModel):
+    _name = 'technical.job.calendar.quick.resolve'
+
+    line_ids = fields.Many2many('technical.job.assistant', 'tj_quick_resolve_line_ids_rel', 'line_id', 'wiz_id')
+
+    @api.model
+    def default_get(self, fields):
+        recs = self.env['technical.job.assistant'].search([('create_uid','=', self.env.user.id), ('technical_job_tag_ids.name', 'ilike', self.env.ref('roc_custom.tj_tag_quick_resolve').name)])
+        if not recs:
+            raise ValidationError("No hay registros esperando coordinación rápida")
+        result = super(TechnicalJobCalendarQuickResolve, self).default_get(fields)
+        result['line_ids'] = [(6, 0, recs.mapped('id'))]
+        return result
 
 class TechnicalJobAssistant(models.Model):
     _name = 'technical.job.assistant'
+
+    def quick_job_resolution(self):
+        action = self.start_assistant()
+        return {
+            'name': "Asignación Rápida",
+            'res_model': 'technical.job.calendar.quick.resolve',
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_id': self.env.ref('roc_custom.technical_job_calendar_quick_resolve').id,
+        }
+
+    def action_quick_resolve(self):
+        self.technical_job_tag_ids = [(3, self.env.ref('roc_custom.tj_tag_quick_resolve').id)]
+        return self.with_context(quick_resolve=True).action_schedule_job()
+
+    def edit_tags(self):
+        action = self.edit_internal_note()
+        return action
 
     def write(self, vals):
         res = super().write(vals)
@@ -62,6 +95,12 @@ class TechnicalJobAssistant(models.Model):
                 if 'visit_priority' in vals:
                     if real_rec.visit_priority != self.visit_priority:
                         real_rec.visit_priority = vals.get('visit_priority', False)
+                if 'job_duration' in vals:
+                    if real_rec.job_duration != self.job_duration:
+                        real_rec.job_duration = vals.get('job_duration', False)
+                if 'estimated_visit_revenue' in vals:
+                    if real_rec.estimated_visit_revenue != self.estimated_visit_revenue:
+                        real_rec.estimated_visit_revenue = vals.get('estimated_visit_revenue', False)
                 if 'job_categ_ids' in vals:
                     if real_rec.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
                         real_rec.job_categ_ids = vals.get('job_categ_ids', [(5,)])
@@ -107,7 +146,7 @@ class TechnicalJobAssistant(models.Model):
         weeks_difference = (start_of_week_input_date - start_of_week_today).days // 7
         return weeks_difference
 
-    @api.depends('html_data_src_doc', 'next_active_job_id', 'next_active_job_date')
+    @api.depends('html_data_src_doc', 'next_active_job_id', 'next_active_job_date', 'technical_job_tag_ids')
     def _compute_week_action_group(self):
         """
             -->  Urgente (no coordinado y marcado como urgente por comercial/coordinador)
@@ -119,20 +158,21 @@ class TechnicalJobAssistant(models.Model):
         """
         for record in self:
             res = ''
-            if record.res_model == 'technical.job.schedule':
+            categ_tag_list_name = record.technical_job_tag_ids.filtered(lambda x: x.category_in_job_assistant).sorted(key=lambda tag: tag.name).mapped('name')
+            if categ_tag_list_name:
+                    res = f"3.{','.join(categ_tag_list_name)}"
+            elif record.res_model == 'technical.job.schedule':
                 date_to_use = record.next_active_job_id.date_schedule.date() if record.next_active_job_id else datetime.date.today()
                 today = datetime.date.today()
                 if date_to_use < today:
-                    res = f"7. Varios ptes finalizar (Vencidos)"
+                    res = f"6. Recoordinar (Vencidos)"
                 else:
-                    res = f"2. Coordinado"
+                    res = f"4. Coordinado (Esta semana)"
             elif not record.next_active_job_id:
                 if record.html_data_src_doc and "Urgente" in record.html_data_src_doc:
                     res = "1. Urgente"
-                elif record.job_status == "waiting_job":
-                    res = "3. No coordinado (c/info cliente)"
-                elif not record.next_active_job_id:
-                    res = "4. No coordinado (s/info cliente)"
+                else:
+                    res = "2. No coordinado (A analizar)"
             else:
                 if record.job_status == 'stand_by':
                     res = f"5. Aplazado (Stand-by)"
@@ -149,17 +189,17 @@ class TechnicalJobAssistant(models.Model):
                                 "The input_date must be a date object, datetime object, or a string in 'YYYY-MM-DD' format")
                         today = datetime.date.today()
                         if input_date < today:
-                            res = f"5. Recoordinar (Vencidos)"
+                            res = f"6. Recoordinar (Vencidos)"
                         else:
                             week_diff = self.weeks_difference(date_to_use)
                             if week_diff == 0:
-                                res = "2. Coordinado"
+                                res = "4. Coordinado (Esta semana)"
                             elif week_diff <= -1:
-                                res = f"5. Recoordinar (Vencidos)"
+                                res = f"6. Recoordinar (Vencidos)"
                             elif week_diff < 2:
-                                res = f"8. En {week_diff} Semanas"
+                                res = f"4. Coordinado (Semana que viene)"
                             else:
-                                res = f"9. +1 Semanas"
+                                res = f"7. Coordinado +1 Semanas"
             record.week_action_group = res
 
     week_action_group = fields.Char(string='Week Action Group', compute='_compute_week_action_group', store=True)
@@ -214,7 +254,7 @@ class TechnicalJobAssistant(models.Model):
         self.ensure_one()
         context = {'update_assistant_id': self.id}
         action = {
-            'name': "Edicion notas internas",
+            'name': "Edicion datos",
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',

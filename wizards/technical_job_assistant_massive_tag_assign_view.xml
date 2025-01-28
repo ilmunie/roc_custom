@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<odoo>
+
+        <record id="technical_job_calendar_quick_resolve" model="ir.ui.view">
+            <field name="name">technical_job_calendar_quick_resolve_wiz</field>
+            <field name="model">technical.job.calendar.quick.resolve</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="line_ids" readonly="1" multi_edit="1" editable="top">
+                        <tree>
+                            <field name="html_link_to_src_doc"/>
+                            <field name="visit_priority" widget="priority"/>
+                            <field name="date_field_value" string="Sol" widget="remaining_days" class="text-right" readonly="1"/>
+                            <field name="job_duration" string="Hs"/>
+                            <button name="action_quick_resolve" type="object" string="Resolver"/>
+                        </tree>
+                        <form string="Job Details">
+                            <sheet>
+                                <group>
+                                    <field name="html_link_to_src_doc" readonly="1"/>
+                                    <field name="visit_priority" widget="priority"/>
+                                    <field name="date_field_value" string="Solicitado" widget="remaining_days"/>
+                                    <field name="job_duration"/>
+                                    <field name="html_data_src_doc" />
+                                    <field name="internal_notes_html"/>
+                                </group>
+                            </sheet>
+                        </form>
+                    </field>
+                    <footer>
+
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+    <record id="technical_job_assistant_massive_tag_assign_wiz" model="ir.ui.view">
+            <field name="name">technical.job.assistant.massive.tag.assign_wiz</field>
+            <field name="model">technical.job.assistant.massive.tag.assign</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group class="oe_title">
+                        <field name="tag_ids" widget="many2many_tags" required="1"/>
+                    </group>
+                    <footer>
+                        <button name="action_done" string="Confirmar" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="technical_job_massive_tag_assign_wiz_action" model="ir.actions.act_window">
+            <field name="name">Asignar etiquetas</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">technical.job.assistant.massive.tag.assign</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="technical_job_assistant_massive_tag_assign_wiz"/>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="roc_custom.model_technical_job_assistant" />
+        </record>
+
+</odoo>

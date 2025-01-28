@@ -430,6 +430,7 @@
             <field name="arch" type="xml">
                 <tree string="Etiquetas" editable="bottom" sample="1">
                     <field name="name"/>
+                    <field name="category_in_job_assistant"/>
                     <field name="color" widget="color_picker"/>
                 </tree>
             </field>
@@ -492,6 +493,15 @@
         </field>
     </record>
 
+    <record id="open_quick_job_assign" model="ir.actions.server">
+        <field name="name">Coordinación rápida</field>
+        <field name="model_id" ref="roc_custom.model_technical_job_assistant"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.quick_job_resolution()
+        </field>
+    </record>
+
     <menuitem
         id="menu_job"
         web_icon="roc_custom,static/src/description/operation_icon.png"
@@ -500,17 +510,30 @@
         sequence="10"/>
     <menuitem
         id="menu_crm_job_calendar"
-        name="Calendario de Trabajos"
+        name="Calendario Trabajos"
         sequence="10"
         parent="roc_custom.menu_job"
+        />
+    <menuitem
+        id="menu_crm_job_calendar_schedule"
+        name="Trabajos Coordinados"
+        sequence="10"
+        parent="roc_custom.menu_crm_job_calendar"
         action="roc_custom.action_technical_job_python"/>
+    <menuitem
+        id="menu_open_quick_job_assign"
+        name="Asignacion Rapida"
+        sequence="11"
+        parent="roc_custom.menu_crm_job_calendar"
+        action="roc_custom.open_quick_job_assign"/>
+
     <menuitem
         id="menu_job_products"
         name="Productos"
         sequence="35"
         groups="roc_custom.technical_job_planner"
-        parent="roc_custom.menu_job"
-        action="roc_custom.action_technical_job_python"/>
+        parent="roc_custom.menu_job"/>
+
     <menuitem
         id="menu_job_product_variant"
         name="Variantes de producto"

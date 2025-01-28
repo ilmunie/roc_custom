@@ -147,6 +147,7 @@
                     <field name="res_model" invisible="1"/>
                     <field name="res_id" invisible="1"/>
                     <field name="technical_job_tag_ids" readonly="False" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
+                    <button name="edit_tags" type="object" icon="fa-tag"/>
                     <field name="visit_priority" readonly="False" widget="priority"/>
                     <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags" readonly="False"/>
                     <field name="responsible_user_id" optional="hide"/>
@@ -165,10 +166,10 @@
                     <field name="next_job_employee_ids" widget="many2many_tags" optional="show"/>
                     <button name="edit_next_job" type="object" icon="fa-edit" attrs="{'invisible': ['|',('next_active_job_id','=',False),('res_model','=','technical.job.schedule')]}"/>
                     <field name="visit_payment_type"/>
-                    <field name="estimated_visit_revenue"/>
-                    <field name="job_duration"/>
+                    <field name="estimated_visit_revenue" readonly="False"/>
+                    <field name="job_duration" readonly="False"/>
                     <field name="internal_notes_html" widget="text_widget"/>
-                    <button name="edit_internal_note" type="object" icon="fa-edit"/>
+                    <button name="edit_internal_note" type="object" icon="fa-comments"/>
                     <field name="html_data_src_doc" widget="text_widget" readonly="1"/>
                     <button name="see_all_data" type="object" icon="fa-eye" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
                     <button name="see_job_in_calendar" type="object" string="Ver operación" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
@@ -242,6 +243,18 @@
         <field name="arch" type="xml">
             <form>
                 <field name="html_link_to_src_doc"/>
+                <group>
+                    <group>
+                        <field name="technical_job_tag_ids" readonly="False" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
+                        <field name="job_categ_ids" readonly="False" widget="many2many_tags"/>
+
+                    </group>
+                    <group>
+                        <field name="estimated_visit_revenue" readonly="False"/>
+                        <field name="job_duration" readonly="False"/>
+                    </group>
+                </group>
+                <label for="internal_notes" />
                 <field name="internal_notes" readonly="0"/>
             </form>
         </field>

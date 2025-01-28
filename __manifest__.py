@@ -97,6 +97,7 @@
         'views/res_config_settings.xml',
         'views/technical_job_checklist_views.xml',
         'views/technical_job_sale_template_views.xml',
+        'wizards/technical_job_assistant_massive_tag_assign_view.xml',
         'security/ir.model.access.csv',
     ],
     "assets": {
