@@ -112,6 +112,7 @@
                                     </group>
                                     <group>
                                         <field name="visit_priority" widget="priority" />
+                                        <field name="reminder_date"/>
                                         <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
                                         <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags"/>
                                         <field name="job_duration"/>

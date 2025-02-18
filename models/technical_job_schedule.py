@@ -106,6 +106,9 @@ class TechnicalJobSchedule(models.Model):
             if 'visit_payment_type' in vals:
                 if real_rec.visit_payment_type != self.visit_payment_type:
                     real_rec.visit_payment_type = vals.get('visit_payment_type', False)
+            if 'reminder_date' in vals:
+                if real_rec.reminder_date != self.reminder_date:
+                    real_rec.reminder_date = vals.get('reminder_date', False)
             if 'visit_priority' in vals:
                 if real_rec.visit_priority != self.visit_priority:
                     real_rec.visit_priority = vals.get('visit_priority', 0)
@@ -302,6 +305,7 @@ class TechnicalJobSchedule(models.Model):
     job_employee_ids = fields.Many2many(comodel_name='hr.employee', string="Personal visita", domain=[('technical','=',True)])
     job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Vehículo")
     technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas")
+    reminder_date = fields.Date(string="A recordar")
     date_schedule = fields.Datetime(string="Fecha a visitar")
     user_id = fields.Many2one('res.users', store=True, string="Responsable")
     job_duration = fields.Float(string="Tiempo trabajo (hs.)")

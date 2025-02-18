@@ -174,6 +174,7 @@
                     <button name="see_all_data" type="object" icon="fa-eye" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
                     <button name="see_job_in_calendar" type="object" string="Ver operación" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
                     <button name="action_schedule_job" type="object" string="Nueva operación" attrs="{'invisible': ['|',('next_active_job_id','!=',False),('res_model','=','technical.job.schedule')]}"/>
+                    <field name="reminder_date" readonly="0"/>
                 </tree>
             </field>
         </record>
@@ -188,6 +189,7 @@
                     <field name="contact_number"/>
                     <field name="config_id" string="Tipo de operacion"/>
                     <field name="technical_job_tag_ids"/>
+                    <field name="job_categ_ids"/>
                     <field name="res_model"/>
                     <field name="responsible_user_id"/>
                     <field name="next_job_vehicle_ids"/>
@@ -215,6 +217,8 @@
                     <filter string="Fecha Solicitud" name="date_field_value_filter" date="date_field_value" />
                     <filter string="Fecha Próx planificación" name="next_active_job_date_filter" date="next_active_job_date" />
                     <group expand="1" string="Group By">
+                        <filter string="Fecha recordatorio" name="reminder_date" context="{'group_by':'reminder_date'}"/>
+                        <separator orientation="vertical"/>
                         <filter string="Semana solicitud" name="week_group" context="{'group_by':'week_group'}"/>
                         <filter string="Estado coordinacion" name="week_action_group" context="{'group_by':'week_action_group'}"/>
                         <separator orientation="vertical"/>
@@ -252,6 +256,7 @@
                     <group>
                         <field name="estimated_visit_revenue" readonly="False"/>
                         <field name="job_duration" readonly="False"/>
+                        <field name="reminder_date" readonly="False"/>
                     </group>
                 </group>
                 <label for="internal_notes" />

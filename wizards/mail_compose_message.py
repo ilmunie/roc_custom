@@ -47,4 +47,12 @@ class MailComposeMessage(models.TransientModel):
         for child in self.child_ids:
             self.partner_ids = [(4, child.id)]
 
+    def quick_wa_open(self):
+        self.ensure_one()
+        url = f"https://wa.me/34{self.whatsapp_number}?text={self.output_wa_text}"
+        return {
+            'type': 'ir.actions.act_url',
+            'url': url,  # Or a hardcoded URL like 'https://www.odoo.com'
+            'target': 'new',  # Opens in a new tab
+        }
 

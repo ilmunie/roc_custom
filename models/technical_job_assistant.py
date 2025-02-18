@@ -92,6 +92,9 @@ class TechnicalJobAssistant(models.Model):
                 if 'technical_job_tag_ids' in vals:
                     if real_rec.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
                         real_rec.technical_job_tag_ids = vals.get('technical_job_tag_ids', [(5,)])
+                if 'reminder_date' in vals:
+                    if real_rec.reminder_date != self.reminder_date:
+                        real_rec.reminder_date = vals.get('reminder_date', False)
                 if 'visit_priority' in vals:
                     if real_rec.visit_priority != self.visit_priority:
                         real_rec.visit_priority = vals.get('visit_priority', False)
@@ -384,10 +387,12 @@ class TechnicalJobAssistant(models.Model):
             visit_payment_type = False
             visit_priority = False
             job_categ_ids = [(5,)]
+            reminder_date = False
             if record.res_model and record.res_id:
                 real_rec = self.env[record.res_model].browse(record.res_id)
                 if real_rec:
                     tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
+                    reminder_date = real_rec.reminder_date
                     html_data_src_doc = real_rec.get_job_data()
                     technical_job_count = real_rec.technical_job_count
                     show_technical_schedule_job_ids = [(6,0,real_rec.show_technical_schedule_job_ids.mapped('id'))] if record.res_model != 'technical.job.schedule' else False
@@ -438,6 +443,7 @@ class TechnicalJobAssistant(models.Model):
             record.internal_notes_html = internal_notes_html
             record.estimated_visit_revenue = estimated_visit_revenue
             record.address = address
+            record.reminder_date = reminder_date
             record.contact_number = '|'.join(phones) if phones else ""
             record.internal_notes = internal_notes
             record.job_duration = job_duration if not next_job else next_job.job_duration
@@ -457,6 +463,7 @@ class TechnicalJobAssistant(models.Model):
     contact_number = fields.Char(compute=related_rec_fields, store=True, string="N° Telefono")
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=related_rec_fields, store=True, string="Operaciones")
     technical_job_tag_ids = fields.Many2many(comodel_name='technical.job.tag', compute=related_rec_fields, store=True, string="Etiquetas")
+    reminder_date = fields.Date(compute=related_rec_fields, store=True, string="A Recordar")
     estimated_visit_revenue = fields.Float(compute=related_rec_fields, store=True, string="Estimado (EUR)")
     job_duration = fields.Float(compute=related_rec_fields, store=True, string="Horas estimadas")
     internal_notes = fields.Text(compute=related_rec_fields, store=True, string="Notas internas")
@@ -500,7 +507,7 @@ class TechnicalJobAssistant(models.Model):
                             job_status = next_job.job_status
                         else:
                             jobs = real_rec.show_technical_schedule_job_ids.filtered(lambda
-                                                                                         x: x.job_type_id and x.job_type_id.id == technical_job and x.job_status != 'cancel')
+                                                                                         x: x.job_type_id and x.job_type_id.id == technical_job and x.job_status != 'cancel' and x.job_status != 'done')
                             if jobs:
                                 job_status = sorted(jobs, key=lambda r: r.date_schedule, reverse=True)[0].job_status
                         if record.res_model == 'technical.job.schedule':

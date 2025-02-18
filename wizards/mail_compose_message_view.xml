@@ -15,6 +15,10 @@
                     <field name="child_ids" widget="many2many_checkboxes" domain="child_ids_domain"/>
                 </group>
             </xpath>
+            <xpath expr="//footer[last()]" position="inside">
+                <button string="Abrir WA" class="btn-primary" type="object"
+                        attrs="{'invisible': [('whatsapp', '=', False)]}" name="quick_wa_open"/>
+            </xpath>
         </field>
     </record>
 </odoo>
