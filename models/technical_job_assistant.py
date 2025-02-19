@@ -96,7 +96,7 @@ class TechnicalJobAssistant(models.Model):
                     if real_rec.reminder_date != self.reminder_date:
                         real_rec.reminder_date = vals.get('reminder_date', False)
                 if 'reminder_user_id' in vals:
-                    rec_user = real_rec.reminder_user_id.id if real_rec.real_rec.reminder_user_id else False
+                    rec_user = real_rec.reminder_user_id.id if real_rec.reminder_user_id else False
                     assistant_user = vals.get('reminder_user_id', False)
                     if rec_user != assistant_user:
                         real_rec.reminder_user_id = vals.get('reminder_user_id', False)
