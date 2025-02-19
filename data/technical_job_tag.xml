@@ -103,15 +103,6 @@
         <field name="date_field_id" eval="ref('roc_custom.field_crm_lead__datetime_in_stage')"/>
         <field name="date_field_tag">Solicitud visita</field>
     </record>
-    <record id="technical_job_config_lead_manual" model="technical.job.assistant.config">
-        <field name="name">Otras Actividades</field>
-        <field name="model_id" eval="ref('crm.model_crm_lead')"/>
-        <field name="technical_job_type_id" eval="ref('roc_custom.technical_job_type_3')"/>
-        <field name="domain_condition" eval="[('manual_technical_job','=',True)]"/>
-        <field name="date_field_id" eval="ref('roc_custom.field_crm_lead__manual_technical_job_request')"/>
-        <field name="date_field_tag">Solicitud visita</field>
-    </record>
-
     <record id="technical_independent_jobs" model="technical.job.assistant.config">
         <field name="name">Trabajos Independientes</field>
         <field name="model_id" eval="ref('roc_custom.model_technical_job_schedule')"/>

@@ -142,6 +142,8 @@ class TechnicalJob(models.Model):
                     record.job_employee_ids = [(6, 0, real_rec.job_employee_ids.mapped('id'))]
                 if real_rec.job_vehicle_ids:
                     record.job_vehicle_ids = [(6, 0, real_rec.job_vehicle_ids.mapped('id'))]
+                if real_rec.reminder_user_id:
+                    record.reminder_user_id = real_rec.reminder_user_id.id
                 if real_rec.reminder_date:
                     record.reminder_date = real_rec.reminder_date
                 if real_rec.technical_job_tag_ids:
@@ -378,6 +380,7 @@ class TechnicalJob(models.Model):
 
     attch_ids = fields.Many2many('ir.attachment', compute=get_schedule_attch)
     reminder_date = fields.Date(related="schedule_id.reminder_date", readonly=False)
+    reminder_user_id = fields.Many2one(related="schedule_id.reminder_user_id", readonly=False)
     technical_job_tag_ids = fields.Many2many(related="schedule_id.technical_job_tag_ids", readonly=False)
     visit_priority = fields.Selection(related="schedule_id.visit_priority", readonly=False, store=True, force_save=True)
     job_categ_ids = fields.Many2many(related="schedule_id.job_categ_ids", readonly=False)

@@ -292,7 +292,6 @@
                                 <field name="user_id" options="{'no_open': True, 'no_create': True}" context="{'default_sales_team_id': team_id}" widget="many2one_avatar_user"/>
                             </group>
                             <group name="processing" string="Procesamiento">
-                                <field name="manual_technical_job"/>
                                 <field name="date_deadline"/>
                                 <field name="last_call_date"/>
                                 <field name="last_call_status"/>
@@ -316,7 +315,7 @@
                                 <label for="description" string="Notas internas"/>
                                 <field name="description" placeholder="Añada una descripción..."/>
                             </page>
-<page string="Visita" attrs="{'invisible':[('type','!=','opportunity')]}">
+                            <page string="Visita" attrs="{'invisible':[('type','!=','opportunity')]}">
                                 <group>
                                     <group>
                                         <field name="visit_payment_type" widget="radio" />
@@ -327,6 +326,7 @@
                                     <group>
                                         <field name="visit_priority" widget="priority" />
                                         <field name="reminder_date"/>
+                                        <field name="reminder_user_id" widget="many2one_avatar_user" options="{'no_create': 1, 'no_open': 1}" readonly="0"/>
                                         <field name="technical_job_tag_ids" widget="many2many_tags" options="{'no_create': True, 'no_open': True, 'color_field': 'color'}" />
                                         <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags"/>
                                         <field name="job_duration"/>

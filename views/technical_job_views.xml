@@ -203,6 +203,8 @@
                             <field name="job_categ_ids" options="{'no_create':1}" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="technical_job_tag_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create': True, 'no_open': True}" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="reminder_date" readonly="0"/>
+                            <field name="reminder_user_id" widget="many2one_avatar_user"
+                                   options="{'no_create': 1, 'no_open': 1}" readonly="0"/>
                             <field name="visit_priority" widget="priority" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="visit_payment_type" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="estimated_visit_revenue" attrs="{'readonly':[('job_status','in',('done','cancel'))],'invisible':[('visit_payment_type', '!=', 'to_bill')]}"/>
@@ -316,7 +318,7 @@
                                    options="{'color_field': 'color', 'no_create': True, 'no_open': True}"/>
                             <field name="visit_priority" widget="priority"/>
                             <field name="reminder_date"/>
-
+                            <field name="reminder_user_id" widget="many2one_avatar_user" options="{'no_create': 1, 'no_open': 1}"/>
                             <field name="visit_payment_type"/>
                             <field name="estimated_visit_revenue" attrs="{'invisible':[('visit_payment_type', '!=', 'to_bill')]}"/>
 

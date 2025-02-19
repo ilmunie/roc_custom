@@ -153,6 +153,7 @@
                     <field name="responsible_user_id" optional="hide"/>
                     <field name="config_id" readonly="1" string="Operación"/>
                     <field name="html_link_to_src_doc"/>
+                    <button name="open_mail_compose_message_wiz" type="object" icon="fa-envelope"/>
                     <button name="see_src_document" type="object" icon="fa-edit"/>
                     <button name="open_form_partner" type="object" icon="fa-user" attrs="{'invisible':[('res_model', '!=', 'crm.lead')]}"/>
                     <field name="date_field_value" string="Solicitado" widget="remaining_days" class="text-right" readonly="1"/>
@@ -175,6 +176,7 @@
                     <button name="see_job_in_calendar" type="object" string="Ver operación" attrs="{'invisible': [('next_active_job_id','=',False)]}"/>
                     <button name="action_schedule_job" type="object" string="Nueva operación" attrs="{'invisible': ['|',('next_active_job_id','!=',False),('res_model','=','technical.job.schedule')]}"/>
                     <field name="reminder_date" readonly="0"/>
+                    <field name="reminder_user_id" widget="many2one_avatar_user" string=" " options="{'no_create': 1, 'no_open': 1}" readonly="0"/>
                 </tree>
             </field>
         </record>
@@ -192,12 +194,17 @@
                     <field name="job_categ_ids"/>
                     <field name="res_model"/>
                     <field name="responsible_user_id"/>
+                    <field name="reminder_user_id"/>
                     <field name="next_job_vehicle_ids"/>
                     <field name="next_job_employee_ids"/>
                     <field name="show_technical_schedule_job_ids"/>
+                    <filter string="A Coordinar" name="to_schedule"  domain="['|', ('next_active_job_overdue', '=', True), '|', ('next_active_job_id', '=', False), ('job_status', '=', 'stand_by')] "/>
+                    <separator/>
                     <filter string="Mis planificaciones" name="assigned_to_me" domain="[('responsible_user_id', '=', uid)]"/>
                     <separator/>
                     <filter string="Mis trabajos" help="Mis trabajos: usted es el empleado" name="myjobs" domain="['|', ('next_job_employee_ids.user_id', 'in',  [uid]),('config_id.technical_job_type_id.default_job_employee_ids.user_id', 'in', [uid])]"/>
+                    <separator/>
+                    <filter string="Mis Recordatorios" help="Mis recordatorios" name="myremiders" domain="[('reminder_user_id', '=',  [uid])]"/>
                     <separator/>
                     <separator/>
                     <filter string="Primario" name="primary" domain="[('technical_job_tag_ids.name', 'ilike', 'Pri')]"/>
@@ -218,6 +225,7 @@
                     <filter string="Fecha Próx planificación" name="next_active_job_date_filter" date="next_active_job_date" />
                     <group expand="1" string="Group By">
                         <filter string="Fecha recordatorio" name="reminder_date" context="{'group_by':'reminder_date'}"/>
+                        <filter string="Usuario recordatorio" name="reminder_user" context="{'group_by':'reminder_user_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Semana solicitud" name="week_group" context="{'group_by':'week_group'}"/>
                         <filter string="Estado coordinacion" name="week_action_group" context="{'group_by':'week_action_group'}"/>
@@ -257,6 +265,8 @@
                         <field name="estimated_visit_revenue" readonly="False"/>
                         <field name="job_duration" readonly="False"/>
                         <field name="reminder_date" readonly="False"/>
+                        <field name="reminder_user_id" options="{'no_create': 1, 'no_open': 1}"
+                               widget="many2one_avatar_user" readonly="False"/>
                     </group>
                 </group>
                 <label for="internal_notes" />

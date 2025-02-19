@@ -2,7 +2,7 @@ import datetime
 from odoo import fields, models, api, SUPERUSER_ID
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 from random import randint
 
 class SeeFullHtmlMessage(models.TransientModel):
@@ -95,6 +95,11 @@ class TechnicalJobAssistant(models.Model):
                 if 'reminder_date' in vals:
                     if real_rec.reminder_date != self.reminder_date:
                         real_rec.reminder_date = vals.get('reminder_date', False)
+                if 'reminder_user_id' in vals:
+                    rec_user = real_rec.reminder_user_id.id if real_rec.real_rec.reminder_user_id else False
+                    assistant_user = vals.get('reminder_user_id', False)
+                    if rec_user != assistant_user:
+                        real_rec.reminder_user_id = vals.get('reminder_user_id', False)
                 if 'visit_priority' in vals:
                     if real_rec.visit_priority != self.visit_priority:
                         real_rec.visit_priority = vals.get('visit_priority', False)
@@ -388,11 +393,13 @@ class TechnicalJobAssistant(models.Model):
             visit_priority = False
             job_categ_ids = [(5,)]
             reminder_date = False
+            reminder_user_id = False
             if record.res_model and record.res_id:
                 real_rec = self.env[record.res_model].browse(record.res_id)
                 if real_rec:
                     tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
                     reminder_date = real_rec.reminder_date
+                    reminder_user_id = real_rec.reminder_user_id.id if real_rec.reminder_user_id else False
                     html_data_src_doc = real_rec.get_job_data()
                     technical_job_count = real_rec.technical_job_count
                     show_technical_schedule_job_ids = [(6,0,real_rec.show_technical_schedule_job_ids.mapped('id'))] if record.res_model != 'technical.job.schedule' else False
@@ -444,6 +451,7 @@ class TechnicalJobAssistant(models.Model):
             record.estimated_visit_revenue = estimated_visit_revenue
             record.address = address
             record.reminder_date = reminder_date
+            record.reminder_user_id = reminder_user_id
             record.contact_number = '|'.join(phones) if phones else ""
             record.internal_notes = internal_notes
             record.job_duration = job_duration if not next_job else next_job.job_duration
@@ -458,12 +466,36 @@ class TechnicalJobAssistant(models.Model):
             record.next_active_job_id = next_job.id if next_job else False
             record.show_technical_schedule_job_ids = show_technical_schedule_job_ids if show_technical_schedule_job_ids else False
 
+    def open_mail_compose_message_wiz(self):
+        self.ensure_one()
+        real_rec = self.env[self.res_model].browse(self.res_id)
+        if real_rec:
+            if 'message_ids' not in real_rec._fields.keys():
+                raise ValidationError('El registro origen no tiene habilitadas las funciones de mensajeria')
+            else:
+                ctx = {
+                    'default_model': self.res_model,
+                    'default_res_id': self.res_id,
+                    'default_whatsapp': True,
+                }
+                return {
+                    'type': 'ir.actions.act_window',
+                    'view_mode': 'form',
+                    'res_model': 'mail.compose.message',
+                    'views': [(False, 'form')],
+                    'view_id': False,
+                    'target': 'new',
+                    'context': ctx,
+                }
+        else:
+            raise ValidationError('No se ha podido encontrar el registro origen')
 
     address = fields.Char(compute=related_rec_fields, store=True, string="Direccion")
     contact_number = fields.Char(compute=related_rec_fields, store=True, string="N° Telefono")
     show_technical_schedule_job_ids = fields.Many2many(comodel_name='technical.job.schedule', compute=related_rec_fields, store=True, string="Operaciones")
     technical_job_tag_ids = fields.Many2many(comodel_name='technical.job.tag', compute=related_rec_fields, store=True, string="Etiquetas")
     reminder_date = fields.Date(compute=related_rec_fields, store=True, string="A Recordar")
+    reminder_user_id = fields.Many2one('res.users', compute=related_rec_fields, store=True, string="Usuario Recordatorio")
     estimated_visit_revenue = fields.Float(compute=related_rec_fields, store=True, string="Estimado (EUR)")
     job_duration = fields.Float(compute=related_rec_fields, store=True, string="Horas estimadas")
     internal_notes = fields.Text(compute=related_rec_fields, store=True, string="Notas internas")
@@ -473,6 +505,16 @@ class TechnicalJobAssistant(models.Model):
     job_categ_ids = fields.Many2many('technical.job.categ',compute=related_rec_fields, store=True, string="Categoria")
     next_active_job_id = fields.Many2one('technical.job.schedule', compute=related_rec_fields, store=True, string= "Próx. Planificación", ondelete='SET NULL')
     next_active_job_date = fields.Datetime(string="Fecha próx. planificación", related='next_active_job_id.date_schedule', store=True)
+    @api.depends('next_active_job_id', 'next_active_job_id.date_schedule')
+    def compute_is_overdue(self):
+        today = fields.Date.context_today(self)
+        for record in self:
+            res = False
+            if record.next_active_job_id:
+                if today > record.next_active_job_id.date_schedule.date():
+                    res = True
+            record.next_active_job_overdue = res
+    next_active_job_overdue = fields.Boolean(string="Proximo Trabajo Vencido", compute=compute_is_overdue, store=True)
     date_field_value = fields.Datetime(string="Fecha interés")
     date_field_tag = fields.Char(string="Solicitud", related="config_id.date_field_tag")
     html_link_to_src_doc = fields.Html(compute=related_rec_fields, store=True, string="Documento origen")
@@ -498,7 +540,9 @@ class TechnicalJobAssistant(models.Model):
                 if real_rec:
                     next_job = record.next_active_job_id if record.res_model != 'technical.job.schedule' else real_rec
                     technical_job = record.config_id.technical_job_type_id.id if record.config_id and record.config_id.technical_job_type_id else False
-                    if technical_job:
+                    if record.res_model == 'technical.job.schedule':
+                        job_status = next_job.job_status
+                    elif technical_job:
                         if record.res_id and record.res_model == 'crm.lead' and \
                                 not real_rec.show_technical_schedule_job_ids and \
                                 real_rec.customer_availability_type in ('hour_range', 'week_availability', 'urgent'):
@@ -512,6 +556,7 @@ class TechnicalJobAssistant(models.Model):
                                 job_status = sorted(jobs, key=lambda r: r.date_schedule, reverse=True)[0].job_status
                         if record.res_model == 'technical.job.schedule':
                             job_status = next_job.job_status
+
             record.job_status = job_status
 
 

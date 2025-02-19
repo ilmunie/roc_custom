@@ -14,6 +14,8 @@ class TechnicalJobMixin(models.AbstractModel):
     manual_technical_job_request = fields.Date(string="Fecha solicitud")
     technical_job_tag_ids = fields.Many2many('technical.job.tag', string="Etiquetas", tracking=True)
     reminder_date = fields.Date(string="A Recordar", tracking=True)
+    reminder_user_id = fields.Many2one('res.users', string="Usuario Recordatorio", tracking=True)
+
     job_employee_ids = fields.Many2many('hr.employee', string="Personal Visita", tracking=True)
     job_vehicle_ids = fields.Many2many('fleet.vehicle', string="Personal Visita", tracking=True)
 
@@ -62,6 +64,11 @@ class TechnicalJobMixin(models.AbstractModel):
                 for job in self.technical_schedule_job_ids:
                     if job.reminder_date != self.reminder_date:
                         job.reminder_date = self.reminder_date
+        if 'reminder_user_id' in vals:
+            if self.reminder_user_id:
+                for job in self.technical_schedule_job_ids:
+                    if job.reminder_user_id and job.reminder_user_id.id != self.reminder_user_id.id:
+                        job.reminder_user_id = self.reminder_user_id.id
         if 'visit_payment_type' in vals:
             if self.visit_payment_type:
                 for job in self.technical_schedule_job_ids:
@@ -104,6 +111,7 @@ class TechnicalJobMixin(models.AbstractModel):
                                                                'res_id': record.id,
                                                                'visit_payment_type': record.visit_payment_type,
                                                                'reminder_date': record.reminder_date,
+                                                               'reminder_user_id': record.reminder_user_id.id if record.reminder_user_id else False,
                                                                'visit_priority': record.visit_priority,
                                                                'job_categ_ids': [(6, 0, record.job_categ_ids.mapped('id'))],
                                                                'estimated_visit_revenue': record.estimated_visit_revenue,
