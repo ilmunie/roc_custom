@@ -8,6 +8,31 @@ class TechnicalJob(models.Model):
     _name = 'technical.job'
     _inherit = ['mail.thread']
 
+    def open_mail_compose_message_wiz(self):
+        self.ensure_one()
+        real_rec = self.env[self.res_model].browse(self.res_id)
+        if real_rec:
+            if 'message_ids' not in real_rec._fields.keys():
+                raise ValidationError('El registro origen no tiene habilitadas las funciones de mensajeria')
+            else:
+                ctx = {
+                    'default_model': self.res_model,
+                    'default_res_id': self.res_id,
+                    'default_whatsapp': True,
+                }
+                return {
+                    'type': 'ir.actions.act_window',
+                    'view_mode': 'form',
+                    'res_model': 'mail.compose.message',
+                    'views': [(False, 'form')],
+                    'view_id': False,
+                    'target': 'new',
+                    'context': ctx,
+                }
+        else:
+            raise ValidationError('No se ha podido encontrar el registro origen')
+
+
     allow_displacement_tracking = fields.Boolean(related='job_type_id.allow_displacement_tracking')
     data_assistant = fields.Boolean(related='job_type_id.data_assistant')
 
@@ -156,6 +181,7 @@ class TechnicalJob(models.Model):
                     record.visit_payment_type = real_rec.visit_payment_type
                 if real_rec.visit_priority:
                     record.visit_priority = real_rec.visit_priority
+                import pdb;pdb.set_trace()
                 if real_rec.job_categ_ids:
                     record.job_categ_ids = [(6, 0, real_rec.job_categ_ids.mapped('id'))]
                 if real_rec.estimated_visit_revenue:

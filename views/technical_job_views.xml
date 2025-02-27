@@ -220,6 +220,7 @@
                             <field name="job_vehicle_ids" options="{'no_create':1}" widget="many2many_tags" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="user_id" options="{'no_create':1}" attrs="{'readonly':[('job_status','in',('done','cancel'))]}"/>
                             <field name="allow_displacement_tracking"/>
+                            <button name="open_mail_compose_message_wiz" type="object" string="CORREO | WHATSAPP" class="oe_highlight" />
                         </group>
                     </group>
                     <group string="Registro de tiempo operación">
