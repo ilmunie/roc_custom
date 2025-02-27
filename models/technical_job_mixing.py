@@ -80,7 +80,7 @@ class TechnicalJobMixin(models.AbstractModel):
                     if job.visit_priority != self.visit_priority:
                         job.visit_priority = self.visit_priority
         if 'job_categ_ids' in vals:
-            if self.technical_schedule_job_ids:
+            if self.job_categ_ids:
                 for job in self.technical_schedule_job_ids:
                     if job.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
                         job.job_categ_ids = [(6, 0, self.job_categ_ids.mapped('id'))]
