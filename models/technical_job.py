@@ -181,7 +181,6 @@ class TechnicalJob(models.Model):
                     record.visit_payment_type = real_rec.visit_payment_type
                 if real_rec.visit_priority:
                     record.visit_priority = real_rec.visit_priority
-                import pdb;pdb.set_trace()
                 if real_rec.job_categ_ids:
                     record.job_categ_ids = [(6, 0, real_rec.job_categ_ids.mapped('id'))]
                 if real_rec.estimated_visit_revenue:
