@@ -13,6 +13,7 @@ class TechnicalJobStatusChange(models.Model):
 class TechnicalJobSchedule(models.Model):
     _name = 'technical.job.schedule'
     order = 'date_schedule DESC'
+    _inherit = ['mail.thread']
 
 
     @api.depends('status_change_ids')
