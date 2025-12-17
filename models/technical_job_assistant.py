@@ -396,9 +396,9 @@ class TechnicalJobAssistant(models.Model):
             reminder_user_id = False
             if record.res_model and record.res_id:
                 real_rec = self.env[record.res_model].browse(record.res_id)
-                if real_rec:
+                if real_rec and real_rec.exists():
                     tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
-                    reminder_date = real_rec.reminder_date
+                    reminder_date = real_rec.reminder_date if real_rec else False
                     reminder_user_id = real_rec.reminder_user_id.id if real_rec.reminder_user_id else False
                     html_data_src_doc = real_rec.get_job_data()
                     technical_job_count = real_rec.technical_job_count

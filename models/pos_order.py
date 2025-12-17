@@ -34,7 +34,7 @@ class PosSession(models.Model):
                 #cash_move_line.account_id = False
             elif 'ING' in (cash_move_line.name or '').upper():
                 #INGRESO A CAJA no se ingresa dinero a caja
-                cash_move_line.account_id = False
+                False
             elif 'OPENING' in (cash_move_line.name or '').upper():
                 # ASIENTO APERTURA
                 cash_move_line.account_id = self.env.ref('l10n_es.1_pgc_pyme_551').id

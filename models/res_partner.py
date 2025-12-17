@@ -21,6 +21,15 @@ class ResPartner(models.Model):
     phone = fields.Char(widget="phone")
     mobile = fields.Char(widget="mobile")
     professional = fields.Boolean(string="Profesional")
+    vat = fields.Char(default="ES")
+
+    @api.constrains('vat','country_id')
+    def check_vat(self):
+        for partner in self:
+            if partner.vat and partner.vat == 'ES':
+               return
+        return super(ResPartner, self).check_vat()
+
     @api.model
     def name_search(self, name="", args=None, operator="ilike", limit=100):
         if args is None:

@@ -66,7 +66,7 @@ ss_payement = {
 # 'TOTAL COSTE S.S.' va de la 476000000 (debe) al haber del banco con la que se pago
 
 tax_dict = {
-    'payment_dates': ['20/04/2024','20/07/2024','20/10/2024','20/01/2025'],
+    'payment_dates': ['20/04','20/07','20/10','20/01'],
     'debe_concepts': ['(00008) 862 RETEN.IRPF','(00008) 863 RET.V.ESP.'],
     'haber_account': '572000005',
 }
@@ -134,7 +134,6 @@ class PayrollAccountImport(models.TransientModel):
             ref = "Nominas " + date.strftime('%m/%Y') + ' ' + employee_name
             date_key = "Nominas " + date.strftime('%m/%Y')
             tax_payemnt_date, trim = self.get_tax_payment_date_info(date)
-            #import pdb;pdb.set_trace()
             trim = "PAGO RETENCIONES " + trim
             if date_key not in first_payment_dict.keys():
                 first_payment_dict[date_key] = []
@@ -286,9 +285,14 @@ class PayrollAccountImport(models.TransientModel):
         trimester = False
         if isinstance(given_date, str):
             given_date = datetime.strptime(given_date, '%d/%m/%Y')
+        year = given_date.year
         for payment_date in tax_dict['payment_dates']:
-            payment_date_obj = datetime.strptime(payment_date, '%d/%m/%Y')
-            #import pdb;pdb.set_trace()
+            if payment_date == '20/01':
+                year_str = str(year + 1)
+            else:
+                year_str = str(year)
+            payment_date_str = payment_date + '/' + year_str
+            payment_date_obj = datetime.strptime(payment_date_str, '%d/%m/%Y')
             # Check if the payment date is after or equal to the given date
             if payment_date_obj >= given_date:
                 # Determine the trimester
