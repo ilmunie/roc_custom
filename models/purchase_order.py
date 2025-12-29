@@ -6,6 +6,7 @@ class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
     _order = 'create_date desc'
 
+    effective_date = fields.Datetime(tracking=True)
     def action_view_pos_order(self):
         self.ensure_one()
         linked_orders = self.pos_order_ids

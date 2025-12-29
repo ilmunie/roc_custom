@@ -9,6 +9,10 @@
             <xpath expr="//field[@name='date_approve']" position="attributes">
                 <attribute name="readonly">False</attribute>
             </xpath>
+            <xpath expr="//field[@name='effective_date']" position="attributes">
+                <attribute name="readonly">False</attribute>
+                <attribute name="force_save">True</attribute>
+            </xpath>
             <xpath expr="//field[@name='invoice_status']" position="attributes">
                 <attribute name="invisible">1</attribute>
                 <attribute name="widget">statusbar</attribute>

@@ -7,6 +7,25 @@ from odoo.exceptions import UserError, ValidationError
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+
+
+    @api.depends('invoice_lines', 'invoice_lines.price_unit', 'invoice_lines.discount', 'invoice_lines.move_id.state')
+    def invoice_price_sync(self):
+        for record in self:
+            total_price = 0
+            total_discount = 0
+            total_qty = 0
+            for invoice_line in record.invoice_lines.filtered(lambda x: x.move_id.state == 'posted'):
+                total_price += invoice_line.price_unit*invoice_line.quantity
+                total_discount += invoice_line.discount*invoice_line.quantity
+                total_qty += invoice_line.quantity
+            if total_price and total_qty:
+                record.price_unit = total_price/total_qty
+                record.discount = total_discount/total_qty
+            record.trigger_invoice_price_sync = False if record.trigger_invoice_price_sync else True
+
+    trigger_invoice_price_sync = fields.Boolean(compute=invoice_price_sync, store=True)
+
     def _prepare_purchase_order_line_from_procurement(self, product_id, product_qty, product_uom, company_id, values, po):
         res = super()._prepare_purchase_order_line_from_procurement(product_id, product_qty, product_uom, company_id, values, po)
         move_dest_ids = values.get('move_dest_ids', False)
