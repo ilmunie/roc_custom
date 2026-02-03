@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<odoo>
+        <record id="sale_alternative_product_assistant_wizard_view" model="ir.ui.view">
+            <field name="name">sale.alternative.product.assistant.wizard.view</field>
+            <field name="model">sale.alternative.product.assistant</field>
+            <field name="arch" type="xml">
+                <form>
+                <script>
+                    $(document).ready(function(){
+                        $(".modal-dialog").css({"min-width": "97%", "height": "97%"});
+                        $(".modal-content").css({"height": "100%"});
+                        $(".modal-body").css({"height": "100%"});
+                    });
+                </script>
+                    <div>
+                        <h3>Plantilla Presupuesto <field name="sale_template_id" readonly="1" force_save="1"/></h3>
+                    </div>
+                    <group>
+
+                        <group>
+                            <field name="sale_line_id" invisible="1"/>
+                            <field name="see_attributes" string="Ver atributos" attrs="{'invisible':[('see_attributes','=',True)]}"/>
+                            <field name="see_attributes" string="Ver productos" attrs="{'invisible':[('see_attributes','=',False)]}"/>
+                            <field name="only_available_products"/>
+                        </group>
+                        <group>
+                            <field name="match_attributes"/>
+                            <field name="attribute_value_domain" invisible="1"/>
+                            <field name="attribute_value_ids" widget="many2many_tags" domain="attribute_value_domain"
+                                   attrs="{'invisible':[('match_attributes','!=',True)]}"  options="{'no_create': True}"/>
+                            <field name="attribute_alt_value_domain" invisible="1"/>
+                            <field name="attribute_alt_value_ids" widget="many2many_tags" domain="attribute_alt_value_domain"
+                                   attrs="{'invisible':[('match_attributes','!=',True)]}"  options="{'no_create': True}"/>
+
+                            <field name="filter_by_template"/>
+                            <field name="prod_template_domain" invisible="1"/>
+                            <field name="product_template_ids" widget="many2many_tags" domain="prod_template_domain"
+                                   attrs="{'invisible':[('filter_by_template','!=',True)]}"  options="{'no_create': True}"/>
+                        </group>
+                        </group>
+                    <group>
+                        <field name="product_to_replace" readonly="1" force_save="1"/>
+                    </group>
+                    <group string="Productos Alternativos">
+                        <field name="show_line_ids" widget="one2many" nolabel="1" mode="tree">
+                            <tree editable="bottom" create="0">
+                                <field name="add_product"/>
+                                <field name="product_tmpl_id" attrs="{'column_invisible':[('parent.see_attributes','=',False)]}" />
+                                <field name="product_template_variant_value_ids" widget="many2many_tags" attrs="{'column_invisible':[('parent.see_attributes','=',False)]}"/>
+                                <field name="product_id" attrs="{'column_invisible':[('parent.see_attributes','=',True)]}"/>
+                                <field name="product_category"/>
+                                <field name="list_price"/>
+                                <field name="qty" />
+                                <field name="product_uom"/>
+                                <field name="location_available"/>
+                                <field name="qty_available_not_res"/>
+                                <field name="location_virtual_available"/>                            
+                                <field name="location_id" readonly="1" force_save="1"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <footer>
+                        <button name="replace_product" string="Reemplazar" type="object" class="btn-primary" data-hotkey="q"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+</odoo>

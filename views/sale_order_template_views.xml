@@ -8,11 +8,15 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='company_id']" position="after">
                 <field name="technical_job_template"/>
+                <field name="sale_template_tag_ids" widget="many2many_tags"/>
+                <field name="sale_attachment_id" widget="binary"/>
+                
             </xpath>
             <xpath expr="//field[@name='sale_order_template_line_ids']//tree[last()]//field[@name='product_uom_qty']" position="after">
                 <field name="technical_job_duration"
                                              attrs="{'column_invisible': [('parent.technical_job_template', '=', False)]}"/>
-
+                <field name="discount" widget="percentage"/>
+                <field name="alternative_product_domain" widget="domain" options="{'model': 'product.product', 'in_dialog': true}"/>          
             </xpath>
 
         </field>

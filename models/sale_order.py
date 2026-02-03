@@ -138,3 +138,4 @@ class SaleOrder(models.Model):
                 'view_mode': 'tree,form',
             })
         return action
+    

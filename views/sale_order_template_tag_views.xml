@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- TREE VIEW -->
+    <record id="view_sale_order_template_tag_tree" model="ir.ui.view">
+        <field name="name">sale.order.template.tag.tree</field>
+        <field name="model">sale.order.template.tag</field>
+        <field name="arch" type="xml">
+            <tree string="Etiquetas Plantillas de Venta">
+                <field name="name"/>
+                <field name="category"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- FORM VIEW -->
+    <record id="view_sale_order_template_tag_form" model="ir.ui.view">
+        <field name="name">sale.order.template.tag.form</field>
+        <field name="model">sale.order.template.tag</field>
+        <field name="arch" type="xml">
+            <form string="Etiqueta Plantilla de Venta">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="category"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_sale_order_template_tag" model="ir.actions.act_window">
+        <field name="name">Etiquetas Plantillas</field>
+        <field name="res_model">sale.order.template.tag</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- MENU ITEM -->
+    <menuitem
+        id="menu_sale_order_template_tag"
+        name="Etiquetas Plantillas Presupuesto"
+        parent="sale.menu_sale_config"
+        action="action_sale_order_template_tag"
+        sequence="10"
+    />
+
+</odoo>

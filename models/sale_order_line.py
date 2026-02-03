@@ -14,3 +14,5 @@ class SaleOrderLine(models.Model):
         for record in self:
             record.is_mto = False
 
+
+
