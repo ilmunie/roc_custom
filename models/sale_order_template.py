@@ -4,8 +4,9 @@ import json
 class SaleOrderTemplateTag(models.Model):
     _name = 'sale.order.template.tag'
 
+    sequence = fields.Integer()
     name = fields.Char()
-    category = fields.Selection(selection=[('pack_type', 'Tipo pack'),('component', 'Componente'), ('door_type', 'Tipo puerta')])
+    category = fields.Selection(selection=[('door_type', 'Tipo puerta'),('pack_type', 'Tipo pack'),('component', 'Componente') ])
 
 class SaleOrderTemplate(models.Model):
     _inherit = 'sale.order.template'
@@ -45,6 +46,11 @@ class SaleOrder(models.Model):
     @api.onchange('sale_order_template_id')
     def onchange_sale_order_template_id(self):
         res = super(SaleOrder, self).onchange_sale_order_template_id()
+        initial_sequence = max(self.order_line.mapped('sequence') or [0])
+        for line in self.order_line:
+            initial_sequence += 10
+            line.sequence = initial_sequence
+
         if self.sale_order_template_id.technical_job_template and any(line.technical_job_duration for line in self.sale_order_template_id.sale_order_template_line_ids):
             time_prod = self.sale_order_template_id.sale_order_template_line_ids.filtered(lambda x: x.technical_job_duration).mapped('product_id.id')
             lines_to_update = self.order_line.filtered(lambda x: x.product_id.id in time_prod)
@@ -70,8 +76,8 @@ class SaleOrder(models.Model):
 
     sale_template_tag_ids = fields.Many2many('sale.order.template.tag', string="Etiquetas plantilla")
     sale_template_domain = fields.Char(compute=compute_tag_domain)
-    sale_template_tag_selector = fields.Selection(selection=[('pack_type', 'Tipo pack'),('component', 'Componente'), ('door_type', 'Tipo puerta')])
-    
+    sale_template_tag_selector = fields.Selection(selection=[('door_type', 'Tipo puerta'),('pack_type', 'Tipo pack'),('component', 'Componente')], default='pack_type')
+
     @api.depends('sale_template_tag_selector')
     def compute_sale_template_tag_domain(self):
         for record in self:
@@ -99,21 +105,25 @@ class SaleOrderLine(models.Model):
     alternative_product_domain = fields.Char(compute=get_alternative_prod_domain, store=True)
 
     def open_alternative_products(self):
-        context = {
-                #'required_attr_name': self.raw_material_production_id.product_id.product_template_variant_value_ids.filtered(lambda x: x.attribute_id.id in self.bom_line_id.force_attributes_value_ids.mapped('id')).mapped('name') or [],
-                #'required_attr_ids': self.raw_material_production_id.product_id.product_template_variant_value_ids.filtered(lambda x: x.attribute_id.id in self.bom_line_id.force_attributes_value_ids.mapped('id')).mapped('id') or [],
-                'sale_template_id': self.order_id.sale_order_template_id.id,
-                'domain': self.alternative_product_domain,
-                'sale_line_id': self.id,
-                'qty': self.product_uom_qty,
-                'location': self.order_id.warehouse_id.lot_stock_id.id,
-                #'attr_values': self.raw_material_production_id.product_id.product_template_variant_value_ids.mapped('id'),
-        }
+        self.ensure_one()
+
+        domain = self.alternative_product_domain
+        location = self.order_id.warehouse_id.lot_stock_id.id
+        qty = self.product_uom_qty
+
+        wiz = self.env['sale.alternative.product.assistant'].create_wizard_from_sale_line(
+            sale_line=self,
+            domain=domain,
+            location=location,
+            qty=qty,
+        )
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'sale.alternative.product.assistant',
-            'context': context,
+            'res_id': wiz.id,
             'view_mode': 'form',
             'views': [(self.env.ref('roc_custom.sale_alternative_product_assistant_wizard_view').id, 'form')],
             'target': 'new',
         }
+    

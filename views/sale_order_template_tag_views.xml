@@ -7,8 +7,15 @@
         <field name="model">sale.order.template.tag</field>
         <field name="arch" type="xml">
             <tree string="Etiquetas Plantillas de Venta">
+                <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="category"/>
+                <!--
+                <field name="extra_line" />
+                <field name="product_id" attrs="{'invisible': [('extra_line','!=',True)]}"/>
+                <field name="price_type" attrs="{'invisible': [('extra_line','!=',True)]}"/>
+                <field name="price_value" attrs="{'invisible': ['|',('price_type','=','lst_price'),('extra_line','!=',True)]}"/>
+           -->
             </tree>
         </field>
     </record>
@@ -21,9 +28,20 @@
             <form string="Etiqueta Plantilla de Venta">
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="category"/>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="name"/>
+                            <field name="category"/>
+                        </group>
+                        <!--
+                        <group>
+                            <field name="extra_line" />
+                            <field name="product_id" attrs="{'invisible': [('extra_line','!=',True)]}"/>
+                            <field name="price_type" attrs="{'invisible': [('extra_line','!=',True)]}"/>
+                            <field name="price_value" attrs="{'invisible': ['|',('price_type','=','lst_price'),('extra_line','!=',True)]}"/>
+                        </group>-->
                     </group>
+
                 </sheet>
             </form>
         </field>

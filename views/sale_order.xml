@@ -45,7 +45,8 @@
                 <field name="sale_template_line_id" invisible="1"/>
 
                 <field name="alternative_product_domain" invisible="1"/>
-                <button name="open_alternative_products" icon="fa-edit" type="object" attrs="{'invisible':['|',('sale_template_line_id','=',False),('alternative_product_domain','=',False)]}"/>
+                <button name="open_alternative_products" icon="fa-exchange" type="object" attrs="{'invisible':['|',('sale_template_line_id','=',False),('alternative_product_domain','=',False)]}"/>
+            
             </xpath>
                 <xpath expr="//field[@name='qty_delivered']" position="attributes">
                     <attribute name="optional">show</attribute>
@@ -85,17 +86,29 @@
                     <button name="%(action_sale_purchase_order_wizard)d" type="action" string="Nueva compra" class="btn-primary" attrs="{'invisible':[('state','in',['done','cancel'])]}"/>
                     <button name="create_new_ticket" type="object" string="Nuevo ticket" class="btn-primary" />
                 </xpath>
-                <xpath expr="//field[@name='sale_order_template_id']" position="attributes">
-                    <attribute name="domain">sale_template_domain</attribute>
-                </xpath>
-
-                <xpath expr="//field[@name='sale_order_template_id']" position="before">
+                <xpath expr="//field[@name='sale_order_template_id']" position="after">
                     <field name="journal_id"/>
-                    <field name="sale_template_tag_ids" domain="sale_template_tag_domain" widget="many2many_tags" options="{'no_create': True}"/>
-                    <field name="sale_template_domain" invisible="1"/>
-                    <field name="sale_template_tag_domain" invisible="1"/>
-
                 </xpath>
+                <xpath expr="//field[@name='sale_order_template_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <xpath expr="//group[@name='sale_header']" position="after">
+                    <group string="Asistente de presupuesto">                
+                        <field name="sale_template_tag_selector" attrs="{'invisible': [('state', '=', 'sale')]}" widget="statusbar" options="{'clickable': '1'}" nolabel="1" />
+                    </group>
+                    <group>
+                        <group attrs="{'invisible':[('sale_template_tag_selector','=', False)]}">
+                            <field name="sale_template_tag_ids" attrs="{'invisible': [('state', '=', 'sale')]}" domain="sale_template_tag_domain" widget="many2many_tags" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field string="Plantilla" name="sale_order_template_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="sale_template_domain" options="{'no_create': 1}"/>
+                        </group>
+                        <field name="sale_template_domain" invisible="1"/>
+                        <field name="sale_template_tag_domain" invisible="1"/>
+                    </group>
+                </xpath>
+
                 <xpath expr="//field[@name='order_line']" position="after">
                     <field name="delivery_status" widget="statusbar"/>
                     <field name="invoice_status" widget="statusbar"/>
@@ -116,7 +129,6 @@
                 <field name="opportunity_id" attrs="{'invisible': [('opportunity_id','=', False)]}"/>
                 <field name="warehouse_id" options="{'no_create': True, 'no_create_and_edit': True}"/>
                 <field name="door_location"/>
-                <field name="sale_template_tag_selector" widget="radio" nolabel="1"/>
             </field>
 
                 <xpath expr="//button[@name='action_view_purchase_orders']" position="attributes">
