@@ -346,37 +346,158 @@ class TechnicalJobAssistant(models.Model):
     responsible_user_id = fields.Many2one(related='config_id.responsible_user_id', store=True, string="Usuario Responsable")
 
     def start_assistant(self):
-        self.env['technical.job.assistant'].search([('create_uid','=', self.env.user.id)]).unlink()
-        configs = self.env['technical.job.assistant.config'].search([('id', '!=', 0)])
-        recs_to_create = []
+        cr = self.env.cr
+        uid = self.env.user.id
         user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
-        for config in configs:
-            domain_to_check = eval(config.domain_condition) if config.domain_condition else []
-            matching_records = self.env[config.model_id.model].search(domain_to_check)
-            recs_to_create.extend([{'res_model': rec._name, 'res_id': rec.id, 'config_id': config.id} for rec in matching_records])
-        self.env['technical.job.assistant'].create(recs_to_create)
+
+        # 1) Bulk delete existing assistant records for this user via raw SQL
+        #    Clean m2m relation tables dynamically, then the main table
+        Assistant = self.env['technical.job.assistant']
+        m2m_fields = [
+            'technical_job_tag_ids', 'show_technical_schedule_job_ids',
+            'job_categ_ids', 'next_job_vehicle_ids', 'next_job_employee_ids',
+        ]
+        for fname in m2m_fields:
+            field = Assistant._fields[fname]
+            rel_table = field.relation
+            col1 = field.column1
+            cr.execute("""
+                DELETE FROM "{rel}" WHERE "{col}" IN (
+                    SELECT id FROM technical_job_assistant WHERE create_uid = %s
+                )
+            """.format(rel=rel_table, col=col1), (uid,))
+        # Also clean the quick resolve wizard m2m
+        cr.execute("""
+            DELETE FROM tj_quick_resolve_line_ids_rel
+            WHERE line_id IN (
+                SELECT id FROM technical_job_assistant WHERE create_uid = %s
+            )
+        """, (uid,))
+        cr.execute("DELETE FROM technical_job_assistant WHERE create_uid = %s", (uid,))
+
+        # 2) Fetch all configs
+        cr.execute("""
+            SELECT c.id, c.domain_condition, m.model
+            FROM technical_job_assistant_config c
+            JOIN ir_model m ON m.id = c.model_id
+        """)
+        configs = cr.fetchall()
+
+        # 3) For each config, resolve the domain to SQL and bulk insert
+        now = fields.Datetime.now()
+        for config_id, domain_condition, model_name in configs:
+            domain_to_check = eval(domain_condition) if domain_condition else []
+            Model = self.env[model_name]
+            query = Model._where_calc(domain_to_check)
+            from_clause, where_clause, where_params = query.get_sql()
+            if not where_clause:
+                where_clause = 'TRUE'
+            # Insert matching records directly into the assistant table
+            cr.execute("""
+                INSERT INTO technical_job_assistant
+                    (res_model, res_id, config_id, create_uid, write_uid, create_date, write_date)
+                SELECT
+                    %s, "{table}".id, %s, %s, %s, %s, %s
+                FROM {from_clause}
+                WHERE {where_clause}
+            """.format(
+                table=Model._table,
+                from_clause=from_clause,
+                where_clause=where_clause,
+            ), [model_name, config_id, uid, uid, now, now] + list(where_params))
+
+        new_records = self.env['technical.job.assistant'].search([('create_uid', '=', uid)])
+        new_records.related_rec_fields()
+        tree_view_id = self.env.ref('roc_custom.technical_job_assistant_tree_view').id
         return {
             'name': "Planificación de Operaciones",
             'res_model': 'technical.job.assistant',
             'type': 'ir.actions.act_window',
             'context': {
-                    #'search_default_assigned_to_me': 1 if user_type == 'planner' else 0,
-                    #'search_default_myjobs': 1 if user_type == 'user' else 0,
                     'search_default_week_action_group': 1,
                     'search_default_configuration': 1,
                 },
-            'domain': [('create_uid', '=', self.env.user.id)],
-            'views': [(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree'),(False,'kanban')] if user_type=='planner' else [(False,'kanban'),(self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')] ,
+            'domain': [('create_uid', '=', uid)],
+            'views': [(tree_view_id, 'tree'), (False, 'kanban')] if user_type == 'planner' else [(False, 'kanban'), (tree_view_id, 'tree')],
         }
+    
 
     res_model = fields.Char(string="Modelo")
     res_id = fields.Integer(string="ID")
 
 
-    @api.depends('res_model','res_id')
     def related_rec_fields(self):
+
+        from collections import defaultdict
+
+        # --- Phase 1: Group assistant records by res_model ---
+        model_groups = defaultdict(list)  # {model_name: [assistant_record, ...]}
         for record in self:
-            show_technical_schedule_job_ids = []
+            if record.res_model and record.res_id:
+                model_groups[record.res_model].append(record)
+            else:
+                model_groups[False].append(record)
+
+        # --- Phase 2: Batch-prefetch source records per model (1 query per model) ---
+        real_recs_map = {}  # {(model_name, res_id): recordset}
+        for model_name, records in model_groups.items():
+            if not model_name:
+                continue
+            all_ids = [r.res_id for r in records]
+            all_real = self.env[model_name].browse(all_ids).exists()
+            # Force prefetch of key fields in a single query
+            if all_real:
+                prefetch_fields = ['display_name', 'technical_job_tag_ids', 'reminder_date',
+                                   'reminder_user_id', 'estimated_visit_revenue', 'job_duration',
+                                   'visit_payment_type', 'visit_priority', 'job_categ_ids',
+                                   'technical_job_count']
+                valid_fields = [f for f in prefetch_fields if f in self.env[model_name]._fields]
+                if model_name != 'technical.job.schedule':
+                    for extra in ['next_active_job_id', 'address_label', 'visit_internal_notes',
+                                  'show_technical_schedule_job_ids']:
+                        if extra in self.env[model_name]._fields:
+                            valid_fields.append(extra)
+                else:
+                    for extra in ['internal_notes', 'job_status', 'date_schedule']:
+                        if extra in self.env[model_name]._fields:
+                            valid_fields.append(extra)
+                all_real.read(valid_fields)
+                for rec in all_real:
+                    real_recs_map[(model_name, rec.id)] = rec
+
+        # --- Phase 3: Pre-fetch technical.job for schedule records (1 query) ---
+        schedule_res_ids = [r.res_id for r in model_groups.get('technical.job.schedule', [])]
+        tj_by_schedule = {}
+        if schedule_res_ids:
+            tech_jobs = self.env['technical.job'].search([('schedule_id', 'in', schedule_res_ids)])
+            if tech_jobs:
+                tech_jobs.read(['schedule_id'])
+                for tj in tech_jobs:
+                    tj_by_schedule.setdefault(tj.schedule_id.id, tj)
+
+        # --- Phase 4: Pre-fetch partner phones for non-schedule models (batch) ---
+        partner_ids_to_fetch = set()
+        for model_name, records in model_groups.items():
+            if not model_name or model_name == 'technical.job.schedule':
+                continue
+            Model = self.env[model_name]
+            if 'partner_id' in Model._fields:
+                for rec in records:
+                    real_rec = real_recs_map.get((model_name, rec.res_id))
+                    if real_rec and real_rec.partner_id:
+                        partner_ids_to_fetch.add(real_rec.partner_id.id)
+        if partner_ids_to_fetch:
+            partners = self.env['res.partner'].browse(list(partner_ids_to_fetch))
+            partners.read(['phone', 'mobile', 'child_ids'])
+            child_ids = set()
+            for p in partners:
+                child_ids.update(p.child_ids.ids)
+            if child_ids:
+                self.env['res.partner'].browse(list(child_ids)).read(['phone', 'mobile'])
+
+        # --- Phase 5: Process all records using prefetched data ---
+        for record in self:
+            show_technical_schedule_job_ids = False
             html = ""
             address = ""
             phones = []
@@ -394,58 +515,60 @@ class TechnicalJobAssistant(models.Model):
             job_categ_ids = [(5,)]
             reminder_date = False
             reminder_user_id = False
-            if record.res_model and record.res_id:
-                real_rec = self.env[record.res_model].browse(record.res_id)
-                if real_rec and real_rec.exists():
-                    tag_ids = [(6, 0, real_rec.technical_job_tag_ids.mapped('id'))]
-                    reminder_date = real_rec.reminder_date if real_rec else False
-                    reminder_user_id = real_rec.reminder_user_id.id if real_rec.reminder_user_id else False
-                    html_data_src_doc = real_rec.get_job_data()
-                    technical_job_count = real_rec.technical_job_count
-                    show_technical_schedule_job_ids = [(6,0,real_rec.show_technical_schedule_job_ids.mapped('id'))] if record.res_model != 'technical.job.schedule' else False
-                    date_field_value = real_rec[record.config_id.date_field_id.name]
+
+            real_rec = real_recs_map.get((record.res_model, record.res_id))
+            if real_rec:
+                tag_ids = [(6, 0, real_rec.technical_job_tag_ids.ids)]
+                reminder_date = real_rec.reminder_date
+                reminder_user_id = real_rec.reminder_user_id.id if real_rec.reminder_user_id else False
+                html_data_src_doc = real_rec.get_job_data()
+                technical_job_count = real_rec.technical_job_count
+                show_technical_schedule_job_ids = [(6, 0, real_rec.show_technical_schedule_job_ids.ids)] if record.res_model != 'technical.job.schedule' else False
+                date_field_name = record.config_id.date_field_id.name
+                if date_field_name:
+                    date_field_value = real_rec[date_field_name]
                     if date_field_value:
                         date_field_value = date_field_value + timedelta(days=1)
-                    estimated_visit_revenue = real_rec.estimated_visit_revenue
-                    job_duration = real_rec.job_duration
-                    if record.res_model != 'technical.job.schedule':
-                        next_job = real_rec.next_active_job_id
-                        address = real_rec.address_label
-                        if 'partner_id' in real_rec._fields.keys() and real_rec.partner_id:
-                            if  real_rec.partner_id.phone:
-                                phones.append(real_rec.partner_id.phone)
-                            if real_rec.partner_id.mobile:
-                                phones.append(real_rec.partner_id.mobile)
-                            if real_rec.partner_id.child_ids:
-                                for part in real_rec.partner_id.child_ids:
-                                    if part.phone:
-                                        phones.append(part.phone)
-                                    if part.mobile:
-                                        phones.append(part.mobile)
-                        if 'phone' in real_rec._fields.keys() and real_rec.phone:
-                            phones.append(real_rec.phone)
-                        if 'mobile' in real_rec._fields.keys() and real_rec.mobile:
-                            phones.append(real_rec.mobile)
-                    else:
-                        next_job = real_rec
-                    internal_notes = real_rec.visit_internal_notes if record.res_model != 'technical.job.schedule' else next_job.internal_notes
-                    internal_notes_html = internal_notes.replace("\n","<br/>") if internal_notes else ""
-                    visit_payment_type = real_rec.visit_payment_type if record.res_model != 'technical.job.schedule' else next_job.visit_payment_type
-                    visit_priority = real_rec.visit_priority if record.res_model != 'technical.job.schedule' else next_job.visit_priority
-                    if record.res_model != 'technical.job.schedule':
-                        job_categ_ids = [(6, 0, real_rec.job_categ_ids.mapped('id'))]
-                    else:
-                        job_categ_ids = [(6, 0, next_job.job_categ_ids.mapped('id'))]
-                    html += "<table style='border-collapse: collapse; border: none;'>"
-                    if record.res_model == 'technical.job.schedule':
-                        jobs_found = self.env['technical.job'].search([('schedule_id', '=', record.res_id)])
-                        html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(
-                        jobs_found[0].id if jobs_found else record.res_id,
-                          'technical.job' if jobs_found else record.res_model)
-                    else:
-                        html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(
-                        record.res_id, record.res_model)
-                    html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
+                estimated_visit_revenue = real_rec.estimated_visit_revenue
+                job_duration = real_rec.job_duration
+
+                is_schedule = record.res_model == 'technical.job.schedule'
+                if not is_schedule:
+                    next_job = real_rec.next_active_job_id
+                    address = real_rec.address_label
+                    if 'partner_id' in real_rec._fields and real_rec.partner_id:
+                        partner = real_rec.partner_id
+                        if partner.phone:
+                            phones.append(partner.phone)
+                        if partner.mobile:
+                            phones.append(partner.mobile)
+                        for part in partner.child_ids:
+                            if part.phone:
+                                phones.append(part.phone)
+                            if part.mobile:
+                                phones.append(part.mobile)
+                    if 'phone' in real_rec._fields and real_rec.phone:
+                        phones.append(real_rec.phone)
+                    if 'mobile' in real_rec._fields and real_rec.mobile:
+                        phones.append(real_rec.mobile)
+                else:
+                    next_job = real_rec
+
+                internal_notes = real_rec.visit_internal_notes if not is_schedule else next_job.internal_notes
+                internal_notes_html = internal_notes.replace("\n", "<br/>") if internal_notes else ""
+                visit_payment_type = real_rec.visit_payment_type if not is_schedule else next_job.visit_payment_type
+                visit_priority = real_rec.visit_priority if not is_schedule else next_job.visit_priority
+                job_categ_ids = [(6, 0, (real_rec if not is_schedule else next_job).job_categ_ids.ids)]
+
+                html = "<table style='border-collapse: collapse; border: none;'>"
+                if is_schedule:
+                    tj = tj_by_schedule.get(record.res_id)
+                    link_id = tj.id if tj else record.res_id
+                    link_model = 'technical.job' if tj else record.res_model
+                    html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(link_id, link_model)
+                else:
+                    html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(record.res_id, record.res_model)
+                html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
 
             record.internal_notes_html = internal_notes_html
             record.estimated_visit_revenue = estimated_visit_revenue
