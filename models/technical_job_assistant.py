@@ -65,53 +65,53 @@ class TechnicalJobAssistant(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        if self.res_id and self.res_model:
-            if self.res_model == 'technical.job.schedule':
-                matched_jobs = self.env['technical.job'].search([('schedule_id', '=', self.res_id)])
-                if matched_jobs:
-                    real_rec = matched_jobs[0]
-                else:
-                    real_rec = self.env[self.res_model].browse(self.res_id)
-
+        if self.env.context.get('_skip_assistant_sync'):
+            return res
+        # Sync changed fields to the source record in a single write
+        sync_scalar = {
+            'reminder_date': 'reminder_date',
+            'reminder_user_id': 'reminder_user_id',
+            'visit_priority': 'visit_priority',
+            'job_duration': 'job_duration',
+            'estimated_visit_revenue': 'estimated_visit_revenue',
+        }
+        sync_m2m = {
+            'job_employee_ids': 'job_employee_ids',
+            'job_vehicle_ids': 'job_vehicle_ids',
+            'technical_job_tag_ids': 'technical_job_tag_ids',
+            'job_categ_ids': 'job_categ_ids',
+        }
+        changed_scalar = {k for k in sync_scalar if k in vals}
+        changed_m2m = {k for k in sync_m2m if k in vals}
+        has_notes = 'internal_notes' in vals
+        if not (changed_scalar or changed_m2m or has_notes):
+            return res
+        for record in self:
+            if not (record.res_id and record.res_model):
+                continue
+            is_schedule = record.res_model == 'technical.job.schedule'
+            if is_schedule:
+                matched_jobs = self.env['technical.job'].search([('schedule_id', '=', record.res_id)], limit=1)
+                real_rec = matched_jobs or self.env[record.res_model].browse(record.res_id)
             else:
-                real_rec = self.env[self.res_model].browse(self.res_id)
-            if real_rec:
-                if 'internal_notes' in vals:
-                    if self.res_model == 'technical.job.schedule':
-                        if real_rec.internal_notes != self.internal_notes:
-                            real_rec.internal_notes = self.internal_notes
-                    else:
-                        if real_rec.visit_internal_notes != self.internal_notes:
-                            real_rec.visit_internal_notes = self.internal_notes
-                if 'job_employee_ids' in vals:
-                    if real_rec.job_employee_ids.mapped('id') != self.job_employee_ids.mapped('id'):
-                        real_rec.job_employee_ids = vals.get('job_employee_ids', [(5,)])
-                if 'job_vehicle_ids' in vals:
-                    if real_rec.job_vehicle_ids.mapped('id') != self.job_vehicle_ids.mapped('id'):
-                        real_rec.job_vehicle_ids = vals.get('job_vehicle_ids', [(5,)])
-                if 'technical_job_tag_ids' in vals:
-                    if real_rec.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
-                        real_rec.technical_job_tag_ids = vals.get('technical_job_tag_ids', [(5,)])
-                if 'reminder_date' in vals:
-                    if real_rec.reminder_date != self.reminder_date:
-                        real_rec.reminder_date = vals.get('reminder_date', False)
-                if 'reminder_user_id' in vals:
-                    rec_user = real_rec.reminder_user_id.id if real_rec.reminder_user_id else False
-                    assistant_user = vals.get('reminder_user_id', False)
-                    if rec_user != assistant_user:
-                        real_rec.reminder_user_id = vals.get('reminder_user_id', False)
-                if 'visit_priority' in vals:
-                    if real_rec.visit_priority != self.visit_priority:
-                        real_rec.visit_priority = vals.get('visit_priority', False)
-                if 'job_duration' in vals:
-                    if real_rec.job_duration != self.job_duration:
-                        real_rec.job_duration = vals.get('job_duration', False)
-                if 'estimated_visit_revenue' in vals:
-                    if real_rec.estimated_visit_revenue != self.estimated_visit_revenue:
-                        real_rec.estimated_visit_revenue = vals.get('estimated_visit_revenue', False)
-                if 'job_categ_ids' in vals:
-                    if real_rec.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
-                        real_rec.job_categ_ids = vals.get('job_categ_ids', [(5,)])
+                real_rec = self.env[record.res_model].browse(record.res_id)
+            if not real_rec:
+                continue
+            # Build a single vals dict for the source record
+            write_vals = {}
+            for assistant_field in changed_scalar:
+                src_field = sync_scalar[assistant_field]
+                write_vals[src_field] = vals.get(assistant_field, False)
+            for assistant_field in changed_m2m:
+                src_field = sync_m2m[assistant_field]
+                if real_rec[src_field].ids != record[assistant_field].ids:
+                    write_vals[src_field] = vals.get(assistant_field, [(5,)])
+            if has_notes:
+                notes_field = 'internal_notes' if is_schedule else 'visit_internal_notes'
+                if real_rec[notes_field] != record.internal_notes:
+                    write_vals[notes_field] = record.internal_notes
+            if write_vals:
+                real_rec.write(write_vals)
         return res
 
     def open_form_partner(self):
@@ -156,26 +156,30 @@ class TechnicalJobAssistant(models.Model):
 
     @api.depends('html_data_src_doc', 'next_active_job_id', 'next_active_job_date', 'technical_job_tag_ids')
     def _compute_week_action_group(self):
-        """
-            -->  Urgente (no coordinado y marcado como urgente por comercial/coordinador)
-            -->  Esperando confirmacion (no coordinado con info de disponibilidad cliente agregada por por comercial/coordinador)
-            -->  Recoordinar/Aplazado (coordinaciones de semanas anteriores y trabajos marcados por tecnico en stand-by)
-            -->  Sin coordinar (sin data de disponibilidad del cliente y sin coordinar)
-            -->  Coordinado esta semana (con trabajos que vencen en la semana en curso puede contener cosas que vencieron ayer siempre y cuando sean de la misma semana)
-            -->  Coordinado en x semanas (trabajos coordinados para el futuro 2 semanas #2+ Semanas)
-        """
+        if not self:
+            return
+        # Pre-compute date constants once
+        today = datetime.date.today()
+        start_of_week_today = today - timedelta(days=today.weekday())
+        # Prefetch all tags in one query
+        all_tag_ids = set()
+        for record in self:
+            all_tag_ids.update(record.technical_job_tag_ids.ids)
+        if all_tag_ids:
+            self.env['technical.job.tag'].browse(list(all_tag_ids)).read(['name', 'category_in_job_assistant'])
+
         for record in self:
             res = ''
-            categ_tag_list_name = record.technical_job_tag_ids.filtered(lambda x: x.category_in_job_assistant).sorted(key=lambda tag: tag.name).mapped('name')
-            if categ_tag_list_name:
-                    res = f"3.{','.join(categ_tag_list_name)}"
+            categ_tags = record.technical_job_tag_ids.filtered(lambda x: x.category_in_job_assistant)
+            if categ_tags:
+                categ_names = sorted(categ_tags.mapped('name'))
+                res = f"3.{','.join(categ_names)}"
             elif record.res_model == 'technical.job.schedule':
-                date_to_use = record.next_active_job_id.date_schedule.date() if record.next_active_job_id else datetime.date.today()
-                today = datetime.date.today()
+                date_to_use = record.next_active_job_id.date_schedule.date() if record.next_active_job_id else today
                 if date_to_use < today:
-                    res = f"6. Recoordinar (Vencidos)"
+                    res = "6. Recoordinar (Vencidos)"
                 else:
-                    res = f"4. Coordinado (Esta semana)"
+                    res = "4. Coordinado (Esta semana)"
             elif not record.next_active_job_id:
                 if record.html_data_src_doc and "Urgente" in record.html_data_src_doc:
                     res = "1. Urgente"
@@ -183,31 +187,30 @@ class TechnicalJobAssistant(models.Model):
                     res = "2. No coordinado (A analizar)"
             else:
                 if record.job_status == 'stand_by':
-                    res = f"5. Aplazado (Stand-by)"
+                    res = "5. Aplazado (Stand-by)"
                 else:
                     date_to_use = record.next_active_job_date
-                    input_date = date_to_use
                     if date_to_use:
-                        if isinstance(date_to_use, str):
-                            input_date = datetime.datetime.strptime(date_to_use, '%Y-%m-%d').date()
-                        elif isinstance(date_to_use, datetime.datetime):
+                        if isinstance(date_to_use, datetime.datetime):
                             input_date = date_to_use.date()
-                        elif not isinstance(date_to_use, datetime.date):
-                            raise ValueError(
-                                "The input_date must be a date object, datetime object, or a string in 'YYYY-MM-DD' format")
-                        today = datetime.date.today()
-                        if input_date < today:
-                            res = f"6. Recoordinar (Vencidos)"
+                        elif isinstance(date_to_use, str):
+                            input_date = datetime.datetime.strptime(date_to_use, '%Y-%m-%d').date()
                         else:
-                            week_diff = self.weeks_difference(date_to_use)
+                            input_date = date_to_use
+                        if input_date < today:
+                            res = "6. Recoordinar (Vencidos)"
+                        else:
+                            # Inline weeks_difference to avoid repeated method calls
+                            start_of_week_input = input_date - timedelta(days=input_date.weekday())
+                            week_diff = (start_of_week_input - start_of_week_today).days // 7
                             if week_diff == 0:
                                 res = "4. Coordinado (Esta semana)"
                             elif week_diff <= -1:
-                                res = f"6. Recoordinar (Vencidos)"
+                                res = "6. Recoordinar (Vencidos)"
                             elif week_diff < 2:
-                                res = f"4. Coordinado (Semana que viene)"
+                                res = "4. Coordinado (Semana que viene)"
                             else:
-                                res = f"7. Coordinado +1 Semanas"
+                                res = "7. Coordinado +1 Semanas"
             record.week_action_group = res
 
     week_action_group = fields.Char(string='Week Action Group', compute='_compute_week_action_group', store=True)
@@ -427,6 +430,7 @@ class TechnicalJobAssistant(models.Model):
 
 
     def related_rec_fields(self):
+        self = self.with_context(_skip_assistant_sync=True)
 
         from collections import defaultdict
 
@@ -647,38 +651,77 @@ class TechnicalJobAssistant(models.Model):
 
     @api.depends('next_active_job_id', 'next_active_job_id.job_vehicle_ids', 'next_active_job_id.job_employee_ids')
     def compute_related_resources(self):
+        if not self:
+            return
+        # Batch prefetch all next_active_job_id records and their m2m fields
+        job_ids = self.mapped('next_active_job_id').ids
+        if job_ids:
+            self.env['technical.job.schedule'].browse(job_ids).read(['job_vehicle_ids', 'job_employee_ids'])
         for record in self:
-            record.next_job_vehicle_ids = [(6,0,record.next_active_job_id.job_vehicle_ids.mapped('id'))] if record.next_active_job_id else False
-            record.next_job_employee_ids = [(6,0,record.next_active_job_id.job_employee_ids.mapped('id'))] if record.next_active_job_id else False
+            if record.next_active_job_id:
+                record.next_job_vehicle_ids = [(6, 0, record.next_active_job_id.job_vehicle_ids.ids)]
+                record.next_job_employee_ids = [(6, 0, record.next_active_job_id.job_employee_ids.ids)]
+            else:
+                record.next_job_vehicle_ids = False
+                record.next_job_employee_ids = False
     next_job_vehicle_ids = fields.Many2many('fleet.vehicle', compute=compute_related_resources, store=True, string="Vehículo")
     next_job_employee_ids = fields.Many2many('hr.employee', compute=compute_related_resources, store=True, string="Personal visita")
 
     @api.depends('next_active_job_id')
     def compute_assistant_status(self):
+        if not self:
+            return
+        from collections import defaultdict
+
+        # Group records by res_model for batch prefetch
+        model_groups = defaultdict(list)
+        for record in self:
+            if record.res_model and record.res_id:
+                model_groups[record.res_model].append(record)
+
+        # Batch browse + prefetch source records per model
+        real_recs_map = {}
+        for model_name, records in model_groups.items():
+            all_ids = list({r.res_id for r in records})
+            all_real = self.env[model_name].browse(all_ids)
+            Model = self.env[model_name]
+            prefetch_fields = []
+            for f in ['job_status', 'show_technical_schedule_job_ids', 'customer_availability_type']:
+                if f in Model._fields:
+                    prefetch_fields.append(f)
+            all_real.read(prefetch_fields)
+            for rec in all_real:
+                real_recs_map[(model_name, rec.id)] = rec
+
+        # Prefetch next_active_job_id records (job_type_id, job_status)
+        next_job_ids = self.mapped('next_active_job_id').ids
+        if next_job_ids:
+            self.env['technical.job.schedule'].browse(next_job_ids).read(['job_type_id', 'job_status', 'date_schedule'])
+
+        # Prefetch config technical_job_type_id
+        self.mapped('config_id').read(['technical_job_type_id'])
+
         for record in self:
             job_status = 'no_job'
-            next_job = False
-            if record.res_model and record.res_id:
-                real_rec = self.env[record.res_model].browse(record.res_id)
-                if real_rec:
-                    next_job = record.next_active_job_id if record.res_model != 'technical.job.schedule' else real_rec
-                    technical_job = record.config_id.technical_job_type_id.id if record.config_id and record.config_id.technical_job_type_id else False
-                    if record.res_model == 'technical.job.schedule':
+            real_rec = real_recs_map.get((record.res_model, record.res_id))
+            if real_rec:
+                is_schedule = record.res_model == 'technical.job.schedule'
+                next_job = real_rec if is_schedule else record.next_active_job_id
+                technical_job = record.config_id.technical_job_type_id.id if record.config_id and record.config_id.technical_job_type_id else False
+                if is_schedule:
+                    job_status = real_rec.job_status
+                elif technical_job:
+                    if record.res_model == 'crm.lead' and \
+                            not real_rec.show_technical_schedule_job_ids and \
+                            real_rec.customer_availability_type in ('hour_range', 'week_availability', 'urgent'):
+                        job_status = 'waiting_job'
+                    elif next_job and next_job.job_type_id and next_job.job_type_id.id == technical_job:
                         job_status = next_job.job_status
-                    elif technical_job:
-                        if record.res_id and record.res_model == 'crm.lead' and \
-                                not real_rec.show_technical_schedule_job_ids and \
-                                real_rec.customer_availability_type in ('hour_range', 'week_availability', 'urgent'):
-                            job_status = 'waiting_job'
-                        elif next_job and next_job.job_type_id and next_job.job_type_id.id == technical_job:
-                            job_status = next_job.job_status
-                        else:
-                            jobs = real_rec.show_technical_schedule_job_ids.filtered(lambda
-                                                                                         x: x.job_type_id and x.job_type_id.id == technical_job and x.job_status != 'cancel' and x.job_status != 'done')
-                            if jobs:
-                                job_status = sorted(jobs, key=lambda r: r.date_schedule, reverse=True)[0].job_status
-                        if record.res_model == 'technical.job.schedule':
-                            job_status = next_job.job_status
+                    else:
+                        jobs = real_rec.show_technical_schedule_job_ids.filtered(
+                            lambda x: x.job_type_id and x.job_type_id.id == technical_job and x.job_status not in ('cancel', 'done'))
+                        if jobs:
+                            job_status = max(jobs, key=lambda r: r.date_schedule).job_status
 
             record.job_status = job_status
 
