@@ -32,13 +32,6 @@
                 <br/><br/>
                 <field name="todo_description" string="A realizar" nolabel="1" attrs="{'invisible': [('content_type', '!=', 'Descripcion Inicial')], 'required': [('content_type', '=', 'Descripcion Inicial')] }"/>
                 <br/>
-                <strong attrs="{'invisible': ['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'yes')]}"><span>¿NECESITA PRESUPUESTO?</span></strong><br/>
-                <field name="needs_quotation" widget="statusbar" options="{'clickable':1}" attrs="{'invisible':['|',('content_type', '!=', 'Finalizacion trabajo'), ('pending_jobs', '=', 'yes')]}" />
-                <br/>
-                <div class="alert alert-warning mb-0" role="alert" attrs="{'invisible': ['|','|', ('pending_jobs', '=', 'yes'),('content_type', '!=', 'Finalizacion trabajo'), ('needs_quotation', '!=', 'yes')]}">
-                    <span>Al continuar notifica a la oficina para realizar el nuevo presupuesto</span>
-                </div>
-                <br/>
                 <strong attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}"><span>¿NECESITA FACTURACION?</span></strong><br/>
                 <field name="needs_billing" widget="statusbar" options="{'clickable':1}" attrs="{'invisible': [('content_type', '!=', 'Finalizacion trabajo')]}" />
                 <br/>

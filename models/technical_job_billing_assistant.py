@@ -1,5 +1,3 @@
-import pdb
-
 from odoo import fields, models, api
 import json
 from odoo.exceptions import UserError, ValidationError
