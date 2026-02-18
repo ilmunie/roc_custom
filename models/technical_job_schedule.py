@@ -86,41 +86,43 @@ class TechnicalJobSchedule(models.Model):
         res = super().write(vals)
         if self.res_id and self.res_model:
             real_rec = self.env[self.res_model].browse(self.res_id)
+            sync_vals = {}
             if 'job_employee_ids' in vals:
-                if real_rec.job_employee_ids.mapped('id') != self.job_employee_ids.mapped('id'):
-                    real_rec.job_employee_ids = vals.get('job_employee_ids', [(5,)])
+                if real_rec.job_employee_ids.ids != self.job_employee_ids.ids:
+                    sync_vals['job_employee_ids'] = vals.get('job_employee_ids', [(5,)])
             if 'job_vehicle_ids' in vals:
-                if real_rec.job_vehicle_ids.mapped('id') != self.job_vehicle_ids.mapped('id'):
-                    real_rec.job_vehicle_ids = vals.get('job_vehicle_ids', [(5,)])
+                if real_rec.job_vehicle_ids.ids != self.job_vehicle_ids.ids:
+                    sync_vals['job_vehicle_ids'] = vals.get('job_vehicle_ids', [(5,)])
             if 'technical_job_tag_ids' in vals:
-                if real_rec.technical_job_tag_ids.mapped('id') != self.technical_job_tag_ids.mapped('id'):
-                    real_rec.technical_job_tag_ids = vals.get('technical_job_tag_ids', [(5,)])
+                if real_rec.technical_job_tag_ids.ids != self.technical_job_tag_ids.ids:
+                    sync_vals['technical_job_tag_ids'] = vals.get('technical_job_tag_ids', [(5,)])
             if 'internal_notes' in vals:
                 if real_rec.visit_internal_notes != self.internal_notes:
-                    real_rec.visit_internal_notes = vals.get('internal_notes', '')
+                    sync_vals['visit_internal_notes'] = vals.get('internal_notes', '')
             if 'estimated_visit_revenue' in vals:
                 if real_rec.estimated_visit_revenue != self.estimated_visit_revenue:
-                    real_rec.estimated_visit_revenue = vals.get('estimated_visit_revenue', 0)
+                    sync_vals['estimated_visit_revenue'] = vals.get('estimated_visit_revenue', 0)
             if 'job_duration' in vals:
                 if real_rec.job_duration != self.job_duration:
-                    real_rec.job_duration = vals.get('job_duration', 0)
+                    sync_vals['job_duration'] = vals.get('job_duration', 0)
             if 'visit_payment_type' in vals:
                 if real_rec.visit_payment_type != self.visit_payment_type:
-                    real_rec.visit_payment_type = vals.get('visit_payment_type', False)
+                    sync_vals['visit_payment_type'] = vals.get('visit_payment_type', False)
             if 'reminder_date' in vals:
                 if real_rec.reminder_date != self.reminder_date:
-                    real_rec.reminder_date = vals.get('reminder_date', False)
+                    sync_vals['reminder_date'] = vals.get('reminder_date', False)
             if 'reminder_user_id' in vals:
                 user_real_rec = real_rec.reminder_user_id.id if real_rec.reminder_user_id else False
-                user_sch = vals.get('reminder_user_id', False)
-                if user_sch != user_real_rec:
-                    real_rec.reminder_user_id = vals.get('reminder_user_id', False)
+                if vals.get('reminder_user_id', False) != user_real_rec:
+                    sync_vals['reminder_user_id'] = vals.get('reminder_user_id', False)
             if 'visit_priority' in vals:
                 if real_rec.visit_priority != self.visit_priority:
-                    real_rec.visit_priority = vals.get('visit_priority', 0)
+                    sync_vals['visit_priority'] = vals.get('visit_priority', 0)
             if 'job_categ_ids' in vals:
-                if real_rec.job_categ_ids.mapped('id') != self.job_categ_ids.mapped('id'):
-                    real_rec.job_categ_ids = vals.get('job_categ_ids', [(5,)])
+                if real_rec.job_categ_ids.ids != self.job_categ_ids.ids:
+                    sync_vals['job_categ_ids'] = vals.get('job_categ_ids', [(5,)])
+            if sync_vals:
+                real_rec.write(sync_vals)
 
         #if self.res_model and self.res_id and :
         #    real_rec = self.env[self.res_model].browse(self.res_id)
@@ -348,37 +350,43 @@ class TechnicalJobSchedule(models.Model):
     @api.depends('job_employee_ids', 'job_vehicle_ids')
     def refresh_jobs(self):
         for rec in self:
-            jobs_to_delete = self.env['technical.job'].search([('schedule_id', '=', rec.id)])
-            for job in jobs_to_delete:
-                job.active = False
+            # Batch deactivate existing jobs instead of one-by-one
+            existing_jobs = self.env['technical.job'].search([('schedule_id', '=', rec.id)])
+            if existing_jobs:
+                existing_jobs.write({'active': False})
+
+            # Build all vals at once and batch-create
+            vals_list = []
             if rec.job_employee_ids:
                 for employee in rec.job_employee_ids:
                     if rec.job_vehicle_ids:
                         for vehicle in rec.job_vehicle_ids:
-                            self.env['technical.job'].create({
+                            vals_list.append({
                                 'job_employee_id': employee.id,
                                 'job_vehicle_id': vehicle.id,
-                                'schedule_id': rec.id
-                                                    })
+                                'schedule_id': rec.id,
+                            })
                     else:
-                        self.env['technical.job'].create({
+                        vals_list.append({
                             'job_employee_id': employee.id,
                             'job_vehicle_id': False,
-                            'schedule_id': rec.id
+                            'schedule_id': rec.id,
                         })
             else:
                 if rec.job_vehicle_ids:
                     for vehicle in rec.job_vehicle_ids:
-                        self.env['technical.job'].create({
+                        vals_list.append({
                             'job_employee_id': False,
                             'job_vehicle_id': vehicle.id,
-                            'schedule_id': rec.id
+                            'schedule_id': rec.id,
                         })
                 else:
-                    self.env['technical.job'].create({
+                    vals_list.append({
                         'job_employee_id': False,
                         'job_vehicle_id': False,
-                        'schedule_id': rec.id
+                        'schedule_id': rec.id,
                     })
+            if vals_list:
+                self.env['technical.job'].create(vals_list)
 
             rec.trigger_refresh_jobs = False if rec.trigger_refresh_jobs else False

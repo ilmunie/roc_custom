@@ -210,14 +210,12 @@ class TechnicalJob(models.Model):
         records = super().create(new_vals)
         return records
     def confirm(self):
-        for record in self:
-            jobs_edit = []
-            jobs_edit.append(record)
-            if record.schedule_id:
-                jobs_edit.extend(
-                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
-            for job in jobs_edit:
-                job.write({'job_status': 'confirmed'})
+        schedule_ids = self.filtered('schedule_id').mapped('schedule_id').ids
+        all_jobs = self.env['technical.job']
+        if schedule_ids:
+            all_jobs |= self.env['technical.job'].search([('schedule_id', 'in', schedule_ids)])
+        all_jobs |= self.filtered(lambda j: not j.schedule_id)
+        all_jobs.write({'job_status': 'confirmed'})
     def stand_by(self):
         for record in self:
             if record.start_tracking_time and record.schedule_id:
@@ -226,30 +224,29 @@ class TechnicalJob(models.Model):
                 record.end_displacement()
             if not record.internal_notes:
                 raise ValidationError("Debe ingresar una nota interna para aplazar la operacion")
-            jobs_edit = []
-            jobs_edit.append(record)
-            if record.schedule_id:
-                jobs_edit.extend(
-                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
-            for job in jobs_edit:
-                job.write({'job_status': 'stand_by'})
             if record.res_id and record.res_model:
                 rec = self.env[record.res_model].browse(record.res_id)
                 body = "Ha aplazado la operación " + record.job_type_id.name
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment')
+        schedule_ids = self.filtered('schedule_id').mapped('schedule_id').ids
+        all_jobs = self.env['technical.job']
+        if schedule_ids:
+            all_jobs |= self.env['technical.job'].search([('schedule_id', 'in', schedule_ids)])
+        all_jobs |= self.filtered(lambda j: not j.schedule_id)
+        all_jobs.write({'job_status': 'stand_by'})
 
 
     def set_draft(self):
-        for record in self:
-            jobs_edit = []
-            jobs_edit.append(record)
-            if record.schedule_id:
-                jobs_edit.extend(
-                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
-            for job in jobs_edit:
-                job.write({'job_status': 'to_do'})
+        schedule_ids = self.filtered('schedule_id').mapped('schedule_id').ids
+        all_jobs = self.env['technical.job']
+        if schedule_ids:
+            all_jobs |= self.env['technical.job'].search([('schedule_id', 'in', schedule_ids)])
+        all_jobs |= self.filtered(lambda j: not j.schedule_id)
+        all_jobs.write({'job_status': 'to_do'})
 
     def mark_as_done(self):
+        from collections import defaultdict
+        assistants_by_model = defaultdict(list)
         for record in self:
             if record.start_tracking_time and record.schedule_id:
                 record.schedule_id.stop_tracking()
@@ -260,13 +257,13 @@ class TechnicalJob(models.Model):
                 raise ValidationError('Cargue la documentación correspondiente')
             if record.job_type_id.force_time_registration and user_type=='user' and not record.minutes_in_job:
                 raise ValidationError('Debe registrar tiempo en la operacion')
-            jobs_to_make_done = []
-            jobs_to_make_done.append(record)
+
+            # Batch write status for this record and all siblings sharing the same schedule
             if record.schedule_id:
-                jobs_to_make_done.extend(
-                    self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)]))
-            for job in jobs_to_make_done:
-                job.write({'job_status': 'done'})
+                jobs_to_make_done = self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)])
+            else:
+                jobs_to_make_done = record
+            jobs_to_make_done.write({'job_status': 'done'})
 
             if (record.res_id and record.res_model):
                 body = "Ha finalizado la operación: " + record.job_type_id.name
@@ -277,13 +274,12 @@ class TechnicalJob(models.Model):
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment',
                                                                             partner_ids=rec.user_id.mapped(
                                                                                 'partner_id.id'))
-                rec = self.env[record.res_model].browse(record.res_id)
                 model_configs = self.env['technical.job.assistant.config'].search([('model_id.model', '=', rec._name)])
                 config = False
                 for model_conf in model_configs:
                     domain = eval(model_conf.domain_condition)
                     domain.insert(0, ('id', '=', rec.id))
-                    if self.env[rec._name].search_count(domain) > 0:
+                    if self.env[rec._name].search(domain, limit=1):
                         config = model_conf
                         break
                 if config:
@@ -304,9 +300,17 @@ class TechnicalJob(models.Model):
                             rec.write(eval(wr_action.write_vals))
                 if rec.manual_technical_job:
                     rec.manual_technical_job = False
-            assistant_to_delete = self.env['technical.job.assistant'].search([('res_model', '=', record.res_model), ('res_id', '=', record.res_id)])
-            assistant_to_delete.unlink()
-            if self.env.context.get("from_kanban", False):
+                assistants_by_model[record.res_model].append(record.res_id)
+
+        # Batch-delete all assistants in one query per distinct model
+        assistants_to_delete = self.env['technical.job.assistant']
+        for res_model, res_ids in assistants_by_model.items():
+            assistants_to_delete |= self.env['technical.job.assistant'].search([
+                ('res_model', '=', res_model), ('res_id', 'in', res_ids)
+            ])
+        assistants_to_delete.unlink()
+
+        if self.env.context.get("from_kanban", False):
                 ctx = self.env.context.copy()
                 ctx.pop('from_kanban')
                 return {
