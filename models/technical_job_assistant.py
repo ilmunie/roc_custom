@@ -443,12 +443,14 @@ class TechnicalJobAssistant(models.Model):
                 model_groups[False].append(record)
 
         # --- Phase 2: Batch-prefetch source records per model (1 query per model) ---
+        # Use sudo() to bypass record rules, consistent with start_assistant()
+        # which inserts records via raw SQL (bypassing record rules)
         real_recs_map = {}  # {(model_name, res_id): recordset}
         for model_name, records in model_groups.items():
             if not model_name:
                 continue
             all_ids = [r.res_id for r in records]
-            all_real = self.env[model_name].browse(all_ids).exists()
+            all_real = self.env[model_name].sudo().browse(all_ids).exists()
             # Force prefetch of key fields in a single query
             if all_real:
                 prefetch_fields = ['display_name', 'technical_job_tag_ids', 'reminder_date',
@@ -473,7 +475,7 @@ class TechnicalJobAssistant(models.Model):
         schedule_res_ids = [r.res_id for r in model_groups.get('technical.job.schedule', [])]
         tj_by_schedule = {}
         if schedule_res_ids:
-            tech_jobs = self.env['technical.job'].search([('schedule_id', 'in', schedule_res_ids)])
+            tech_jobs = self.env['technical.job'].sudo().search([('schedule_id', 'in', schedule_res_ids)])
             if tech_jobs:
                 tech_jobs.read(['schedule_id'])
                 for tj in tech_jobs:
@@ -491,13 +493,13 @@ class TechnicalJobAssistant(models.Model):
                     if real_rec and real_rec.partner_id:
                         partner_ids_to_fetch.add(real_rec.partner_id.id)
         if partner_ids_to_fetch:
-            partners = self.env['res.partner'].browse(list(partner_ids_to_fetch))
+            partners = self.env['res.partner'].sudo().browse(list(partner_ids_to_fetch))
             partners.read(['phone', 'mobile', 'child_ids'])
             child_ids = set()
             for p in partners:
                 child_ids.update(p.child_ids.ids)
             if child_ids:
-                self.env['res.partner'].browse(list(child_ids)).read(['phone', 'mobile'])
+                self.env['res.partner'].sudo().browse(list(child_ids)).read(['phone', 'mobile'])
 
         # --- Phase 5: Process all records using prefetched data ---
         for record in self:
