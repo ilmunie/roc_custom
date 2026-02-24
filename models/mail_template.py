@@ -69,6 +69,17 @@ class MailTemplate(models.Model):
                     if 'attachments' not in results[res_id]:
                         results[res_id]['attachments'] = []
                     results[res_id]['attachments'].extend(attachments)
+        # Adjuntar material comercial en pedidos de venta
+        if self.model_id.model == 'sale.order':
+            for res_id in (res_ids if isinstance(res_ids, list) else [res_ids]):
+                order = self.env['sale.order'].browse(res_id)
+                if order.commercial_material_ids:
+                    if 'attachments' not in results[res_id]:
+                        results[res_id]['attachments'] = []
+                    for att in order.commercial_material_ids:
+                        results[res_id]['attachments'].append(
+                            (att.name, att.datas)
+                        )
         return results
 
 

@@ -12,7 +12,6 @@ class SaleOrderTemplate(models.Model):
     _inherit = 'sale.order.template'
 
     technical_job_template = fields.Boolean(string="Disponible trabajo tenico")
-    sale_attachment_id = fields.Many2one('ir.attachment', string="Material comercial")
     sale_template_tag_ids = fields.Many2many('sale.order.template.tag', string="Etiquetas plantilla")
     additional_documentation = fields.Html(string="Documentación Adicional")
 

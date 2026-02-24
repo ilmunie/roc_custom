@@ -10,7 +10,6 @@
                 <field name="technical_job_template"/>
                 <field name="sale_template_tag_ids" widget="many2many_tags"/>
                 <field name="tag_filter_ids" widget="many2many_tags" string="Etiquetas de Configuración de Producto" options="{'no_create': True}"/>
-                <field name="sale_attachment_id" widget="binary"/>
             </xpath>
             <xpath expr="//notebook[@name='main_book']" position="inside">
                 <page string="Documentación Adicional" name="additional_doc">

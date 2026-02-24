@@ -90,6 +90,7 @@
         'views/crm_complementary_models_views.xml',
         'views/sale_template_tag_filter_views.xml',
         'views/sale_add_line_tag_views.xml',
+        'views/sale_commercial_material_views.xml',
         'views/sale_order_template_views.xml',
         'views/technical_job_views.xml',
         'views/technical_job_assistant_view.xml',

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="sale_commercial_material_rule_tree" model="ir.ui.view">
+        <field name="name">sale.commercial.material.rule.tree</field>
+        <field name="model">sale.commercial.material.rule</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="active"/>
+                <field name="attachment_ids" widget="many2many_tags"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="sale_commercial_material_rule_form" model="ir.ui.view">
+        <field name="name">sale.commercial.material.rule.form</field>
+        <field name="model">sale.commercial.material.rule</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <separator string="Dominio"/>
+                    <field name="domain" widget="domain" options="{'model': 'sale.order', 'in_dialog': true}"/>
+                    <separator string="Archivos adjuntos"/>
+                    <field name="attachment_ids" widget="many2many_binary"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_sale_commercial_material_rule" model="ir.actions.act_window">
+        <field name="name">Reglas Material Comercial</field>
+        <field name="res_model">sale.commercial.material.rule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu item under Sales > Configuration -->
+    <menuitem
+        id="menu_sale_commercial_material_rule"
+        name="Reglas Material Comercial"
+        parent="sale.menu_sale_config"
+        action="action_sale_commercial_material_rule"
+        sequence="13"/>
+
+</odoo>

@@ -141,6 +141,9 @@
                     <field name="invoice_status" widget="badge" decoration-success="invoice_status == 'invoiced'" decoration-warning="invoice_status == 'to invoice'" decoration-info="invoice_status == 'upselling'" decoration-muted="invoice_status == 'no'"/>
                 </xpath>
                 <xpath expr="//notebook[last()]" position="inside">
+                    <page string="Material Comercial" name="commercial_material">
+                        <field name="commercial_material_ids" widget="many2many_binary" readonly="1"/>
+                    </page>
                     <page string="Documentación Adicional" name="additional_documentation">
                         <field name="additional_documentation"/>
                     </page>
