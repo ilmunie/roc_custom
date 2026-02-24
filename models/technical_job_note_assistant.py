@@ -14,6 +14,7 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     content_type = fields.Char()
     pending_jobs = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Operacion en domicilio pendiente", default='no')
     needs_billing = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Necesita facturacion adicional?")
+    needs_quotation = fields.Selection(selection=[('yes', 'SI'), ('no', 'NO')], string="Necesita generar presupuesto?")
     content = fields.Text(required=True, string="Comentarios")
     todo_description = fields.Text(string="A realizar")
     technical_job_id = fields.Many2one('technical.job')
@@ -84,8 +85,19 @@ class TechnicalJobNoteAssistant(models.TransientModel):
                 'context': ctx,
                 'target': 'new',
             }
-        else:
-            return {'type': 'ir.actions.act_window_close'}
+        if self.needs_quotation == 'yes' and self.content_type == 'Finalizacion trabajo' and self.pending_jobs != 'yes':
+            job = self.technical_job_id
+            lead_id = job.res_id if job.res_model == 'crm.lead' else False
+            if lead_id:
+                return {
+                    'name': "Generar Presupuestos",
+                    'res_model': 'generale.sale.quotation',
+                    'type': 'ir.actions.act_window',
+                    'view_mode': 'form',
+                    'context': {'active_id': lead_id},
+                    'target': 'new',
+                }
+        return {'type': 'ir.actions.act_window_close'}
 
 
 

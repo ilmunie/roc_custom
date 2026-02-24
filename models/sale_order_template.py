@@ -14,6 +14,7 @@ class SaleOrderTemplate(models.Model):
     technical_job_template = fields.Boolean(string="Disponible trabajo tenico")
     sale_attachment_id = fields.Many2one('ir.attachment', string="Material comercial")
     sale_template_tag_ids = fields.Many2many('sale.order.template.tag', string="Etiquetas plantilla")
+    additional_documentation = fields.Html(string="Documentación Adicional")
 
 class SaleOrderTemplateLine(models.Model):
     _inherit = 'sale.order.template.line'
@@ -27,6 +28,7 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     payment_journal_id = fields.Many2one('account.journal', domain=[('type', 'in', ('bank', 'cash'))], string="Metodo Pago")
+    additional_documentation = fields.Html(string="Documentación Adicional")
 
     def bill_and_pay(self):
         self.ensure_one()
@@ -58,6 +60,8 @@ class SaleOrder(models.Model):
                 lines_to_update.product_uom_qty = self.opportunity_id.total_job_minutes/60
         for order_line in self.order_line.filtered(lambda x: x.sale_template_line_id):
             order_line.discount = order_line.sale_template_line_id.discount*100
+        if self.sale_order_template_id.additional_documentation:
+            self.additional_documentation = self.sale_order_template_id.additional_documentation
         return res
     
     def _compute_line_data_for_template_change(self, line):
@@ -76,7 +80,7 @@ class SaleOrder(models.Model):
 
     sale_template_tag_ids = fields.Many2many('sale.order.template.tag', string="Etiquetas plantilla")
     sale_template_domain = fields.Char(compute=compute_tag_domain)
-    sale_template_tag_selector = fields.Selection(selection=[('door_type', 'Tipo puerta'),('pack_type', 'Tipo pack'),('component', 'Componente')], default='pack_type')
+    sale_template_tag_selector = fields.Selection(selection=[('door_type', 'Tipo puerta'),('pack_type', 'Tipo pack'),('component', 'Componente')], default='door_type')
 
     @api.depends('sale_template_tag_selector')
     def compute_sale_template_tag_domain(self):

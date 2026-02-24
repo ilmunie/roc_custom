@@ -574,24 +574,26 @@ class TechnicalJobAssistant(models.Model):
                     html += "<tr><td style='border: none;'><a href='/web#id={}&view_type=form&model={}' target='_blank'>".format(record.res_id, record.res_model)
                 html += "<i class='fa fa-arrow-right'></i> {}</a></td></tr>".format(real_rec.display_name)
 
-            record.internal_notes_html = internal_notes_html
-            record.estimated_visit_revenue = estimated_visit_revenue
-            record.address = address
-            record.reminder_date = reminder_date
-            record.reminder_user_id = reminder_user_id
-            record.contact_number = '|'.join(phones) if phones else ""
-            record.internal_notes = internal_notes
-            record.job_duration = job_duration if not next_job else next_job.job_duration
-            record.visit_payment_type = visit_payment_type
-            record.visit_priority = visit_priority
-            record.job_categ_ids = job_categ_ids
-            record.technical_job_tag_ids = tag_ids
-            record.date_field_value = date_field_value.date() if isinstance(date_field_value, datetime.datetime) else date_field_value
-            record.technical_job_count = technical_job_count
-            record.html_link_to_src_doc = html
-            record.html_data_src_doc = html_data_src_doc
-            record.next_active_job_id = next_job.id if next_job else False
-            record.show_technical_schedule_job_ids = show_technical_schedule_job_ids if show_technical_schedule_job_ids else False
+            record.write({
+                'internal_notes_html': internal_notes_html,
+                'estimated_visit_revenue': estimated_visit_revenue,
+                'address': address,
+                'reminder_date': reminder_date,
+                'reminder_user_id': reminder_user_id,
+                'contact_number': '|'.join(phones) if phones else "",
+                'internal_notes': internal_notes,
+                'job_duration': job_duration if not next_job else next_job.job_duration,
+                'visit_payment_type': visit_payment_type,
+                'visit_priority': visit_priority,
+                'job_categ_ids': job_categ_ids,
+                'technical_job_tag_ids': tag_ids,
+                'date_field_value': date_field_value.date() if isinstance(date_field_value, datetime.datetime) else date_field_value,
+                'technical_job_count': technical_job_count,
+                'html_link_to_src_doc': html,
+                'html_data_src_doc': html_data_src_doc,
+                'next_active_job_id': next_job.id if next_job else False,
+                'show_technical_schedule_job_ids': show_technical_schedule_job_ids if show_technical_schedule_job_ids else [(5,)],
+            })
 
     def open_mail_compose_message_wiz(self):
         self.ensure_one()

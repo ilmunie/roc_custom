@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         sale.extra.product.selector - FORM (wizard)
+    ============================================================ -->
+    <record id="view_sale_extra_product_selector_form" model="ir.ui.view">
+        <field name="name">sale.extra.product.selector.form</field>
+        <field name="model">sale.extra.product.selector</field>
+        <field name="arch" type="xml">
+            <form string="Agregar Extra">
+                <sheet>
+                    <div class="oe_title">
+                        <h3>
+                            <field name="product_name" readonly="1"/>
+                        </h3>
+                    </div>
+                    <field name="config_line_ids" nolabel="1">
+                        <tree create="0" delete="0">
+                            <field name="sequence" invisible="1"/>
+                            <field name="usage_type" string="Tipo"/>
+                            <field name="description" string="Descripción"/>
+                            <field name="extra_product_id"/>
+                            <field name="quantity"/>
+                            <button name="apply_extra" type="object" string="Agregar" class="btn-primary" icon="fa-plus"/>
+                        </tree>
+                    </field>
+                </sheet>
+                <footer>
+                    <button special="cancel" string="Cerrar" class="btn-default"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         sale.extra.variant.selector - FORM (wizard)
+         Radio-button UX: attributes (left) + values (right) + variant list
+    ============================================================ -->
+    <record id="view_sale_extra_variant_selector_form" model="ir.ui.view">
+        <field name="name">sale.extra.variant.selector.form</field>
+        <field name="model">sale.extra.variant.selector</field>
+        <field name="arch" type="xml">
+            <form string="Seleccionar Variante">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="product_tmpl_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="product_uom_qty"/>
+                        </group>
+                    </group>
+
+                    <!-- Hidden fields -->
+                    <field name="available_attr_ids" invisible="1"/>
+                    <field name="available_value_ids" invisible="1"/>
+                    <field name="_selections_json" invisible="1"/>
+
+                    <!-- Two-column radio layout -->
+                    <group col="2">
+                        <group string="Atributo">
+                            <field name="selected_attr_id"
+                                   widget="radio"
+                                   domain="[('id', 'in', available_attr_ids)]"
+                                   nolabel="1"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group string="Valor">
+                            <field name="selected_value_id"
+                                   widget="radio"
+                                   domain="[('id', 'in', available_value_ids)]"
+                                   nolabel="1"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <!-- Clear selections button -->
+                    <div class="mt-2 mb-2"
+                         attrs="{'invisible': [('config_summary', 'in', ['', False])]}">
+                        <button name="clear_selections" type="object"
+                                string="Limpiar selecciones" class="btn-secondary"
+                                icon="fa-eraser"/>
+                    </div>
+
+                    <!-- Config summary -->
+                    <div attrs="{'invisible': [('config_summary', 'in', ['', False])]}">
+                        <strong>Configuraci&#243;n: </strong>
+                        <field name="config_summary" nolabel="1" class="oe_inline"/>
+                    </div>
+
+                    <separator string="Variantes disponibles"/>
+
+                    <!-- Variant list -->
+                    <field name="variant_line_ids" nolabel="1">
+                        <tree create="0" delete="0">
+                            <field name="product_id" string="Variante"/>
+                            <field name="ptav_ids" widget="many2many_tags" string="Atributos"/>
+                            <field name="lst_price" string="Precio"/>
+                            <button name="select_variant" type="object"
+                                    string="Seleccionar" class="btn-primary"
+                                    icon="fa-check"/>
+                        </tree>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="apply_variant" type="object"
+                            string="Agregar por config" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar" class="btn-default"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

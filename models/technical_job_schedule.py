@@ -133,18 +133,31 @@ class TechnicalJobSchedule(models.Model):
 
     def stop_tracking(self):
         self.ensure_one()
-        time_difference = fields.Datetime.now() - self.start_tracking_time
-        reg_to_end = self.time_register_ids.filtered(lambda x: x.start_time and not x.end_time)
-        for reg in reg_to_end:
-            reg.end_time = fields.Datetime.now()
-        self.minutes_in_job += time_difference.total_seconds() / 60
-        self.start_tracking_time = False
-
+        cr = self.env.cr
+        now = fields.Datetime.now()
+        cr.execute("SELECT start_tracking_time, minutes_in_job FROM technical_job_schedule WHERE id = %s", (self.id,))
+        row = cr.fetchone()
+        start_time = row[0] if row else None
+        current_minutes = row[1] if row else 0.0
+        if start_time:
+            time_diff_minutes = (now - start_time).total_seconds() / 60
+            new_minutes = (current_minutes or 0.0) + time_diff_minutes
+            cr.execute("UPDATE technical_job_time_register SET end_time = %s WHERE technical_job_schedule_id = %s AND end_time IS NULL", (now, self.id))
+            cr.execute("UPDATE technical_job_schedule SET minutes_in_job = %s, start_tracking_time = NULL WHERE id = %s", (new_minutes, self.id))
+            self.invalidate_cache()
+        return True
 
     def start_tracking(self):
         self.ensure_one()
-        self.time_register_ids = [(0,0, {'start_time': fields.Datetime.now()})]
-        self.start_tracking_time = fields.Datetime.now()
+        cr = self.env.cr
+        now = fields.Datetime.now()
+        cr.execute("""
+            INSERT INTO technical_job_time_register (technical_job_schedule_id, start_time, create_uid, write_uid, create_date, write_date)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (self.id, now, self.env.uid, self.env.uid, now, now))
+        cr.execute("UPDATE technical_job_schedule SET start_tracking_time = %s WHERE id = %s", (now, self.id))
+        self.invalidate_cache()
+        return True
 
 
 

@@ -136,17 +136,15 @@
                 <field name="pos_force_ship_later"/>
             </xpath>
 
-            <xpath expr="//field[@name='variant_seller_ids']" position="after">
-                <group string="Productos Adicionales">
-                    <field name="additional_product_ids" widget="one2many" nolabel="1" mode="tree">
+            <xpath expr="//page[@name='sales']" position="inside">
+                <group string="Productos Extra (Presupuesto)">
+                    <field name="extra_product_config_ids" widget="one2many" nolabel="1" mode="tree">
                         <tree editable="bottom">
-                            <field name="name"/>
-                            <field name="required"/>
-                            <field name="domain" widget="domain" options="{'in_dialog': True, 'model': 'product.product'}"/>
-                            <field name="default_product_ids" domain="domain" widget="many2many_tags"/>
-                            <field name="qty"/>
-                            <button name="see_affected_prod" type="object" icon="fa-bars" attrs="{'invisible':['|',('count_rel_prod','=',1),('count_rel_prod','=',0)]}"/>
-                            <field name="count_rel_prod" string="Productos asociados" invisible="1"/>
+                            <field name="sequence" widget="handle"/>
+                            <field name="usage_type"/>
+                            <field name="extra_product_id" attrs="{'invisible': [('usage_type', '!=', 'other_product')], 'required': [('usage_type', '=', 'other_product')]}"/>
+                            <field name="quantity"/>
+                            <field name="description"/>
                         </tree>
                     </field>
                 </group>
@@ -202,4 +200,14 @@
             <field name="code">action = records.renumerate_order_line_sequence()</field>
         </record>
 
+    <record id="product_template_hide_optional_products" model="ir.ui.view">
+        <field name="name">product.template.hide.optional.products</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="sale_product_configurator.product_template_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='upsell']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>

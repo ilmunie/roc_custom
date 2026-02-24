@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         sale.order.line.add.tag - TREE & FORM
+    ============================================================ -->
+    <record id="view_sale_order_line_add_tag_tree" model="ir.ui.view">
+        <field name="name">sale.order.line.add.tag.tree</field>
+        <field name="model">sale.order.line.add.tag</field>
+        <field name="arch" type="xml">
+            <tree string="Etiquetas de Línea Extra">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="price_method"/>
+                <field name="fixed_amount"/>
+                <field name="percentage_value"/>
+                <field name="tax_type"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sale_order_line_add_tag_form" model="ir.ui.view">
+        <field name="name">sale.order.line.add.tag.form</field>
+        <field name="model">sale.order.line.add.tag</field>
+        <field name="arch" type="xml">
+            <form string="Etiqueta de Línea Extra">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="sequence"/>
+                            <field name="product_id"/>
+                            <field name="price_method"/>
+                        </group>
+                        <group>
+                            <field name="fixed_amount" attrs="{'invisible': [('price_method', '!=', 'fixed_amount')], 'required': [('price_method', '=', 'fixed_amount')]}"/>
+                            <field name="percentage_value" attrs="{'invisible': [('price_method', '!=', 'percentage')], 'required': [('price_method', '=', 'percentage')]}"/>
+                            <field name="tax_type" attrs="{'invisible': [('price_method', '!=', 'percentage')]}"/>
+                            <field name="product_domain" attrs="{'invisible': [('price_method', '!=', 'percentage')]}" widget="domain" options="{'model': 'product.product', 'in_dialog': true}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sale_order_line_add_tag" model="ir.actions.act_window">
+        <field name="name">Etiquetas de Línea Extra</field>
+        <field name="res_model">sale.order.line.add.tag</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+        id="menu_sale_order_line_add_tag"
+        name="Etiquetas de Línea Extra"
+        parent="sale.menu_sale_config"
+        action="action_sale_order_line_add_tag"
+        sequence="12"
+    />
+
+</odoo>

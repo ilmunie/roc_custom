@@ -211,11 +211,15 @@ class TechnicalJob(models.Model):
         return records
     def confirm(self):
         schedule_ids = self.filtered('schedule_id').mapped('schedule_id').ids
-        all_jobs = self.env['technical.job']
+        standalone = self.filtered(lambda j: not j.schedule_id)
+        cr = self.env.cr
         if schedule_ids:
-            all_jobs |= self.env['technical.job'].search([('schedule_id', 'in', schedule_ids)])
-        all_jobs |= self.filtered(lambda j: not j.schedule_id)
-        all_jobs.write({'job_status': 'confirmed'})
+            cr.execute("UPDATE technical_job_schedule SET job_status='confirmed' WHERE id IN %s", (tuple(schedule_ids),))
+            cr.execute("UPDATE technical_job SET job_status='confirmed' WHERE schedule_id IN %s", (tuple(schedule_ids),))
+        if standalone:
+            cr.execute("UPDATE technical_job SET job_status='confirmed' WHERE id IN %s", (tuple(standalone.ids),))
+        self.invalidate_cache()
+        return True
     def stand_by(self):
         for record in self:
             if record.start_tracking_time and record.schedule_id:
@@ -228,21 +232,30 @@ class TechnicalJob(models.Model):
                 rec = self.env[record.res_model].browse(record.res_id)
                 body = "Ha aplazado la operación " + record.job_type_id.name
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment')
+        # Batch status update via SQL
         schedule_ids = self.filtered('schedule_id').mapped('schedule_id').ids
-        all_jobs = self.env['technical.job']
+        standalone = self.filtered(lambda j: not j.schedule_id)
+        cr = self.env.cr
         if schedule_ids:
-            all_jobs |= self.env['technical.job'].search([('schedule_id', 'in', schedule_ids)])
-        all_jobs |= self.filtered(lambda j: not j.schedule_id)
-        all_jobs.write({'job_status': 'stand_by'})
+            cr.execute("UPDATE technical_job_schedule SET job_status='stand_by' WHERE id IN %s", (tuple(schedule_ids),))
+            cr.execute("UPDATE technical_job SET job_status='stand_by' WHERE schedule_id IN %s", (tuple(schedule_ids),))
+        if standalone:
+            cr.execute("UPDATE technical_job SET job_status='stand_by' WHERE id IN %s", (tuple(standalone.ids),))
+        self.invalidate_cache()
+        return True
 
 
     def set_draft(self):
         schedule_ids = self.filtered('schedule_id').mapped('schedule_id').ids
-        all_jobs = self.env['technical.job']
+        standalone = self.filtered(lambda j: not j.schedule_id)
+        cr = self.env.cr
         if schedule_ids:
-            all_jobs |= self.env['technical.job'].search([('schedule_id', 'in', schedule_ids)])
-        all_jobs |= self.filtered(lambda j: not j.schedule_id)
-        all_jobs.write({'job_status': 'to_do'})
+            cr.execute("UPDATE technical_job_schedule SET job_status='to_do' WHERE id IN %s", (tuple(schedule_ids),))
+            cr.execute("UPDATE technical_job SET job_status='to_do' WHERE schedule_id IN %s", (tuple(schedule_ids),))
+        if standalone:
+            cr.execute("UPDATE technical_job SET job_status='to_do' WHERE id IN %s", (tuple(standalone.ids),))
+        self.invalidate_cache()
+        return True
 
     def mark_as_done(self):
         from collections import defaultdict
@@ -252,18 +265,20 @@ class TechnicalJob(models.Model):
                 record.schedule_id.stop_tracking()
             if record.displacement_start_datetime:
                 record.end_displacement()
-            user_type = 'planner' if self.env.user.has_group('roc_custom.technical_job_planner') else 'user'
-            if record.job_type_id.requires_documentation and record.res_id and not record.attch_ids and user_type=='user':
+            is_technical_user = self.env.user.has_group('roc_custom.technical_job_user')
+            if record.job_type_id.requires_documentation and record.res_id and not record.attch_ids and is_technical_user:
                 raise ValidationError('Cargue la documentación correspondiente')
-            if record.job_type_id.force_time_registration and user_type=='user' and not record.minutes_in_job:
+            if record.job_type_id.force_time_registration and is_technical_user and not record.minutes_in_job:
                 raise ValidationError('Debe registrar tiempo en la operacion')
 
-            # Batch write status for this record and all siblings sharing the same schedule
+            # Batch write status for this record and all siblings sharing the same schedule via SQL
+            cr = self.env.cr
             if record.schedule_id:
-                jobs_to_make_done = self.env['technical.job'].search([('schedule_id', '=', record.schedule_id.id)])
+                cr.execute("UPDATE technical_job_schedule SET job_status='done' WHERE id = %s", (record.schedule_id.id,))
+                cr.execute("UPDATE technical_job SET job_status='done' WHERE schedule_id = %s", (record.schedule_id.id,))
             else:
-                jobs_to_make_done = record
-            jobs_to_make_done.write({'job_status': 'done'})
+                cr.execute("UPDATE technical_job SET job_status='done' WHERE id = %s", (record.id,))
+            self.invalidate_cache()
 
             if (record.res_id and record.res_model):
                 body = "Ha finalizado la operación: " + record.job_type_id.name
@@ -321,7 +336,7 @@ class TechnicalJob(models.Model):
                     'domain': [('create_uid', '=', self.env.user.id)],
                     'views': [(False, 'kanban'), (self.env.ref('roc_custom.technical_job_assistant_tree_view').id, 'tree')],
                 }
-
+        return True
 
 
     def delete_schedule_tree(self):
@@ -469,19 +484,28 @@ class TechnicalJob(models.Model):
 
     def start_displacement(self):
         self.ensure_one()
-        schedule_id = self.schedule_id
-        if schedule_id:
-            schedule_id.time_register_ids = [(0, 0, {'start_time': fields.Datetime.now(), 'displacement': True})]
-            schedule_id.displacement_start_datetime = fields.Datetime.now()
+        if self.schedule_id:
+            cr = self.env.cr
+            now = fields.Datetime.now()
+            schedule_id = self.schedule_id.id
+            cr.execute("""
+                INSERT INTO technical_job_time_register (technical_job_schedule_id, start_time, displacement, create_uid, write_uid, create_date, write_date)
+                VALUES (%s, %s, TRUE, %s, %s, %s, %s)
+            """, (schedule_id, now, self.env.uid, self.env.uid, now, now))
+            cr.execute("UPDATE technical_job_schedule SET displacement_start_datetime = %s WHERE id = %s", (now, schedule_id))
+            self.invalidate_cache()
+        return True
 
     def end_displacement(self):
         self.ensure_one()
-        schedule_id = self.schedule_id
-        if schedule_id:
-            register_to_end = schedule_id.time_register_ids.filtered(lambda x: x.displacement and not x.end_time)
-            for reg in register_to_end:
-                reg.end_time = fields.Datetime.now()
-            schedule_id.displacement_start_datetime = False
+        if self.schedule_id:
+            cr = self.env.cr
+            now = fields.Datetime.now()
+            schedule_id = self.schedule_id.id
+            cr.execute("UPDATE technical_job_time_register SET end_time = %s WHERE technical_job_schedule_id = %s AND displacement = TRUE AND end_time IS NULL", (now, schedule_id))
+            cr.execute("UPDATE technical_job_schedule SET displacement_start_datetime = NULL WHERE id = %s", (schedule_id,))
+            self.invalidate_cache()
+        return True
 
     def call_billing_wiz(self):
         ctx = {'technical_job': self.id}
@@ -522,7 +546,9 @@ class TechnicalJob(models.Model):
     def stop_tracking(self):
         if self.schedule_id:
             self.schedule_id.stop_tracking()
-            self.schedule_id.out_time = fields.Datetime.now()
+            cr = self.env.cr
+            cr.execute("UPDATE technical_job_schedule SET out_time = %s WHERE id = %s", (fields.Datetime.now(), self.schedule_id.id))
+            self.invalidate_cache()
             if self.job_type_id.data_assistant:
                 ctx = {'note_assistant_type': 'Finalizacion trabajo', 'technical_job': self.id}
                 return {
@@ -535,13 +561,16 @@ class TechnicalJob(models.Model):
                 }
             else:
                 self.mark_as_done()
+        return True
 
 
     def start_tracking(self):
         if self.schedule_id:
             self.schedule_id.start_tracking()
             if not self.schedule_id.arrive_time:
-                self.schedule_id.arrive_time = fields.Datetime.now()
+                cr = self.env.cr
+                cr.execute("UPDATE technical_job_schedule SET arrive_time = %s WHERE id = %s AND arrive_time IS NULL", (fields.Datetime.now(), self.schedule_id.id))
+                self.invalidate_cache()
         if self.job_type_id.data_assistant:
             ctx = {'note_assistant_type': 'Descripcion Inicial', 'technical_job': self.id}
             return {
@@ -552,6 +581,7 @@ class TechnicalJob(models.Model):
                 'context': ctx,
                 'target': 'new',
             }
+        return True
 
     @api.depends('date_schedule', 'job_duration')
     def get_end_time(self):

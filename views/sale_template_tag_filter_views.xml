@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         sale.template.tag.filter - TREE & FORM
+    ============================================================ -->
+    <record id="view_sale_template_tag_filter_tree" model="ir.ui.view">
+        <field name="name">sale.template.tag.filter.tree</field>
+        <field name="model">sale.template.tag.filter</field>
+        <field name="arch" type="xml">
+            <tree string="Etiquetas de Configuración de Plantilla">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="rotation_field"/>
+                <field name="first_selection"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sale_template_tag_filter_form" model="ir.ui.view">
+        <field name="name">sale.template.tag.filter.form</field>
+        <field name="model">sale.template.tag.filter</field>
+        <field name="arch" type="xml">
+            <form string="Etiqueta de Configuración">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="rotation_field"/>
+                            <field name="sequence"/>
+                            <field name="first_selection"/>
+                        </group>
+                        <group>
+                            <field name="parent_tag_id" widget="many2many_tags" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sale_template_tag_filter" model="ir.actions.act_window">
+        <field name="name">Etiquetas Configuración Plantilla</field>
+        <field name="res_model">sale.template.tag.filter</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============================================================
+         sale.template.line.tag.config - TREE & FORM (used inline)
+    ============================================================ -->
+    <record id="view_sale_template_line_tag_config_tree" model="ir.ui.view">
+        <field name="name">sale.template.line.tag.config.tree</field>
+        <field name="model">sale.template.line.tag.config</field>
+        <field name="arch" type="xml">
+            <tree string="Config Etiquetas por Línea" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="tag_filter_id" options="{'no_create': True}"/>
+                <field name="domain" widget="domain" options="{'model': 'product.product', 'in_dialog': true}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sale_template_line_tag_config_form" model="ir.ui.view">
+        <field name="name">sale.template.line.tag.config.form</field>
+        <field name="model">sale.template.line.tag.config</field>
+        <field name="arch" type="xml">
+            <form string="Config Etiqueta">
+                <sheet>
+                    <group>
+                        <field name="sequence"/>
+                        <field name="tag_filter_id" options="{'no_create': True}"/>
+                        <field name="domain" widget="domain" options="{'model': 'product.product', 'in_dialog': true}"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem
+        id="menu_sale_template_tag_filter"
+        name="Etiquetas Config Presupuesto"
+        parent="sale.menu_sale_config"
+        action="action_sale_template_tag_filter"
+        sequence="11"
+    />
+
+</odoo>

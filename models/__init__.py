@@ -36,3 +36,6 @@ from . import partner_replacement_script
 from . import technical_job_action_done_efects
 from . import helpdesk_integration
 from . import helpdesk_ticket
+from . import sale_template_tag_filter
+from . import sale_add_line_tag
+from . import sale_extra_product
