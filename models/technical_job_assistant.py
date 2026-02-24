@@ -421,7 +421,7 @@ class TechnicalJobAssistant(models.Model):
                     'search_default_configuration': 1,
                 },
             'domain': [('create_uid', '=', uid)],
-            'views': [(tree_view_id, 'tree'), (False, 'kanban')] if user_type == 'planner' else [(False, 'kanban'), (tree_view_id, 'tree')],
+            'views': [(tree_view_id, 'tree'), (False, 'kanban')],
         }
     
 
