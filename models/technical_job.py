@@ -266,9 +266,11 @@ class TechnicalJob(models.Model):
             if record.displacement_start_datetime:
                 record.end_displacement()
             is_technical_user = self.env.user.has_group('roc_custom.technical_job_user')
-            if record.job_type_id.requires_documentation and record.res_id and not record.attch_ids and is_technical_user:
+            is_coordinator = self.env.user.has_group('roc_custom.technical_job_planner')
+            is_only_technical = is_technical_user and not is_coordinator
+            if record.job_type_id.requires_documentation and record.res_id and not record.attch_ids and is_only_technical:
                 raise ValidationError('Cargue la documentación correspondiente')
-            if record.job_type_id.force_time_registration and is_technical_user and not record.minutes_in_job:
+            if record.job_type_id.force_time_registration and is_only_technical and not record.minutes_in_job:
                 raise ValidationError('Debe registrar tiempo en la operacion')
 
             # Batch write status for this record and all siblings sharing the same schedule via SQL
