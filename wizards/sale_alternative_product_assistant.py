@@ -328,7 +328,7 @@ class SaleAlternativeProductAssistantLine(models.TransientModel):
     def get_sale_line_vals(self):
         return {
             'product_id': self.product_id.id,
-            'name': self.product_id.name,
+            'name': self.product_id.get_product_multiline_description_sale(),
             'price_unit': self.product_id.list_price,
             'discount': self.wiz_id.sale_line_id.discount,
         }

@@ -42,7 +42,7 @@ class SaleExtraProductSelectorLine(models.TransientModel):
             self.env['sale.order.line'].create({
                 'order_id': sale_line.order_id.id,
                 'product_id': config.extra_product_id.id,
-                'name': config.extra_product_id.display_name,
+                'name': config.extra_product_id.get_product_multiline_description_sale(),
                 'product_uom_qty': config.quantity,
                 'product_uom': config.extra_product_id.uom_id.id,
                 'price_unit': config.extra_product_id.lst_price,
@@ -106,7 +106,7 @@ class SaleExtraVariantLine(models.TransientModel):
         self.env['sale.order.line'].create({
             'order_id': sale_line.order_id.id,
             'product_id': product.id,
-            'name': product.display_name,
+            'name': product.get_product_multiline_description_sale(),
             'product_uom_qty': wiz.product_uom_qty,
             'product_uom': product.uom_id.id,
             'price_unit': product.lst_price,
@@ -348,7 +348,7 @@ class SaleExtraVariantSelector(models.TransientModel):
             self.env['sale.order.line'].create({
                 'order_id': sale_line.order_id.id,
                 'product_id': product.id,
-                'name': product.display_name,
+                'name': product.get_product_multiline_description_sale(),
                 'product_uom_qty': self.product_uom_qty,
                 'product_uom': product.uom_id.id,
                 'price_unit': product.lst_price,

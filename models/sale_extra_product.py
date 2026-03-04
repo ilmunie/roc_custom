@@ -1,6 +1,35 @@
 from odoo import fields, models, api
 
 
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
+
+    def get_product_multiline_description_sale(self):
+        """Si tiene description_sale, usarla como nombre base + atributos.
+        Si no, usar display_name (que ya incluye atributos)."""
+        desc = (self.description_sale or '').strip()
+        if desc:
+            attrs = self.product_template_attribute_value_ids.mapped(
+                'product_attribute_value_id.name'
+            )
+            if attrs:
+                desc += ' (' + ', '.join(attrs) + ')'
+            return desc
+        return self.display_name
+
+    def get_product_multiline_description_purchase(self):
+        """Mismo criterio que venta pero con description_purchase."""
+        desc = (self.description_purchase or '').strip()
+        if desc:
+            attrs = self.product_template_attribute_value_ids.mapped(
+                'product_attribute_value_id.name'
+            )
+            if attrs:
+                desc += ' (' + ', '.join(attrs) + ')'
+            return desc
+        return self.display_name
+
+
 class SaleExtraProductConfig(models.Model):
     _name = 'sale.extra.product.config'
     _order = 'sequence'
@@ -18,6 +47,11 @@ class SaleExtraProductConfig(models.Model):
         'product.product',
         string="Producto Extra",
     )
+
+    @api.onchange('extra_product_id')
+    def _onchange_extra_product_id(self):
+        if self.extra_product_id:
+            self.description = self.extra_product_id.get_product_multiline_description_sale()
 
 
 class ProductTemplate(models.Model):
@@ -50,7 +84,7 @@ class SaleOrder(models.Model):
             self.env['sale.order.line'].create({
                 'order_id': self.id,
                 'product_id': product.id,
-                'name': product.display_name,
+                'name': product.get_product_multiline_description_sale(),
                 'product_uom_qty': quantity,
                 'product_uom': product.uom_id.id,
                 'price_unit': product.lst_price,

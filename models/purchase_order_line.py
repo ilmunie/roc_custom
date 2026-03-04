@@ -7,6 +7,10 @@ from odoo.exceptions import UserError, ValidationError
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
+    def _get_product_purchase_description(self, product_lang):
+        """Override: usar description_purchase como nombre base."""
+        return product_lang.get_product_multiline_description_purchase()
+
 
 
     @api.depends('invoice_lines', 'invoice_lines.price_unit', 'invoice_lines.discount', 'invoice_lines.move_id.state')
