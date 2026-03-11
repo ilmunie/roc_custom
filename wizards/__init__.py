@@ -19,3 +19,5 @@ from . import crm_lead_import
 from . import technical_job_assistant_massive_tag_assign
 from . import sale_extra_product_selector
 from . import sale_order_send_multi
+from . import crm_lead_send_quotations
+from . import technical_job_photo_wizard

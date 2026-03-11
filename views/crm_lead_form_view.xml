@@ -22,6 +22,8 @@
                             attrs="{'invisible': ['|', ('probability', '&gt;', 0), ('active', '=', True)]}"/>
                         <button name="%(open_generale_sale_quotation_wizard)d" string="Generar presupuestos" type="action" class="oe_highlight"
                         attrs="{'invisible': [('type','=','lead')]}"/>
+                        <button name="action_send_quotations" type="object" string="Enviar presupuestos" class="oe_highlight"
+                        attrs="{'invisible': ['|', '|', ('type','=','lead'), ('quotation_count', '=', 0), ('probability', '=', 100)]}"/>
                         <field name="lead_stage_id" widget="statusbar"
                                options="{'clickable': '1'}"
                                attrs="{'invisible': ['|', ('active', '=', False), ('type', '=', 'opportunity')]}"/>

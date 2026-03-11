@@ -20,6 +20,8 @@ class TechnicalJobNoteAssistant(models.TransientModel):
     technical_job_id = fields.Many2one('technical.job')
     attch_ids = fields.Many2many('ir.attachment', string="Adjuntos")
     technical_job_tag_ids = fields.Many2many(related='technical_job_id.technical_job_tag_ids', readonly=False)
+    photo_ids = fields.Many2many('ir.attachment', 'note_assistant_photo_rel', 'wiz_id', 'attach_id', string="Fotos")
+    photo_stage = fields.Selection([('initial', 'Inicial'), ('final', 'Final')], string="Etapa foto")
 
 
 
@@ -28,11 +30,24 @@ class TechnicalJobNoteAssistant(models.TransientModel):
         result = super(TechnicalJobNoteAssistant, self).default_get(fields)
         result['content_type'] = self.env.context.get("note_assistant_type", False)
         result['technical_job_id'] = self.env.context.get("technical_job", False)
-        #result['pending_jobs'] = 'yes' if self.env.context.get("stand_by", False) else 'no'
+        result['photo_stage'] = self.env.context.get("photo_stage", False)
         result['currency_id'] = self.env.user.company_id.currency_id.id
         return result
 
+    def _save_photos(self):
+        if self.photo_ids and self.photo_stage and self.technical_job_id:
+            job = self.technical_job_id
+            res_model = 'technical.job.schedule' if not job.schedule_id.res_model else job.schedule_id.res_model
+            res_id = job.schedule_id.id if not job.schedule_id.res_model else job.schedule_id.res_id
+            self.photo_ids.write({
+                'res_model': res_model,
+                'res_id': res_id,
+                'added_from_technical_job': True,
+                'photo_stage': self.photo_stage,
+            })
+
     def action_done(self):
+        self._save_photos()
         if self.content_type == 'Finalizacion trabajo' and self.pending_jobs == 'yes':
             content_label = 'Pendientes'
         else:

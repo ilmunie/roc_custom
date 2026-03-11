@@ -268,8 +268,13 @@ class TechnicalJob(models.Model):
             is_technical_user = self.env.user.has_group('roc_custom.technical_job_user')
             is_coordinator = self.env.user.has_group('roc_custom.technical_job_planner')
             is_only_technical = is_technical_user and not is_coordinator
-            if record.job_type_id.requires_documentation and record.res_id and not record.attch_ids and is_only_technical:
-                raise ValidationError('Cargue la documentación correspondiente')
+            if record.job_type_id.requires_documentation and is_only_technical:
+                if record.res_id and not record.attch_ids:
+                    raise ValidationError('Cargue la documentación correspondiente')
+                if not record.initial_photo_ids:
+                    raise ValidationError('Debe cargar las fotos iniciales del trabajo')
+                if not record.final_photo_ids:
+                    raise ValidationError('Debe cargar las fotos finales del trabajo')
             if record.job_type_id.force_time_registration and is_only_technical and not record.minutes_in_job:
                 raise ValidationError('Debe registrar tiempo en la operacion')
 
@@ -421,10 +426,77 @@ class TechnicalJob(models.Model):
         for record in self:
             res_model = 'technical.job.schedule' if not record.schedule_id.res_model else record.schedule_id.res_model
             res_id = record.schedule_id.id if not record.schedule_id.res_model else record.schedule_id.res_id
-            att = self.env['ir.attachment'].search([('res_id','=', res_id),('res_model', '=', res_model), ('added_from_technical_job', '=', True)])
+            att = self.env['ir.attachment'].search([('res_id','=', res_id),('res_model', '=', res_model), ('added_from_technical_job', '=', True), ('photo_stage', '=', False)])
             record.attch_ids = [(6, 0, att.mapped('id'))]
 
     attch_ids = fields.Many2many('ir.attachment', compute=get_schedule_attch)
+
+    def _get_photo_res(self):
+        self.ensure_one()
+        res_model = 'technical.job.schedule' if not self.schedule_id.res_model else self.schedule_id.res_model
+        res_id = self.schedule_id.id if not self.schedule_id.res_model else self.schedule_id.res_id
+        return res_model, res_id
+
+    def get_initial_photos(self):
+        for record in self:
+            res_model, res_id = record._get_photo_res()
+            att = self.env['ir.attachment'].search([
+                ('res_id', '=', res_id), ('res_model', '=', res_model),
+                ('added_from_technical_job', '=', True), ('photo_stage', '=', 'initial')
+            ])
+            record.initial_photo_ids = [(6, 0, att.mapped('id'))]
+
+    def set_initial_photos(self):
+        for record in self:
+            res_model, res_id = record._get_photo_res()
+            current = self.env['ir.attachment'].search([
+                ('res_id', '=', res_id), ('res_model', '=', res_model),
+                ('added_from_technical_job', '=', True), ('photo_stage', '=', 'initial')
+            ])
+            new_set = record.initial_photo_ids
+            removed = current - new_set
+            if removed:
+                removed.write({'added_from_technical_job': False, 'photo_stage': False})
+            added = new_set - current
+            if added:
+                added.write({
+                    'res_model': res_model,
+                    'res_id': res_id,
+                    'added_from_technical_job': True,
+                    'photo_stage': 'initial',
+                })
+
+    def get_final_photos(self):
+        for record in self:
+            res_model, res_id = record._get_photo_res()
+            att = self.env['ir.attachment'].search([
+                ('res_id', '=', res_id), ('res_model', '=', res_model),
+                ('added_from_technical_job', '=', True), ('photo_stage', '=', 'final')
+            ])
+            record.final_photo_ids = [(6, 0, att.mapped('id'))]
+
+    def set_final_photos(self):
+        for record in self:
+            res_model, res_id = record._get_photo_res()
+            current = self.env['ir.attachment'].search([
+                ('res_id', '=', res_id), ('res_model', '=', res_model),
+                ('added_from_technical_job', '=', True), ('photo_stage', '=', 'final')
+            ])
+            new_set = record.final_photo_ids
+            removed = current - new_set
+            if removed:
+                removed.write({'added_from_technical_job': False, 'photo_stage': False})
+            added = new_set - current
+            if added:
+                added.write({
+                    'res_model': res_model,
+                    'res_id': res_id,
+                    'added_from_technical_job': True,
+                    'photo_stage': 'final',
+                })
+
+    initial_photo_ids = fields.Many2many('ir.attachment', 'technical_job_initial_photo_rel', 'job_id', 'attach_id', compute=get_initial_photos, inverse=set_initial_photos, string="Fotos Iniciales")
+    final_photo_ids = fields.Many2many('ir.attachment', 'technical_job_final_photo_rel', 'job_id', 'attach_id', compute=get_final_photos, inverse=set_final_photos, string="Fotos Finales")
     reminder_date = fields.Date(related="schedule_id.reminder_date", readonly=False)
     reminder_user_id = fields.Many2one(related="schedule_id.reminder_user_id", readonly=False)
     technical_job_tag_ids = fields.Many2many(related="schedule_id.technical_job_tag_ids", readonly=False)
@@ -546,44 +618,67 @@ class TechnicalJob(models.Model):
 
     # functions to track time in job
     def stop_tracking(self):
+        self.ensure_one()
         if self.schedule_id:
             self.schedule_id.stop_tracking()
             cr = self.env.cr
-            cr.execute("UPDATE technical_job_schedule SET out_time = %s WHERE id = %s", (fields.Datetime.now(), self.schedule_id.id))
+            cr.execute(
+                "UPDATE technical_job_schedule SET out_time = %s WHERE id = %s",
+                (fields.Datetime.now(), self.schedule_id.id)
+            )
             self.invalidate_cache()
-            if self.job_type_id.data_assistant:
-                ctx = {'note_assistant_type': 'Finalizacion trabajo', 'technical_job': self.id}
-                return {
-                    'name': "Descripción trabajo realizado",
-                    'res_model': 'technical.job.note.assistant',
-                    'type': 'ir.actions.act_window',
-                    'view_mode': 'form',
-                    'context': ctx,
-                    'target': 'new',
-                }
-            else:
-                self.mark_as_done()
-        return True
-
-
-    def start_tracking(self):
-        if self.schedule_id:
-            self.schedule_id.start_tracking()
-            if not self.schedule_id.arrive_time:
-                cr = self.env.cr
-                cr.execute("UPDATE technical_job_schedule SET arrive_time = %s WHERE id = %s AND arrive_time IS NULL", (fields.Datetime.now(), self.schedule_id.id))
-                self.invalidate_cache()
         if self.job_type_id.data_assistant:
-            ctx = {'note_assistant_type': 'Descripcion Inicial', 'technical_job': self.id}
+            ctx = {'note_assistant_type': 'Finalizacion trabajo', 'technical_job': self.id, 'photo_stage': 'final'}
             return {
-                'name': "Descripción antes de realizar el trabajo",
+                'name': "Descripcion trabajo realizado",
                 'res_model': 'technical.job.note.assistant',
                 'type': 'ir.actions.act_window',
                 'view_mode': 'form',
                 'context': ctx,
                 'target': 'new',
             }
-        return True
+        else:
+            ctx = {'technical_job': self.id, 'photo_stage': 'final'}
+            return {
+                'name': "Fotos Finales",
+                'res_model': 'technical.job.photo.wizard',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'context': ctx,
+                'target': 'new',
+            }
+
+    def start_tracking(self):
+        self.ensure_one()
+        if self.schedule_id:
+            self.schedule_id.start_tracking()
+            if not self.schedule_id.arrive_time:
+                cr = self.env.cr
+                cr.execute(
+                    "UPDATE technical_job_schedule SET arrive_time = %s WHERE id = %s AND arrive_time IS NULL",
+                    (fields.Datetime.now(), self.schedule_id.id)
+                )
+                self.invalidate_cache()
+        if self.job_type_id.data_assistant:
+            ctx = {'note_assistant_type': 'Descripcion Inicial', 'technical_job': self.id, 'photo_stage': 'initial'}
+            return {
+                'name': "Descripcion antes de realizar el trabajo",
+                'res_model': 'technical.job.note.assistant',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'context': ctx,
+                'target': 'new',
+            }
+        else:
+            ctx = {'technical_job': self.id, 'photo_stage': 'initial'}
+            return {
+                'name': "Fotos Iniciales",
+                'res_model': 'technical.job.photo.wizard',
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'context': ctx,
+                'target': 'new',
+            }
 
     @api.depends('date_schedule', 'job_duration')
     def get_end_time(self):
@@ -597,7 +692,8 @@ class IrAtt(models.Model):
     _inherit = 'ir.attachment'
 
     added_from_technical_job = fields.Boolean()
-    
+    photo_stage = fields.Selection([('initial', 'Inicial'), ('final', 'Final')], string="Etapa foto")
+
     @api.model
     def check(self, mode, values=None):
         return True

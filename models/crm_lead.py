@@ -454,6 +454,16 @@ class CrmLead(models.Model):
         ('high', 'Alto')],
         string="Nivel de seguridad", tracking=True
     )
+    def action_send_quotations(self):
+        return {
+            'name': "Envío masivo de presupuestos",
+            'res_model': 'crm.lead.send.quotations',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'context': {'active_ids': self.ids},
+            'target': 'new',
+        }
+
     def action_view_sale_quotation(self):
         action = self.env["ir.actions.actions"]._for_xml_id("sale.action_quotations_with_onboarding")
         action['context'] = {

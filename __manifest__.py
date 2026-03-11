@@ -107,6 +107,8 @@
         'views/sale_report.xml',
         'wizards/technical_job_assistant_massive_tag_assign_view.xml',
         'wizards/sale_order_send_multi_views.xml',
+        'wizards/crm_lead_send_quotations_views.xml',
+        'wizards/technical_job_photo_wizard_views.xml',
         'security/ir.model.access.csv',
     ],
     "assets": {
