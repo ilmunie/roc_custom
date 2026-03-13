@@ -200,10 +200,13 @@ class TechnicalJob(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         new_vals = []
+        schedule_model = self.env['technical.job.schedule']
+        schedule_fields = set(schedule_model._fields.keys())
         for vals in vals_list:
             if 'schedule_id' in vals.keys() and not vals.get('schedule_id', False):
                 vals.pop('schedule_id')
-                vals['schedule_id'] = self.env['technical.job.schedule'].create(vals).id
+                schedule_vals = {k: v for k, v in vals.items() if k in schedule_fields}
+                vals['schedule_id'] = schedule_model.create(schedule_vals).id
                 new_vals.append(vals)
             else:
                 new_vals.append(vals)
