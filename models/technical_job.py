@@ -272,8 +272,6 @@ class TechnicalJob(models.Model):
             is_coordinator = self.env.user.has_group('roc_custom.technical_job_planner')
             is_only_technical = is_technical_user and not is_coordinator
             if record.job_type_id.requires_documentation and is_only_technical:
-                if record.res_id and not record.attch_ids:
-                    raise ValidationError('Cargue la documentación correspondiente')
                 if not record.initial_photo_ids:
                     raise ValidationError('Debe cargar las fotos iniciales del trabajo')
                 if not record.final_photo_ids:
