@@ -14,7 +14,7 @@ class SaleExtraProductSelector(models.TransientModel):
         if vals.get('sale_line_id'):
             sale_line = self.env['sale.order.line'].browse(vals['sale_line_id'])
             configs = sale_line.product_id.product_tmpl_id.extra_product_config_ids.filtered(
-                lambda x: x.usage_type in ('attribute_change', 'other_product')
+                lambda x: x.usage_type in ('attribute_change', 'attribute_value_change', 'product_extra', 'other_product')
             )
             if configs:
                 vals['config_line_ids'] = [(0, 0, {'config_id': c.id}) for c in configs]
@@ -28,10 +28,18 @@ class SaleExtraProductSelectorLine(models.TransientModel):
     wiz_id = fields.Many2one('sale.extra.product.selector', ondelete='cascade')
     config_id = fields.Many2one('sale.extra.product.config', required=True)
     sequence = fields.Integer(related='config_id.sequence', store=True)
-    description = fields.Text(related='config_id.description', string="Descripción")
-    usage_type = fields.Selection(related='config_id.usage_type', string="Tipo de Uso")
+    description = fields.Text(related='config_id.description', string="Descripcion")
+    usage_type = fields.Selection(related='config_id.usage_type', string="Tipo")
     quantity = fields.Float(related='config_id.quantity', string="Cantidad")
-    extra_product_id = fields.Many2one(related='config_id.extra_product_id', string="Producto Extra")
+    extra_product_id = fields.Many2one(related='config_id.extra_product_id', string="Producto")
+    attribute_id = fields.Many2one(related='config_id.attribute_id', string="Atributo")
+    price_info = fields.Char(compute='_compute_price_info', string="Precio Extra")
+
+    def _compute_price_info(self):
+        for line in self:
+            line.price_info = line.config_id.get_price_display(
+                current_product=line.wiz_id.sale_line_id.product_id if line.wiz_id else None
+            )
 
     def apply_extra(self):
         self.ensure_one()
@@ -39,6 +47,16 @@ class SaleExtraProductSelectorLine(models.TransientModel):
         sale_line = self.wiz_id.sale_line_id
 
         if config.usage_type == 'other_product' and config.extra_product_id:
+            # Reemplazo: reemplaza el producto de la linea actual
+            sale_line.write({
+                'product_id': config.extra_product_id.id,
+                'name': config.extra_product_id.get_product_multiline_description_sale(),
+                'price_unit': config.extra_product_id.lst_price,
+            })
+            return {'type': 'ir.actions.act_window_close'}
+
+        elif config.usage_type == 'product_extra' and config.extra_product_id:
+            # Producto extra: agrega una linea nueva
             self.env['sale.order.line'].create({
                 'order_id': sale_line.order_id.id,
                 'product_id': config.extra_product_id.id,
@@ -51,13 +69,44 @@ class SaleExtraProductSelectorLine(models.TransientModel):
             return {'type': 'ir.actions.act_window_close'}
 
         elif config.usage_type == 'attribute_change':
+            # Cambio de atributo: abre selector de variantes filtrado por el atributo
             product_tmpl = sale_line.product_id.product_tmpl_id
             wiz = self.env['sale.extra.variant.selector'].create({
                 'sale_line_id': sale_line.id,
                 'product_tmpl_id': product_tmpl.id,
                 'product_uom_qty': config.quantity,
+                'filter_attribute_id': config.attribute_id.id if config.attribute_id else False,
             })
             return wiz._reopen()
+
+        elif config.usage_type == 'attribute_value_change' and config.attribute_value_id:
+            # Cambio de valor de atributo: busca la variante con ese valor y reemplaza
+            product_tmpl = sale_line.product_id.product_tmpl_id
+            current_ptavs = sale_line.product_id.product_template_attribute_value_ids
+            target_attr = config.attribute_id
+
+            # Build new ptav set: replace the value for this attribute
+            new_ptav_ids = set()
+            for ptav in current_ptavs:
+                if ptav.attribute_id == target_attr:
+                    new_ptav_ids.add(config.attribute_value_id.id)
+                else:
+                    new_ptav_ids.add(ptav.id)
+
+            # Find matching variant
+            candidates = self.env['product.product'].search([
+                ('product_tmpl_id', '=', product_tmpl.id),
+            ])
+            product = candidates.filtered(
+                lambda p: set(p.product_template_attribute_value_ids.ids) == new_ptav_ids
+            )[:1]
+            if product:
+                sale_line.write({
+                    'product_id': product.id,
+                    'name': product.get_product_multiline_description_sale(),
+                    'price_unit': product.lst_price,
+                })
+            return {'type': 'ir.actions.act_window_close'}
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -128,6 +177,9 @@ class SaleExtraVariantSelector(models.TransientModel):
     )
     product_uom_qty = fields.Float(string="Cantidad", default=1)
 
+    # Optional: when set, only show this attribute's values for selection
+    filter_attribute_id = fields.Many2one('product.attribute', string="Atributo a cambiar")
+
     # -- kept for DB compat, no longer used in the view --
     attr_line_ids = fields.One2many('sale.extra.attr.line', 'wiz_id', string="Atributos")
 
@@ -150,7 +202,7 @@ class SaleExtraVariantSelector(models.TransientModel):
     )
 
     # -- summary of current selections --
-    config_summary = fields.Char(compute='_compute_config_summary', string="Configuración")
+    config_summary = fields.Char(compute='_compute_config_summary', string="Configuracion")
 
     # -- dict stored as JSON: {attr_id: ptav_id, ...} --
     _selections_json = fields.Text(default='{}')
@@ -212,6 +264,11 @@ class SaleExtraVariantSelector(models.TransientModel):
         wiz = super().create(vals)
         if wiz.product_tmpl_id:
             attr_lines = wiz._get_template_attrs()
+            if wiz.filter_attribute_id:
+                # If filtering by a specific attribute, only show that one
+                attr_lines = attr_lines.filtered(
+                    lambda l: l.attribute_id == wiz.filter_attribute_id
+                )
             wiz.available_attr_ids = [(6, 0, attr_lines.mapped('attribute_id').ids)]
             first_attr_line = attr_lines[:1]
             if first_attr_line:

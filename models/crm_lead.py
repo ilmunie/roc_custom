@@ -165,12 +165,12 @@ class CrmLead(models.Model):
     trigger_followers_customization = fields.Boolean(compute='followers_customization', store=True)
     def sync_expected_revenue(self):
         for record in self:
-            amount = sum(record.order_ids.filtered(lambda x: not x.pos_order_line_ids and x.state in ('done', 'sale')).mapped('amount_untaxed'))
+            amount = sum(record.order_ids.filtered(lambda x: not x.pos_order_line_ids and x.state in ('done', 'sale')).mapped('amount_total'))
             pos_ids = []
             if record.order_ids:
                 for pos_order_line in record.order_ids.pos_order_line_ids:
                     if pos_order_line.order_id.id not in pos_ids:
-                        amount += (pos_order_line.order_id.amount_total - pos_order_line.order_id.amount_tax)
+                        amount += pos_order_line.order_id.amount_total
                         pos_ids.append(pos_order_line.order_id.id)
             record.expected_revenue = amount
 

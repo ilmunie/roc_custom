@@ -142,7 +142,17 @@
                         <tree editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="usage_type"/>
-                            <field name="extra_product_id" attrs="{'invisible': [('usage_type', '!=', 'other_product')], 'required': [('usage_type', '=', 'other_product')]}"/>
+                            <field name="attribute_id"
+                                   attrs="{'invisible': [('usage_type', 'not in', ['attribute_change', 'attribute_value_change'])],
+                                           'required': [('usage_type', 'in', ['attribute_change', 'attribute_value_change'])]}"
+                                   options="{'no_create': True}"/>
+                            <field name="attribute_value_id"
+                                   attrs="{'invisible': [('usage_type', '!=', 'attribute_value_change')],
+                                           'required': [('usage_type', '=', 'attribute_value_change')]}"
+                                   options="{'no_create': True}"/>
+                            <field name="extra_product_id"
+                                   attrs="{'invisible': [('usage_type', 'not in', ['product_extra', 'other_product'])],
+                                           'required': [('usage_type', 'in', ['product_extra', 'other_product'])]}"/>
                             <field name="quantity"/>
                             <field name="description"/>
                         </tree>

@@ -160,6 +160,22 @@ class SaleAlternativeProductAssistant(models.TransientModel):
         wiz.attribute_alt_value_domain = json.dumps([
             ('id', 'in', attr_ids or [])
         ])
+
+        # Load distinct attribute names for the 2-step filter
+        cr.execute(f"""
+            SELECT ARRAY_AGG(DISTINCT pa.id)
+            FROM {from_clause.replace('"','')}
+            JOIN product_variant_combination pvc
+                ON pvc.product_product_id = product_product.id
+            JOIN product_template_attribute_value ptav
+                ON ptav.id = pvc.product_template_attribute_value_id
+            JOIN product_attribute pa
+                ON pa.id = ptav.attribute_id
+            WHERE {where_clause.replace('"','')}
+        """, where_params)
+        (pa_ids,) = cr.fetchone()
+        wiz.available_attr_filter_ids = [(6, 0, pa_ids or [])]
+
         return wiz
 
 
@@ -178,6 +194,45 @@ class SaleAlternativeProductAssistant(models.TransientModel):
     attribute_value_domain = fields.Char()
     attribute_value_ids = fields.Many2many('product.template.attribute.value', 'aux_table_sale_wiz_2', 'wiz_id', 'att_value_id', string="Atributos")
     only_available_products = fields.Boolean(string="Solo productos disponibles")
+
+    # Feature 2: 2-step attribute filter (select attribute first, then value)
+    available_attr_filter_ids = fields.Many2many(
+        'product.attribute', 'sale_alt_wiz_avail_attr_rel', 'wiz_id', 'attr_id',
+        string="Atributos disponibles")
+    selected_filter_attr_id = fields.Many2one('product.attribute', string="Filtrar por atributo")
+    available_filter_value_ids = fields.Many2many(
+        'product.template.attribute.value', 'sale_alt_wiz_avail_fval_rel', 'wiz_id', 'ptav_id',
+        string="Valores disponibles")
+    selected_filter_value_id = fields.Many2one(
+        'product.template.attribute.value', string="Valor de atributo")
+
+    @api.onchange('selected_filter_attr_id')
+    def _onchange_selected_filter_attr_id(self):
+        """When user selects an attribute, load the available values for it from visible products."""
+        self.selected_filter_value_id = False
+        if not self.selected_filter_attr_id:
+            self.available_filter_value_ids = [(5, 0, 0)]
+            return
+        cr = self.env.cr
+        cr.execute("""
+            SELECT ARRAY_AGG(DISTINCT ptav.id)
+            FROM sale_alternative_product_assistant_line l
+            JOIN product_variant_combination pvc ON pvc.product_product_id = l.product_id
+            JOIN product_template_attribute_value ptav ON ptav.id = pvc.product_template_attribute_value_id
+            WHERE l.wiz_id = %s
+              AND ptav.attribute_id = %s
+        """, [self._origin.id or self.id, self.selected_filter_attr_id.id])
+        row = cr.fetchone()
+        ptav_ids = row[0] if row and row[0] else []
+        self.available_filter_value_ids = [(6, 0, ptav_ids)]
+
+    def add_attr_filter(self):
+        """Add the selected attribute value to the filter and refresh."""
+        self.ensure_one()
+        if self.selected_filter_value_id:
+            self.attribute_alt_value_ids = [(4, self.selected_filter_value_id.id)]
+            self.selected_filter_value_id = False
+        return self.apply_filters()
     sale_line_id = fields.Many2one('sale.order.line')
     product_to_replace = fields.Many2one(related='sale_line_id.product_id')
     sale_template_line_id = fields.Many2one('sale.order.template.line', related='sale_line_id.sale_template_line_id')

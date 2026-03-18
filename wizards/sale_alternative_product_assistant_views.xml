@@ -39,6 +39,19 @@
                             <field name="attribute_alt_value_domain" invisible="1"/>
                             <field name="attribute_alt_value_ids" widget="many2many_tags" domain="attribute_alt_value_domain"
                                    attrs="{'invisible':[('match_attributes','!=',True)]}"  options="{'no_create': True}"/>
+                            <field name="available_attr_filter_ids" invisible="1"/>
+                            <field name="available_filter_value_ids" invisible="1"/>
+                            <field name="selected_filter_attr_id"
+                                   domain="[('id', 'in', available_attr_filter_ids)]"
+                                   attrs="{'invisible':[('match_attributes','!=',True)]}"
+                                   options="{'no_create': True}" string="Atributo"/>
+                            <field name="selected_filter_value_id"
+                                   domain="[('id', 'in', available_filter_value_ids)]"
+                                   attrs="{'invisible':['|', ('match_attributes','!=',True), ('selected_filter_attr_id','=',False)]}"
+                                   options="{'no_create': True}" string="Valor"/>
+                            <button name="add_attr_filter" type="object" string="+ Agregar filtro" icon="fa-plus"
+                                    class="btn-link"
+                                    attrs="{'invisible':['|', ('match_attributes','!=',True), ('selected_filter_value_id','=',False)]}"/>
                         </group>
                         </group>
                     <group>

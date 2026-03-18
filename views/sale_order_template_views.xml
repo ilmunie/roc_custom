@@ -21,6 +21,9 @@
                                              attrs="{'column_invisible': [('parent.technical_job_template', '=', False)]}"/>
                 <field name="discount" widget="percentage"/>
                 <field name="alternative_product_domain" widget="domain" options="{'model': 'product.product', 'in_dialog': true}"/>
+                <field name="enable_qty_limits"/>
+                <field name="min_qty" attrs="{'invisible': [('enable_qty_limits', '=', False)]}"/>
+                <field name="max_qty" attrs="{'invisible': [('enable_qty_limits', '=', False)]}"/>
                 <button name="open_tag_config" type="object" string="Config Tags" icon="fa-tags" title="Configurar etiquetas de selección de producto"/>
                 <field name="tag_config_ids" invisible="1"/>
             </xpath>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Func 3 - Extras section in quotation PDF.
-        Appended at the end of the page div in sale.report_saleorder_document.
+        Extras section in quotation PDF.
+        Shows available extras with pricing per type.
     -->
     <template id="report_saleorder_extras" inherit_id="sale.report_saleorder_document">
         <xpath expr="//div[hasclass('page')]" position="inside">
@@ -12,7 +12,7 @@
             ]"/>
             <t t-if="extra_lines">
                 <div class="extras-section mt-4" style="page-break-inside: avoid;">
-                    <h4 style="border-bottom: 1px solid #888; padding-bottom: 4px; margin-top: 20px;">Productos Extra Disponibles</h4>
+                    <h4 style="border-bottom: 1px solid #888; padding-bottom: 4px; margin-top: 20px;">Opciones y Extras Disponibles</h4>
                     <t t-foreach="extra_lines" t-as="extra_line">
                         <t t-set="configs" t-value="extra_line.product_id.product_tmpl_id.extra_product_config_ids"/>
                         <t t-if="configs">
@@ -20,14 +20,42 @@
                                 <strong t-esc="extra_line.product_id.display_name"/>
                                 <ul class="mt-1 mb-1" style="font-size:10px; padding-left:18px;">
                                     <t t-foreach="configs" t-as="cfg">
-                                        <t t-if="cfg.description">
-                                            <li>
-                                                <t t-esc="cfg.description"/>
+                                        <li>
+                                            <!-- data_extra: solo descripcion -->
+                                            <t t-if="cfg.usage_type == 'data_extra' and cfg.description">
+                                                <span t-esc="cfg.description"/>
+                                            </t>
+
+                                            <!-- attribute_change: nombre atributo + valores con precios -->
+                                            <t t-if="cfg.usage_type == 'attribute_change' and cfg.attribute_id">
+                                                <span>Cambio de <strong t-esc="cfg.attribute_id.name"/>: </span>
+                                                <span t-esc="cfg.get_price_display(extra_line.product_id)"/>
+                                            </t>
+
+                                            <!-- attribute_value_change: cambio especifico -->
+                                            <t t-if="cfg.usage_type == 'attribute_value_change' and cfg.attribute_value_id">
+                                                <span t-esc="cfg.description or ''"/>
+                                                <t t-set="av_price" t-value="cfg.get_price_display()"/>
+                                                <t t-if="av_price">
+                                                    <span style="color:#555;"> (<t t-esc="av_price"/>)</span>
+                                                </t>
+                                            </t>
+
+                                            <!-- product_extra: producto adicional -->
+                                            <t t-if="cfg.usage_type == 'product_extra' and cfg.extra_product_id">
+                                                <span t-esc="cfg.description or cfg.extra_product_id.display_name"/>
+                                                <span style="color:#555;"> (<t t-esc="cfg.get_price_display()"/>)</span>
                                                 <t t-if="cfg.quantity and cfg.quantity != 1">
                                                     <span style="color:#555;"> x <t t-esc="int(cfg.quantity) if cfg.quantity == int(cfg.quantity) else cfg.quantity"/></span>
                                                 </t>
-                                            </li>
-                                        </t>
+                                            </t>
+
+                                            <!-- other_product: reemplazo -->
+                                            <t t-if="cfg.usage_type == 'other_product' and cfg.extra_product_id">
+                                                <span>Reemplazo por <strong t-esc="cfg.extra_product_id.display_name"/>: </span>
+                                                <span style="color:#555;" t-esc="cfg.get_price_display(extra_line.product_id)"/>
+                                            </t>
+                                        </li>
                                     </t>
                                 </ul>
                             </div>

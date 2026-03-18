@@ -21,6 +21,9 @@ class SaleOrderTemplateLine(models.Model):
     technical_job_duration = fields.Boolean(string="Cant. hs T.T.")
     discount = fields.Float(string="Descuento")
     alternative_product_domain = fields.Char(string="Productos Alternativos")
+    enable_qty_limits = fields.Boolean(string="Limitar cantidad")
+    min_qty = fields.Float(string="Cant. Min")
+    max_qty = fields.Float(string="Cant. Max")
    
 
 class SaleOrder(models.Model):
@@ -92,9 +95,22 @@ class SaleOrder(models.Model):
     sale_template_tag_domain = fields.Char(compute="compute_sale_template_tag_domain")
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
-    
-    sale_template_line_id = fields.Many2one('sale.order.template.line')
 
+    sale_template_line_id = fields.Many2one('sale.order.template.line')
+    enable_qty_limits = fields.Boolean(related='sale_template_line_id.enable_qty_limits', store=True)
+    min_qty = fields.Float(related='sale_template_line_id.min_qty', store=True)
+    max_qty = fields.Float(related='sale_template_line_id.max_qty', store=True)
+
+    @api.constrains('product_uom_qty')
+    def _check_qty_limits(self):
+        for line in self:
+            if line.enable_qty_limits and line.sale_template_line_id:
+                if line.min_qty and line.product_uom_qty < line.min_qty:
+                    raise UserError(
+                        f'La cantidad de "{line.product_id.display_name}" no puede ser menor a {line.min_qty}')
+                if line.max_qty and line.product_uom_qty > line.max_qty:
+                    raise UserError(
+                        f'La cantidad de "{line.product_id.display_name}" no puede ser mayor a {line.max_qty}')
 
     @api.depends('sale_template_line_id')
     def get_alternative_prod_domain(self):
