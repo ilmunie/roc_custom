@@ -263,14 +263,21 @@ class TechnicalJob(models.Model):
     def mark_as_done(self):
         from collections import defaultdict
         assistants_by_model = defaultdict(list)
+        cr = self.env.cr
+
+        # Pre-check permissions once (same for all records in self)
+        is_technical_user = self.env.user.has_group('roc_custom.technical_job_user')
+        is_coordinator = self.env.user.has_group('roc_custom.technical_job_planner')
+        is_only_technical = is_technical_user and not is_coordinator
+
+        # Prefetch assistant configs grouped by model (avoid repeated searches)
+        config_cache = {}
+
         for record in self:
             if record.start_tracking_time and record.schedule_id:
                 record.schedule_id.stop_tracking()
             if record.displacement_start_datetime:
                 record.end_displacement()
-            is_technical_user = self.env.user.has_group('roc_custom.technical_job_user')
-            is_coordinator = self.env.user.has_group('roc_custom.technical_job_planner')
-            is_only_technical = is_technical_user and not is_coordinator
             if record.job_type_id.requires_documentation and is_only_technical:
                 if not record.initial_photo_ids:
                     raise ValidationError('Debe cargar las fotos iniciales del trabajo')
@@ -279,51 +286,71 @@ class TechnicalJob(models.Model):
             if record.job_type_id.force_time_registration and is_only_technical and not record.minutes_in_job:
                 raise ValidationError('Debe registrar tiempo en la operacion')
 
-            # Batch write status for this record and all siblings sharing the same schedule via SQL
-            cr = self.env.cr
-            if record.schedule_id:
-                cr.execute("UPDATE technical_job_schedule SET job_status='done' WHERE id = %s", (record.schedule_id.id,))
-                cr.execute("UPDATE technical_job SET job_status='done' WHERE schedule_id = %s", (record.schedule_id.id,))
+            # Read fields we need BEFORE invalidating cache
+            res_id = record.res_id
+            res_model = record.res_model
+            schedule_id = record.schedule_id.id if record.schedule_id else False
+            minutes_in_job = record.minutes_in_job
+            arrive_time = record.arrive_time
+            out_time = record.out_time
+            job_type_name = record.job_type_id.name
+
+            # Batch write status via SQL
+            if schedule_id:
+                cr.execute("UPDATE technical_job_schedule SET job_status='done' WHERE id = %s", (schedule_id,))
+                cr.execute("UPDATE technical_job SET job_status='done' WHERE schedule_id = %s", (schedule_id,))
             else:
                 cr.execute("UPDATE technical_job SET job_status='done' WHERE id = %s", (record.id,))
             self.invalidate_cache()
 
-            if (record.res_id and record.res_model):
-                body = "Ha finalizado la operación: " + record.job_type_id.name
-                if record.minutes_in_job:
-                    body += f"<br/> TIEMPO TOTAL REGISTRADO: {round(record.minutes_in_job, 0)} min"
-                    body += f"<br/> LLEGADA: {record.arrive_time} | SALIDA: {record.out_time}"
-                rec = self.env[record.res_model].browse(record.res_id)
+            if res_id and res_model:
+                body = "Ha finalizado la operación: " + job_type_name
+                if minutes_in_job:
+                    body += f"<br/> TIEMPO TOTAL REGISTRADO: {round(minutes_in_job, 0)} min"
+                    body += f"<br/> LLEGADA: {arrive_time} | SALIDA: {out_time}"
+                rec = self.env[res_model].browse(res_id)
+
                 rec.with_context(mail_create_nosubscribe=True).message_post(body=body, message_type='comment',
                                                                             partner_ids=rec.user_id.mapped(
                                                                                 'partner_id.id'))
-                model_configs = self.env['technical.job.assistant.config'].search([('model_id.model', '=', rec._name)])
+
+                # Find matching config (use cache to avoid repeated searches)
+                if res_model not in config_cache:
+                    config_cache[res_model] = self.env['technical.job.assistant.config'].search(
+                        [('model_id.model', '=', res_model)])
+                model_configs = config_cache[res_model]
+
                 config = False
                 for model_conf in model_configs:
                     domain = eval(model_conf.domain_condition)
                     domain.insert(0, ('id', '=', rec.id))
-                    if self.env[rec._name].search(domain, limit=1):
+                    if self.env[res_model].search(domain, limit=1):
                         config = model_conf
                         break
+
+                # Collect ALL write vals into one dict → single write to source record
+                batch_vals = {}
                 if config:
+                    wizard = self.env.context.get('wiz_id', False)
                     for wr_action in config.action_done_line_ids:
                         apply = True
-                        if wr_action.wiz_condition:
-                            wizard = self.env.context.get('wiz_id', False)
+                        if wr_action.wiz_condition and wizard:
                             domain = eval(wr_action.wiz_condition)
                             domain.insert(0, ('id', '=', wizard.id))
-                            if wizard and not self.env[wizard._name].search(domain):
+                            if not self.env[wizard._name].search(domain):
                                 apply = False
-                        if wr_action.domain_condition:
+                        if apply and wr_action.domain_condition:
                             domain = eval(wr_action.domain_condition)
                             domain.insert(0, ('id', '=', rec.id))
-                            if not self.env[rec._name].search(domain):
+                            if not self.env[res_model].search(domain):
                                 apply = False
                         if apply:
-                            rec.write(eval(wr_action.write_vals))
+                            batch_vals.update(eval(wr_action.write_vals))
                 if rec.manual_technical_job:
-                    rec.manual_technical_job = False
-                assistants_by_model[record.res_model].append(record.res_id)
+                    batch_vals['manual_technical_job'] = False
+                if batch_vals:
+                    rec.write(batch_vals)
+                assistants_by_model[res_model].append(res_id)
 
         # Batch-delete all assistants in one query per distinct model
         assistants_to_delete = self.env['technical.job.assistant']
@@ -331,7 +358,8 @@ class TechnicalJob(models.Model):
             assistants_to_delete |= self.env['technical.job.assistant'].search([
                 ('res_model', '=', res_model), ('res_id', 'in', res_ids)
             ])
-        assistants_to_delete.unlink()
+        if assistants_to_delete:
+            assistants_to_delete.unlink()
 
         if self.env.context.get("from_kanban", False):
                 ctx = self.env.context.copy()

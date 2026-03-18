@@ -219,15 +219,17 @@ class CrmLead(models.Model):
 
     @api.depends('stage_id')
     def trigger_crm_stage_change(self):
+        cr = self.env.cr
+        now = fields.Datetime.now()
+        uid = self.env.uid
         for record in self:
             if record.stage_id:
-                self.env['crm.stage.change'].create({
-                    'opportunity_id': record.id,
-                    'date': fields.Datetime.now(),
-                    'stage_id': record.stage_id.id
-                })
+                cr.execute("""
+                    INSERT INTO crm_stage_change (opportunity_id, date, stage_id, create_uid, write_uid, create_date, write_date)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (record.id, now, record.stage_id.id, uid, uid, now, now))
 
-            record.trigger_crm_lead_stage_change = False if record.trigger_crm_lead_stage_change else True
+            record.trigger_crm_lead_stage_change = not record.trigger_crm_lead_stage_change
     trigger_crm_stage_change = fields.Boolean(compute=trigger_crm_stage_change, store=True)
 
     @api.depends('lead_stage_id')

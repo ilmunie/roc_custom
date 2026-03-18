@@ -94,6 +94,10 @@ class TechnicalJobMixin(models.AbstractModel):
     @api.depends('customer_availability_type', 'customer_visit_datetime')
     def visit_job_generation(self):
         for record in self:
+            # Short-circuit: skip expensive config searches when conditions aren't met
+            if record.customer_availability_type != 'specific_date' or not record.customer_visit_datetime:
+                record.trigger_visit_job_generation = not record.trigger_visit_job_generation
+                continue
             model_configs = self.env['technical.job.assistant.config'].search([('model_id.model', '=', record._name)])
             config = False
             for model_conf in model_configs:
@@ -102,8 +106,7 @@ class TechnicalJobMixin(models.AbstractModel):
                 if self.env[record._name].search_count(domain) > 0:
                     config = model_conf
                     break
-            if config and record.customer_availability_type == 'specific_date' and record.customer_visit_datetime and \
-                    not record.show_technical_schedule_job_ids.filtered(
+            if config and not record.show_technical_schedule_job_ids.filtered(
                         lambda x: x.job_type_id.id == config[0].technical_job_type_id.id):
                 record.write({'technical_schedule_job_ids': [(0, 0,
                                                               {'res_model': record._name,
@@ -128,7 +131,7 @@ class TechnicalJobMixin(models.AbstractModel):
                                                                'user_id': config[
                                                                    0].responsible_user_id.id,
                                                                'date_schedule': record.customer_visit_datetime})]})
-            record.trigger_visit_job_generation = True if record.trigger_visit_job_generation else False
+            record.trigger_visit_job_generation = not record.trigger_visit_job_generation
 
 
 
