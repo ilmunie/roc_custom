@@ -1,5 +1,21 @@
 from odoo import fields, models, api
 import json
+import logging
+
+_logger = logging.getLogger(__name__)
+
+
+class SaleTemplateConfigTarget(models.Model):
+    _name = 'sale.template.config.target'
+    _description = 'Grupo de configuración de plantilla'
+    _order = 'sequence, name'
+
+    name = fields.Char(required=True, string="Nombre")
+    sequence = fields.Integer(default=10)
+    apply_all = fields.Boolean(
+        string="Aplicar a todos",
+        help="Si está activo, aplica la configuración a todas las líneas configurables",
+    )
 
 
 class SaleTemplateTagFilter(models.Model):
@@ -37,6 +53,12 @@ class SaleOrderTemplate(models.Model):
         'template_id', 'tag_filter_id',
         string="Etiquetas de Configuración",
     )
+    config_target_ids = fields.Many2many(
+        'sale.template.config.target',
+        'sale_order_template_config_target_rel',
+        'template_id', 'target_id',
+        string="Grupos de Configuración",
+    )
 
 
 class SaleOrderTemplateLine(models.Model):
@@ -47,6 +69,10 @@ class SaleOrderTemplateLine(models.Model):
         'template_line_id',
         string="Config Etiquetas",
         copy=True,
+    )
+    config_target_id = fields.Many2one(
+        'sale.template.config.target',
+        string="Grupo Config",
     )
 
     def open_tag_config(self):
@@ -83,6 +109,24 @@ class SaleOrder(models.Model):
     )
     config_tag_domain = fields.Char(compute='_compute_config_tag_domain')
     config_tag_order = fields.Char(default='[]', copy=False)
+
+    config_target_id = fields.Many2one(
+        'sale.template.config.target',
+        string="Aplicar a",
+    )
+    config_target_domain = fields.Char(
+        compute='_compute_config_target_domain',
+    )
+
+    @api.depends('sale_order_template_id', 'sale_order_template_id.config_target_ids')
+    def _compute_config_target_domain(self):
+        for r in self:
+            if r.sale_order_template_id and r.sale_order_template_id.config_target_ids:
+                r.config_target_domain = json.dumps([
+                    ('id', 'in', r.sale_order_template_id.config_target_ids.ids)
+                ])
+            else:
+                r.config_target_domain = json.dumps([('id', '=', 0)])
 
     @api.onchange('select_config_tag_id')
     def _onchange_select_config_tag_id(self):
@@ -160,9 +204,81 @@ class SaleOrder(models.Model):
                 res.append(('first_selection', '=', True))
             r.config_tag_domain = json.dumps(res)
 
+    def _search_or_create_variant(self, domain):
+        """Search for a product variant. If not found, find the template,
+        create the variant on-the-fly, and return it."""
+        Product = self.env['product.product']
+        PTAV = self.env['product.template.attribute.value']
+        product = Product.search(domain, limit=1)
+        if product:
+            return product
+
+        # Split domain: template-level (name, categ) vs attribute-level
+        template_domain = []
+        attr_values = []  # (operator, value) tuples
+        for d in domain:
+            if isinstance(d, (list, tuple)) and len(d) == 3:
+                if 'product_template_attribute_value_ids' in str(d[0]):
+                    attr_values.append((d[1], d[2]))
+                else:
+                    template_domain.append(d)
+            else:
+                template_domain.append(d)
+
+        if not template_domain:
+            return False
+
+        # Find the product.template
+        template = self.env['product.template'].search(template_domain, limit=1)
+        if not template:
+            return False
+
+        # Find matching PTAVs for each requested attribute value
+        matched_ptavs = PTAV
+        for operator, value in attr_values:
+            ptav = PTAV.search([
+                ('product_tmpl_id', '=', template.id),
+                ('product_attribute_value_id.name', operator, value),
+            ], limit=1)
+            if ptav:
+                matched_ptavs |= ptav
+
+        if not matched_ptavs:
+            return False
+
+        # For attributes NOT specified by tags, pick the first available value
+        all_attr_lines = template.attribute_line_ids
+        specified_attr_ids = matched_ptavs.mapped('attribute_id').ids
+        for line in all_attr_lines:
+            if line.attribute_id.id not in specified_attr_ids:
+                # Pick first ptav of this attribute line
+                first_ptav = line.product_template_value_ids[:1]
+                if first_ptav:
+                    matched_ptavs |= first_ptav
+
+        # Try to get existing variant for this combination
+        variant = template._get_variant_for_combination(matched_ptavs)
+        if variant:
+            return variant
+
+        # Create the variant
+        variant = Product.sudo().create({
+            'product_tmpl_id': template.id,
+            'product_template_attribute_value_ids': [(6, 0, matched_ptavs.ids)],
+            'active': True,
+        })
+        return variant
+
     def apply_config_tags(self):
         self.ensure_one()
         cr = self.env.cr
+
+        # 0. Validate: at least one tag must be selected
+        order = json.loads(self.config_tag_order or '[]')
+        if not order:
+            raise models.ValidationError(
+                "Debe seleccionar al menos una etiqueta de configuración antes de aplicar."
+            )
 
         # 1. Get selected config tag IDs via SQL
         cr.execute(
@@ -173,16 +289,31 @@ class SaleOrder(models.Model):
         if not config_tag_ids:
             return True
 
+        # 1b. Determine target filter based on config_target_id
+        target = self.config_target_id
+
         # 2. Single SQL JOIN: line + template_line + tag_config data
-        cr.execute("""
-            SELECT sol.id, sotl.alternative_product_domain, stltc.domain
-            FROM sale_order_line sol
-            JOIN sale_order_template_line sotl ON sotl.id = sol.sale_template_line_id
-            JOIN sale_template_line_tag_config stltc ON stltc.template_line_id = sotl.id
-            WHERE sol.order_id = %s
-              AND sol.sale_template_line_id IS NOT NULL
-              AND stltc.tag_filter_id IN %s
-        """, (self.id, config_tag_ids))
+        if target and not target.apply_all:
+            cr.execute("""
+                SELECT sol.id, sotl.alternative_product_domain, stltc.domain
+                FROM sale_order_line sol
+                JOIN sale_order_template_line sotl ON sotl.id = sol.sale_template_line_id
+                JOIN sale_template_line_tag_config stltc ON stltc.template_line_id = sotl.id
+                WHERE sol.order_id = %s
+                  AND sol.sale_template_line_id IS NOT NULL
+                  AND stltc.tag_filter_id IN %s
+                  AND sotl.config_target_id = %s
+            """, (self.id, config_tag_ids, target.id))
+        else:
+            cr.execute("""
+                SELECT sol.id, sotl.alternative_product_domain, stltc.domain
+                FROM sale_order_line sol
+                JOIN sale_order_template_line sotl ON sotl.id = sol.sale_template_line_id
+                JOIN sale_template_line_tag_config stltc ON stltc.template_line_id = sotl.id
+                WHERE sol.order_id = %s
+                  AND sol.sale_template_line_id IS NOT NULL
+                  AND stltc.tag_filter_id IN %s
+            """, (self.id, config_tag_ids))
         rows = cr.fetchall()
         if not rows:
             return True
@@ -209,7 +340,7 @@ class SaleOrder(models.Model):
         updated_count = 0
         all_updated_ids = []
         for entry in domain_to_lines.values():
-            product = self.env['product.product'].search(entry['domain'], limit=1)
+            product = self._search_or_create_variant(entry['domain'])
             if not product:
                 continue
             name = product.get_product_multiline_description_sale()
@@ -235,7 +366,9 @@ class SaleOrder(models.Model):
             WHERE r.order_id = %s ORDER BY t.sequence, t.name
         """, (self.id,))
         tag_names = ', '.join(r[0] for r in cr.fetchall())
+        target_name = target.name if target else 'Todas las líneas'
         self.message_post(
-            body="Configuración de etiquetas aplicada: <b>%s</b>. %d línea(s) actualizada(s)." % (tag_names, updated_count),
+            body="Configuración aplicada a <b>%s</b>: <b>%s</b>. %d línea(s) actualizada(s)." % (
+                target_name, tag_names, updated_count),
         )
         return True
