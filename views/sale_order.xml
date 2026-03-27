@@ -109,15 +109,17 @@
                         <field name="sale_template_tag_domain" invisible="1"/>
                     </group>
                     <!-- Func 1: Configuración de etiquetas de producto por template line -->
-                    <group string="Configuración de variante por etiquetas" col="1" attrs="{'invisible': [('sale_order_template_id', '=', False)]}">
+                    <group string="Configuración de variante por etiquetas" col="1" attrs="{'invisible': ['|', ('sale_order_template_id', '=', False), ('has_tag_filters', '=', False)]}">
+                        <field name="has_config_targets" invisible="1"/>
+                        <field name="has_tag_filters" invisible="1"/>
                         <field name="config_target_domain" invisible="1"/>
-                        <separator string="Aplicar a"/>
-                        <field name="config_target_id" nolabel="1" domain="config_target_domain" widget="statusbar" options="{'clickable': '1'}"/>
+                        <separator string="Aplicar a" attrs="{'invisible': [('has_config_targets', '=', False)]}"/>
+                        <field name="config_target_id" nolabel="1" domain="config_target_domain" widget="statusbar" options="{'clickable': '1'}" attrs="{'invisible': [('has_config_targets', '=', False)]}"/>
                         <field name="config_tag_domain" invisible="1"/>
                         <field name="sale_config_tag_ids" invisible="1"/>
                         <field name="config_tag_order" invisible="1"/>
                         <separator string="Configurar"/>
-                        <field name="select_config_tag_id" nolabel="1" domain="config_tag_domain" widget="statusbar" options="{'clickable': '1'}" attrs="{'invisible': [('sale_order_template_id', '=', False)]}"/>
+                        <field name="select_config_tag_id" nolabel="1" domain="config_tag_domain" widget="statusbar" options="{'clickable': '1'}"/>
                         <div class="o_row" attrs="{'invisible': [('selected_config_tags_name', '=', '')]}">
                             <field name="selected_config_tags_name" widget="badge" nolabel="1"/>
                             <button name="undo_last_config_tag" type="object" icon="fa-undo" class="btn-link" title="Deshacer última etiqueta"/>

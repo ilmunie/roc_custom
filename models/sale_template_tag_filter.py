@@ -117,6 +117,12 @@ class SaleOrder(models.Model):
     config_target_domain = fields.Char(
         compute='_compute_config_target_domain',
     )
+    has_config_targets = fields.Boolean(
+        compute='_compute_config_target_domain',
+    )
+    has_tag_filters = fields.Boolean(
+        compute='_compute_config_tag_domain',
+    )
 
     @api.depends('sale_order_template_id', 'sale_order_template_id.config_target_ids')
     def _compute_config_target_domain(self):
@@ -125,8 +131,10 @@ class SaleOrder(models.Model):
                 r.config_target_domain = json.dumps([
                     ('id', 'in', r.sale_order_template_id.config_target_ids.ids)
                 ])
+                r.has_config_targets = True
             else:
                 r.config_target_domain = json.dumps([('id', '=', 0)])
+                r.has_config_targets = False
 
     @api.onchange('select_config_tag_id')
     def _onchange_select_config_tag_id(self):
@@ -191,7 +199,9 @@ class SaleOrder(models.Model):
         for r in self:
             if not r.sale_order_template_id or not r.sale_order_template_id.tag_filter_ids:
                 r.config_tag_domain = json.dumps([('id', '=', 0)])
+                r.has_tag_filters = False
                 continue
+            r.has_tag_filters = True
             res = [('id', 'in', r.sale_order_template_id.tag_filter_ids.ids)]
             order = json.loads(r.config_tag_order or '[]')
             if order:
