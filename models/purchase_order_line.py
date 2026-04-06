@@ -11,6 +11,17 @@ class PurchaseOrderLine(models.Model):
         """Override: usar description_purchase como nombre base."""
         return product_lang.get_product_multiline_description_purchase()
 
+    def _check_orderpoint_picking_type(self):
+        """Override: excluir moves cancelados de la validación de consistencia
+        almacén/ubicación. En standard Odoo, move_dest_ids incluye moves
+        cancelados que ya no son relevantes y disparan falsos positivos."""
+        warehouse_loc = self.order_id.picking_type_id.warehouse_id.view_location_id
+        active_moves = self.move_dest_ids.filtered(lambda m: m.state != 'cancel')
+        dest_loc = active_moves.location_id or self.orderpoint_id.location_id
+        if warehouse_loc and dest_loc and dest_loc.warehouse_id and warehouse_loc.parent_path not in dest_loc[0].parent_path:
+            raise UserError(_('For the product %s, the warehouse of the operation type (%s) is inconsistent with the location (%s) of the reordering rule (%s). Change the operation type or cancel the request for quotation.',
+                              self.product_id.display_name, self.order_id.picking_type_id.display_name, self.orderpoint_id.location_id.display_name, self.orderpoint_id.display_name))
+
 
 
     @api.depends('invoice_lines', 'invoice_lines.price_unit', 'invoice_lines.discount', 'invoice_lines.move_id.state')
