@@ -64,6 +64,16 @@ class SaleOrder(models.Model):
                 record.opportunity_id.sync_expected_revenue()
         return res
 
+    @api.depends('amount_untaxed', 'state', 'opportunity_id')
+    def sync_opportunity_revenue(self):
+        """Resincroniza el expected_revenue de la oportunidad cuando cambia
+        el importe (sin impuestos) o el estado de la SO asociada."""
+        for record in self:
+            if record.opportunity_id:
+                record.opportunity_id.sync_expected_revenue()
+            record.trigger_sync_opportunity_revenue = False if record.trigger_sync_opportunity_revenue else True
+    trigger_sync_opportunity_revenue = fields.Boolean(compute=sync_opportunity_revenue, store=True)
+
     @api.depends('partner_id')
     def get_domain_shipping(self):
         for record in self:
