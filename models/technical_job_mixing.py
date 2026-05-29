@@ -286,8 +286,11 @@ class CrmLead(models.Model,TechnicalJobMixin):
     @api.depends('expected_revenue')
     def sync_exp_rev(self):
         for record in self:
-            if record.expected_revenue and record.expected_revenue != record.estimated_visit_revenue:
-                record.estimated_visit_revenue = record.expected_revenue
+            # El estimado de la visita lo cobra el operario: debe ir CON IVA,
+            # a diferencia de expected_revenue que se calcula sin IVA para el CRM.
+            amount_with_tax = record._get_visit_amount_with_tax()
+            if amount_with_tax and amount_with_tax != record.estimated_visit_revenue:
+                record.estimated_visit_revenue = amount_with_tax
             record.trigger_sync_expected_revenue = False if record.trigger_sync_expected_revenue else True
     trigger_sync_expected_revenue = fields.Boolean(compute=sync_exp_rev, store=True )
 

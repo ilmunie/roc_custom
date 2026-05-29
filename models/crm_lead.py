@@ -174,6 +174,20 @@ class CrmLead(models.Model):
                         pos_ids.append(pos_order_line.order_id.id)
             record.expected_revenue = amount
 
+    def _get_visit_amount_with_tax(self):
+        """Total CON IVA de las ordenes confirmadas (SO + POS). A diferencia de
+        expected_revenue (sin IVA, para el CRM), este importe es el que ve y
+        cobra el operario en la pestaña de visita, por lo que debe llevar IVA."""
+        self.ensure_one()
+        amount = sum(self.order_ids.filtered(lambda x: not x.pos_order_line_ids and x.state in ('done', 'sale')).mapped('amount_total'))
+        pos_ids = []
+        if self.order_ids:
+            for pos_order_line in self.order_ids.pos_order_line_ids:
+                if pos_order_line.order_id.id not in pos_ids:
+                    amount += pos_order_line.order_id.amount_total
+                    pos_ids.append(pos_order_line.order_id.id)
+        return amount
+
     sale_amount_total = fields.Monetary(compute='_compute_sale_data', string="Sum of Orders", help="Untaxed Total of Confirmed Orders", currency_field='company_currency', store=True)
     quotation_count = fields.Integer(compute='_compute_sale_data', string="Number of Quotations", store=True)
     sale_order_count = fields.Integer(compute='_compute_sale_data', string="Number of Sale Orders", store=True)

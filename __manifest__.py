@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'roc_custom',
-    'version': '15.0.1.1',
+    'version': '15.0.1.2',
     'category': 'Custom',
     'sequence': 15,
     'summary': 'Odoo v15 module with custom features for roc project',
