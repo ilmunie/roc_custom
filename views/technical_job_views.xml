@@ -141,6 +141,7 @@
                     <field name="job_type_id"  attrs="{'invisible':[('job_type_id','=',False)]}" filters="True"/>
                     <field name="user_id"  attrs="{'invisible':[('user_id','=',False)]}" avatar_field="avatar_128" filters="True"/>
                     <field name="sale_order_ids" widget="many2many_tags" attrs="{'invisible':[('sale_order_ids','=',False)]}"/>
+                    <button name="see_all_data" type="object" icon="fa-eye" attrs="{'invisible': [('res_model','=','technical.job.schedule')]}"/>
                 </calendar>
             </field>
         </record>
