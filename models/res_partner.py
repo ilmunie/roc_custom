@@ -27,7 +27,9 @@ class ResPartner(models.Model):
     def check_vat(self):
         for partner in self:
             if partner.vat and partner.vat == 'ES':
-               return
+                return
+            if partner.country_id and partner.country_id.code and partner.country_id.code.upper() == 'VE':
+                return
         return super(ResPartner, self).check_vat()
 
     @api.model
