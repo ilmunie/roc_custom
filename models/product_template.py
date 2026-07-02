@@ -233,7 +233,7 @@ class ProductTemplate(models.Model):
         for record in self:
             rentability_multiplier = record.get_material_rentability_multiplier()
             if record.price_from_seller:
-                sellers = self.seller_ids.filtered(lambda x: x.price > 0)
+                sellers = record.seller_ids.filtered(lambda x: x.price > 0)
                 sorted_sellers = sorted(sellers, key=lambda r: r.price*(1 - r.discount/100), reverse=True)
                 seller = sorted_sellers[0] if sellers else False
                 if seller:
